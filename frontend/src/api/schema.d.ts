@@ -581,6 +581,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leaderboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_leaderboard_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -1010,9 +1026,12 @@ export interface components {
          * @enum {string}
          */
         ActionTakenEnum: "open" | "snooze" | "tone_down";
+        /** @description Send the field for the card's kind: choice, text or pairs. */
         AnswerRequest: {
             position: number;
-            choice: number;
+            choice?: number;
+            text?: string;
+            pairs?: number[];
         };
         AnswersRequest: {
             answers: {
@@ -1107,6 +1126,10 @@ export interface components {
             number: number;
             correct: number;
             finished: boolean;
+            timed_out: boolean;
+            /** Format: date-time */
+            expires_at: string | null;
+            xp: number;
             cards: components["schemas"]["CheckCard"][];
         };
         Availability: {
@@ -1149,13 +1172,21 @@ export interface components {
             label?: string;
         };
         CardResult: {
-            /** @description position of the tapped option, as shown */
-            chosen: number;
-            /** @description position of the right option, as shown */
-            answer: number;
             correct: boolean;
             explanation: string;
             source_excerpt: string;
+            /** @description choice: option tapped, as shown */
+            chosen: number | null;
+            /** @description choice: right option, as shown */
+            answer: number | null;
+            /** @description short: what was typed */
+            given_text: string | null;
+            /** @description short: the key term */
+            expected_text: string | null;
+            /** @description match: sentence picked per term */
+            pairs: number[] | null;
+            /** @description match: right sentence per term */
+            right_pairs: number[] | null;
         };
         ChangeLink: {
             to: string;
@@ -1241,9 +1272,15 @@ export interface components {
         ChatMessageStateEnum: "pending" | "done" | "failed";
         CheckCard: {
             position: number;
-            type: components["schemas"]["QuestionTypeEnum"];
+            kind: components["schemas"]["CheckCardKindEnum"];
+            /** @description multiple_choice, true_false, short_answer or matching */
+            type: string;
             front: string;
             options: string[];
+            /** @description match: the key terms */
+            terms: string[];
+            /** @description match: the sentences */
+            clues: string[];
             /** @description e.g. CS 201 · Ch 4: Stacks and Queues */
             source: string;
             chapter_id: number;
@@ -1251,6 +1288,13 @@ export interface components {
             /** @description null until the card is answered */
             result: components["schemas"]["CardResult"] | null;
         };
+        /**
+         * @description * `choice` - choice
+         *     * `short` - short
+         *     * `match` - match
+         * @enum {string}
+         */
+        CheckCardKindEnum: "choice" | "short" | "match";
         CheckChapter: {
             id: number;
             course_id: number;
@@ -1366,6 +1410,25 @@ export interface components {
             /** Format: uri */
             support_url: string;
             results: components["schemas"]["Notification"][];
+        };
+        Leaderboard: {
+            /** Format: date */
+            week_start: string;
+            course_id: number | null;
+            courses: components["schemas"]["LeaderboardCourse"][];
+            rows: components["schemas"]["LeaderboardRow"][];
+        };
+        LeaderboardCourse: {
+            id: number;
+            code: string;
+        };
+        LeaderboardRow: {
+            rank: number;
+            student_id: number;
+            name: string;
+            xp: number;
+            streak: number;
+            is_me: boolean;
         };
         Link: {
             label: string;
@@ -3078,6 +3141,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DemoStudent"];
+                };
+            };
+        };
+    };
+    v1_leaderboard_retrieve: {
+        parameters: {
+            query?: {
+                course_id?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Leaderboard"];
                 };
             };
         };

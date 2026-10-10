@@ -14,7 +14,7 @@ from pulse.models import Session
 from pulse.services.planner import plan
 from quizzes.models import CheckAttempt, CheckQuestion, Streak, StreakEvent, StudyCheck
 from quizzes.services import bank as bank_service
-from quizzes.services.checks import pass_mark
+from quizzes.services.checks import _question_ids, pass_mark
 from quizzes.services.streaks import sweep_student, week_of
 from quizzes.services.windows import sync_checks, window_for
 
@@ -64,10 +64,27 @@ def make_check(student, chapters, opens, closes):
     return check
 
 
+def latest_attempt(check):
+    return CheckAttempt.objects.filter(study_check=check).order_by("-number").first()
+
+
 def right_choice(check, position):
-    attempt = CheckAttempt.objects.filter(study_check=check).order_by("-number").first()
-    item = attempt.cards[position]
+    item = latest_attempt(check).cards[position]
     return item["order"].index(CheckQuestion.objects.get(pk=item["question_id"]).correct_index)
+
+
+def payload(check, position, *, right: bool) -> dict:
+    """The answer to send for a card of any kind, right or wrong."""
+    item = latest_attempt(check).cards[position]
+    kind = item.get("kind", "choice")
+    if kind == "match":
+        pairs = [item["clues"].index(qid) for qid in item["question_ids"]]
+        return {"pairs": pairs if right else pairs[1:] + pairs[:1]}
+    if kind == "short":
+        term = CheckQuestion.objects.get(pk=item["question_id"]).answer
+        return {"text": term if right else "photosynthesis"}
+    choice = right_choice(check, position)
+    return {"choice": choice if right else (choice + 1) % len(item["order"])}
 
 
 def take(client, check, *, right=4, gap=5, start=None):
@@ -79,14 +96,8 @@ def take(client, check, *, right=4, gap=5, start=None):
     response = detail
     for position in range(4):
         with time_machine.travel(start + timedelta(seconds=gap * (position + 1)), tick=False):
-            choice = right_choice(check, position)
-            if position >= right:
-                choice = (choice + 1) % len(detail.data["attempt"]["cards"][position]["options"])
-            response = client.post(
-                f"/api/v1/checks/{check.id}/answer",
-                {"position": position, "choice": choice},
-                format="json",
-            )
+            body = {"position": position, **payload(check, position, right=position < right)}
+            response = client.post(f"/api/v1/checks/{check.id}/answer", body, format="json")
             assert response.status_code == 200, response.data
     return response
 
@@ -95,7 +106,7 @@ class TestBank:
     def test_key_term_fallback_builds_valid_cards(self, setup):
         _, _, chapter = setup
         assert bank_service.rebuild_bank(chapter) >= bank_service.MIN_BANK
-        for q in CheckQuestion.objects.filter(chapter=chapter):
+        for q in bank_service.choices(chapter):
             assert len(set(q.options)) == len(q.options)
             assert q.correct_index < len(q.options)
             assert q.origin == "cloze"
@@ -130,7 +141,7 @@ class TestBank:
         _, _, chapter = setup
         self.ai_on(settings, monkeypatch)
         bank_service.rebuild_bank(chapter)
-        kept = bank_service.usable(chapter)
+        kept = bank_service.choices(chapter)
         assert kept.count() == 10
         assert all(q.origin == "ai" for q in kept)
 
@@ -139,16 +150,17 @@ class TestBank:
     ):
         _, _, chapter = setup
         bank_service.rebuild_bank(chapter, allow_ai=False)
-        assert set(bank_service.usable(chapter).values_list("origin", flat=True)) == {"cloze"}
+        assert set(bank_service.choices(chapter).values_list("origin", flat=True)) == {"cloze"}
         self.ai_on(settings, monkeypatch)
         bank_service.rebuild_bank(chapter)
-        assert set(bank_service.usable(chapter).values_list("origin", flat=True)) == {"ai"}
+        assert set(bank_service.choices(chapter).values_list("origin", flat=True)) == {"ai"}
+        assert bank_service.usable(chapter).filter(origin="term").count() == 6
 
     def test_too_few_model_cards_are_topped_up_with_key_terms(self, setup, settings, monkeypatch):
         _, _, chapter = setup
         self.ai_on(settings, monkeypatch, count=3)
         bank_service.rebuild_bank(chapter)
-        origins = list(bank_service.usable(chapter).values_list("origin", flat=True))
+        origins = list(bank_service.choices(chapter).values_list("origin", flat=True))
         assert origins.count("ai") == 3 and "cloze" in origins
 
     def test_edit_retires_old_cards(self, setup):
@@ -270,14 +282,10 @@ class TestTakingChecks:
         assert all(c["result"] is None for c in started["attempt"]["cards"])
         assert "correct_index" not in str(started)
         with time_machine.travel(timezone.now() + timedelta(seconds=5), tick=False):
-            choice = right_choice(check, 0)
-            after = client.post(
-                f"/api/v1/checks/{check.id}/answer",
-                {"position": 0, "choice": choice},
-                format="json",
-            ).data
+            body = {"position": 0, **payload(check, 0, right=True)}
+            after = client.post(f"/api/v1/checks/{check.id}/answer", body, format="json").data
         first, second = after["attempt"]["cards"][:2]
-        assert first["result"]["correct"] is True and first["result"]["answer"] == choice
+        assert first["result"]["correct"] is True
         assert first["result"]["explanation"] and first["result"]["source_excerpt"]
         assert second["result"] is None
 
@@ -301,9 +309,9 @@ class TestTakingChecks:
         client = client_for(student)
         failed = take(client, check, right=2)
         assert failed.data["state"] == "open" and failed.data["tries_left"] == 1
-        first_ids = {c["question_id"] for c in check.attempts.get(number=1).cards}
+        first_ids = {q for c in check.attempts.get(number=1).cards for q in _question_ids(c)}
         passed = take(client, check, right=4, start=timezone.now() + timedelta(minutes=5))
-        second_ids = {c["question_id"] for c in check.attempts.get(number=2).cards}
+        second_ids = {q for c in check.attempts.get(number=2).cards for q in _question_ids(c)}
         assert not first_ids & second_ids
         assert passed.data["state"] == "passed"
         assert Streak.objects.get(student=student).current == 1
@@ -346,7 +354,7 @@ class TestTakingChecks:
         check = make_check(student, [chapter], now - timedelta(hours=5), now + timedelta(seconds=3))
         client = client_for(student)
         client.post(f"/api/v1/checks/{check.id}/start")
-        done = take(client, check, gap=120)
+        done = take(client, check, gap=40)
         assert done.data["counted_for_streak"] is True
 
     def test_closed_check_cannot_be_started(self, setup):
@@ -498,3 +506,139 @@ class TestMissedDeadlines:
         Streak.objects.update_or_create(student=student, defaults={"current": 3})
         data = client_for(student).get("/api/v1/streak").data
         assert data["missed_deadlines"] == [] and data["current"] == 3
+
+
+def open_check_for(setup):
+    student, _, chapter = setup
+    now = timezone.now()
+    return student, make_check(
+        student, [chapter], now - timedelta(hours=1), now + timedelta(hours=10)
+    )
+
+
+def answer_at(client, check, position, body, at):
+    with time_machine.travel(at, tick=False):
+        return client.post(
+            f"/api/v1/checks/{check.id}/answer", {"position": position, **body}, format="json"
+        )
+
+
+class TestCardKinds:
+    def test_a_try_mixes_matching_short_answer_and_options(self, setup):
+        student, check = open_check_for(setup)
+        cards = (
+            client_for(student).post(f"/api/v1/checks/{check.id}/start").data["attempt"]["cards"]
+        )
+        kinds = [c["kind"] for c in cards]
+        assert len(cards) == 4 and kinds[2] == "match"
+        assert sorted(kinds) == ["choice", "choice", "match", "short"]
+        match = cards[2]
+        assert len(match["terms"]) == 3 and len(match["clues"]) == 3
+        assert all("_____" in clue for clue in match["clues"])
+        short = next(c for c in cards if c["kind"] == "short")
+        assert "_____" in short["front"] and short["options"] == []
+
+    def test_short_answers_forgive_small_slips(self):
+        from quizzes.services.grading import close_enough
+
+        assert close_enough("spaced practise", "Spaced practice")
+        assert close_enough("the interleaving", "Interleaving")
+        assert close_enough("Concrete example", "Concrete examples")
+        assert not close_enough("cramming", "Spaced practice")
+        assert not close_enough("  ", "Elaboration")
+
+    def test_matching_and_short_answers_are_graded_on_the_server(self, setup):
+        student, check = open_check_for(setup)
+        client = client_for(student)
+        start = timezone.now()
+        with time_machine.travel(start, tick=False):
+            client.post(f"/api/v1/checks/{check.id}/start")
+        cards = latest_attempt(check).cards
+        results = []
+        for position, card in enumerate(cards):
+            body = payload(check, position, right=card["kind"] != "match")
+            if card["kind"] == "match":
+                bad = client.post(
+                    f"/api/v1/checks/{check.id}/answer",
+                    {"position": position, "pairs": [0, 0, 1]},
+                    format="json",
+                )
+                assert bad.status_code == 400
+            response = answer_at(
+                client, check, position, body, start + timedelta(seconds=10 * (position + 1))
+            )
+            results.append(response.data["attempt"]["cards"][position]["result"])
+        by_kind = {card["kind"]: r for card, r in zip(cards, results, strict=True)}
+        assert by_kind["match"]["correct"] is False
+        assert by_kind["match"]["right_pairs"] != by_kind["match"]["pairs"]
+        assert by_kind["short"]["correct"] is True and by_kind["short"]["expected_text"]
+
+    def test_xp_is_ten_a_right_answer_plus_twenty_for_finishing(self, setup):
+        student, check = open_check_for(setup)
+        done = take(client_for(student), check, right=3)
+        assert done.data["attempt"]["xp"] == 3 * 10 + 20
+        assert done.data["state"] == "passed"
+
+
+class TestTimer:
+    def test_time_runs_out_and_unanswered_cards_count_as_wrong(self, setup, settings):
+        settings.STUDY_CHECK_TIME_LIMIT = 60
+        student, check = open_check_for(setup)
+        client = client_for(student)
+        start = timezone.now()
+        with time_machine.travel(start, tick=False):
+            started = client.post(f"/api/v1/checks/{check.id}/start").data
+        assert started["attempt"]["expires_at"] is not None
+        first = payload(check, 0, right=True)
+        assert answer_at(client, check, 0, first, start + timedelta(seconds=10)).status_code == 200
+        late = answer_at(
+            client, check, 1, payload(check, 1, right=True), start + timedelta(seconds=75)
+        )
+        assert late.status_code == 400 and "Time's up" in str(late.data)
+        with time_machine.travel(start + timedelta(seconds=75), tick=False):
+            detail = client.get(f"/api/v1/checks/{check.id}").data
+        attempt = detail["attempt"]
+        assert attempt["finished"] and attempt["timed_out"]
+        assert attempt["correct"] == 1 and attempt["xp"] == 10
+        assert detail["state"] == "open" and detail["tries_left"] == 1
+
+    def test_a_little_network_delay_is_allowed(self, setup, settings):
+        settings.STUDY_CHECK_TIME_LIMIT = 60
+        student, check = open_check_for(setup)
+        client = client_for(student)
+        start = timezone.now()
+        with time_machine.travel(start, tick=False):
+            client.post(f"/api/v1/checks/{check.id}/start")
+        ok = answer_at(
+            client, check, 0, payload(check, 0, right=True), start + timedelta(seconds=65)
+        )
+        assert ok.status_code == 200
+
+
+class TestLeaderboard:
+    def test_weekly_xp_among_classmates_with_a_course_filter(self, setup):
+        from .factories import StudentFactory
+
+        student, course, chapter = setup
+        other_course = CourseFactory(code="CS 201")
+        enroll(student, other_course)
+        mate = StudentFactory(first_name="Kwame", last_name="Mensah")
+        enroll(mate, course)
+        stranger = StudentFactory()
+        enroll(stranger, CourseFactory(code="BUS 210"))
+        now = timezone.now()
+        for who, xp in ((student, 40), (mate, 60), (stranger, 90)):
+            check = make_check(who, [chapter], now - timedelta(hours=3), now + timedelta(hours=3))
+            CheckAttempt.objects.create(
+                study_check=check, number=1, started_at=now - timedelta(minutes=5),
+                finished_at=now - timedelta(minutes=2), correct=2, xp=xp,
+            )  # fmt: skip
+        data = client_for(student).get("/api/v1/leaderboard").data
+        assert [(r["name"], r["xp"]) for r in data["rows"]] == [
+            ("Kwame M.", 60),
+            (data["rows"][1]["name"], 40),
+        ]
+        assert data["rows"][1]["is_me"] is True
+        assert {c["code"] for c in data["courses"]} == {"PSY 101", "CS 201"}
+        only_cs = client_for(student).get(f"/api/v1/leaderboard?course_id={other_course.id}").data
+        assert [r["is_me"] for r in only_cs["rows"]] == [True]

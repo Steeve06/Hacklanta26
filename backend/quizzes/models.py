@@ -7,22 +7,29 @@ User = settings.AUTH_USER_MODEL
 
 
 class CheckQuestion(TimeStamped):
-    """One question in a chapter's bank. Written by the model from the chapter text (and checked
-    against it), or built from the chapter's key terms when the model isn't available."""
+    """One question in a chapter's bank. Multiple choice and true/false are written by the model
+    from the chapter text (and checked against it), or built from the chapter's key terms when the
+    model isn't available. Short answers ("type the missing term") always come from the key terms;
+    they also make up matching cards."""
 
     class Type(models.TextChoices):
         MULTIPLE_CHOICE = "multiple_choice"
         TRUE_FALSE = "true_false"
+        SHORT_ANSWER = "short_answer"
 
     class Origin(models.TextChoices):
         AI = "ai"
         CLOZE = "cloze"
+        TERM = "term"
 
     chapter = models.ForeignKey("lms.Chapter", on_delete=models.CASCADE, related_name="bank")
     type = models.CharField(max_length=20, choices=Type.choices)
     prompt = models.TextField()
-    options = models.JSONField()
-    correct_index = models.PositiveSmallIntegerField()
+    options = models.JSONField(default=list)
+    correct_index = models.PositiveSmallIntegerField(default=0)
+    answer = models.CharField(
+        max_length=120, blank=True, help_text="the key term, for short answers"
+    )
     explanation = models.TextField()
     source_excerpt = models.TextField()
     content_hash = models.CharField(max_length=64, db_index=True, help_text="chapter version")
@@ -59,15 +66,19 @@ class StudyCheck(TimeStamped):
 
 
 class CheckAttempt(TimeStamped):
-    """One go at a check: four cards, picked from the chapters' banks when the attempt starts."""
+    """One timed go at a check: four cards, picked from the chapters' banks when it starts. Each
+    card is {kind: choice, question_id, order}, {kind: short, question_id} or
+    {kind: match, question_ids, clues} (clues are the same ids in the order shown)."""
 
     study_check = models.ForeignKey(StudyCheck, on_delete=models.CASCADE, related_name="attempts")
     number = models.PositiveSmallIntegerField()
-    cards = models.JSONField(default=list, help_text="[{question_id, order: [option indexes]}]")
+    cards = models.JSONField(default=list)
     started_at = models.DateTimeField()
+    expires_at = models.DateTimeField(null=True, blank=True, help_text="when the clock runs out")
     last_answer_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
     correct = models.PositiveSmallIntegerField(default=0)
+    xp = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         ordering = ["number"]
@@ -82,8 +93,14 @@ class CheckAttempt(TimeStamped):
 class CheckAnswer(TimeStamped):
     attempt = models.ForeignKey(CheckAttempt, on_delete=models.CASCADE, related_name="answers")
     position = models.PositiveSmallIntegerField()
-    question = models.ForeignKey(CheckQuestion, on_delete=models.CASCADE, related_name="answers")
-    chosen_index = models.PositiveSmallIntegerField(help_text="index in the original options")
+    question = models.ForeignKey(
+        CheckQuestion, on_delete=models.CASCADE, related_name="answers",
+        help_text="for a matching card, its first question",
+    )  # fmt: skip
+    chosen_index = models.PositiveSmallIntegerField(
+        null=True, blank=True, help_text="index in the original options (choice cards)"
+    )
+    response = models.JSONField(default=dict, help_text="typed text or matched pairs")
     correct = models.BooleanField()
 
     class Meta:

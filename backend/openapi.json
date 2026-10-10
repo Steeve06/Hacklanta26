@@ -1790,6 +1790,40 @@
                 }
             }
         },
+        "/api/v1/leaderboard": {
+            "get": {
+                "operationId": "v1_leaderboard_retrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "course_id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Leaderboard"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/me": {
             "get": {
                 "operationId": "v1_me_retrieve",
@@ -2975,6 +3009,7 @@
             },
             "AnswerRequest": {
                 "type": "object",
+                "description": "Send the field for the card's kind: choice, text or pairs.",
                 "properties": {
                     "position": {
                         "type": "integer",
@@ -2985,10 +3020,23 @@
                         "type": "integer",
                         "maximum": 3,
                         "minimum": 0
+                    },
+                    "text": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "pairs": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "maximum": 5,
+                            "minimum": 0
+                        },
+                        "maxItems": 6
                     }
                 },
                 "required": [
-                    "choice",
                     "position"
                 ]
             },
@@ -3377,6 +3425,17 @@
                     "finished": {
                         "type": "boolean"
                     },
+                    "timed_out": {
+                        "type": "boolean"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "xp": {
+                        "type": "integer"
+                    },
                     "cards": {
                         "type": "array",
                         "items": {
@@ -3387,8 +3446,11 @@
                 "required": [
                     "cards",
                     "correct",
+                    "expires_at",
                     "finished",
-                    "number"
+                    "number",
+                    "timed_out",
+                    "xp"
                 ]
             },
             "Availability": {
@@ -3523,14 +3585,6 @@
             "CardResult": {
                 "type": "object",
                 "properties": {
-                    "chosen": {
-                        "type": "integer",
-                        "description": "position of the tapped option, as shown"
-                    },
-                    "answer": {
-                        "type": "integer",
-                        "description": "position of the right option, as shown"
-                    },
                     "correct": {
                         "type": "boolean"
                     },
@@ -3539,13 +3593,53 @@
                     },
                     "source_excerpt": {
                         "type": "string"
+                    },
+                    "chosen": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "choice: option tapped, as shown"
+                    },
+                    "answer": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "choice: right option, as shown"
+                    },
+                    "given_text": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "short: what was typed"
+                    },
+                    "expected_text": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "short: the key term"
+                    },
+                    "pairs": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "nullable": true,
+                        "description": "match: sentence picked per term"
+                    },
+                    "right_pairs": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "nullable": true,
+                        "description": "match: right sentence per term"
                     }
                 },
                 "required": [
                     "answer",
                     "chosen",
                     "correct",
+                    "expected_text",
                     "explanation",
+                    "given_text",
+                    "pairs",
+                    "right_pairs",
                     "source_excerpt"
                 ]
             },
@@ -3899,8 +3993,12 @@
                     "position": {
                         "type": "integer"
                     },
+                    "kind": {
+                        "$ref": "#/components/schemas/CheckCardKindEnum"
+                    },
                     "type": {
-                        "$ref": "#/components/schemas/QuestionTypeEnum"
+                        "type": "string",
+                        "description": "multiple_choice, true_false, short_answer or matching"
                     },
                     "front": {
                         "type": "string"
@@ -3910,6 +4008,20 @@
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "terms": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "match: the key terms"
+                    },
+                    "clues": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "match: the sentences"
                     },
                     "source": {
                         "type": "string",
@@ -3933,14 +4045,26 @@
                 },
                 "required": [
                     "chapter_id",
+                    "clues",
                     "course_id",
                     "front",
+                    "kind",
                     "options",
                     "position",
                     "result",
                     "source",
+                    "terms",
                     "type"
                 ]
+            },
+            "CheckCardKindEnum": {
+                "enum": [
+                    "choice",
+                    "short",
+                    "match"
+                ],
+                "type": "string",
+                "description": "* `choice` - choice\n* `short` - short\n* `match` - match"
             },
             "CheckChapter": {
                 "type": "object",
@@ -4379,6 +4503,83 @@
                     "support_url",
                     "supportive_mode",
                     "unread"
+                ]
+            },
+            "Leaderboard": {
+                "type": "object",
+                "properties": {
+                    "week_start": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "course_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "courses": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/LeaderboardCourse"
+                        }
+                    },
+                    "rows": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/LeaderboardRow"
+                        }
+                    }
+                },
+                "required": [
+                    "course_id",
+                    "courses",
+                    "rows",
+                    "week_start"
+                ]
+            },
+            "LeaderboardCourse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "code",
+                    "id"
+                ]
+            },
+            "LeaderboardRow": {
+                "type": "object",
+                "properties": {
+                    "rank": {
+                        "type": "integer"
+                    },
+                    "student_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "xp": {
+                        "type": "integer"
+                    },
+                    "streak": {
+                        "type": "integer"
+                    },
+                    "is_me": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "is_me",
+                    "name",
+                    "rank",
+                    "streak",
+                    "student_id",
+                    "xp"
                 ]
             },
             "Link": {

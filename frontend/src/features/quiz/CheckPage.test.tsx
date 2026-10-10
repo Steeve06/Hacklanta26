@@ -23,7 +23,10 @@ function card(position: number): CheckCard {
   const q = question(position);
   return {
     position,
+    kind: "choice",
     type: "multiple_choice",
+    terms: [],
+    clues: [],
     front: q.front,
     options: q.options,
     source: "PSY 101 · Ch 3: Learning Strategies",
@@ -87,7 +90,15 @@ describe("CheckPage", () => {
       if (request.method === "POST" && request.url.endsWith("/api/v1/checks/7/start")) {
         check = {
           ...check,
-          attempt: { number: 1, correct: 0, finished: false, cards: [card(0), card(1)] },
+          attempt: {
+            number: 1,
+            correct: 0,
+            finished: false,
+            timed_out: false,
+            expires_at: new Date(Date.now() + 180_000).toISOString(),
+            xp: 0,
+            cards: [card(0), card(1)],
+          },
         };
         return json(check);
       }
@@ -107,6 +118,10 @@ describe("CheckPage", () => {
                   correct: body.choice === right,
                   explanation: "Because the chapter says so.",
                   source_excerpt: "spreads study over several sessions",
+                  given_text: null,
+                  expected_text: null,
+                  pairs: null,
+                  right_pairs: null,
                 },
               }
             : c,
@@ -115,7 +130,7 @@ describe("CheckPage", () => {
         const correct = cards.filter((c) => c.result?.correct).length;
         check = {
           ...check,
-          attempt: { ...attempt, cards, correct, finished },
+          attempt: { ...attempt, cards, correct, finished, xp: finished ? correct * 10 + 20 : 0 },
           ...(finished
             ? {
                 state: "passed",
@@ -139,6 +154,7 @@ describe("CheckPage", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Start" }));
 
     expect(await screen.findByText(question(0).front)).toBeInTheDocument();
+    expect(screen.getByRole("timer")).toHaveTextContent(/^[23]:\d\d$/);
     await userEvent.click(screen.getByRole("button", { name: "Study" }));
     expect(await screen.findByText("Right")).toBeInTheDocument();
     expect(screen.getByText(/From the chapter/)).toHaveTextContent(
@@ -152,6 +168,7 @@ describe("CheckPage", () => {
 
     expect(await screen.findByRole("heading", { name: "2 of 2 right" })).toBeInTheDocument();
     expect(screen.getByText("Passed. 3 checks in a row: that's a milestone.")).toBeInTheDocument();
+    expect(screen.getByText("+40 XP")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Review this chapter/ })).toHaveAttribute(
       "href",
       "/lms/courses/3/chapters/5",

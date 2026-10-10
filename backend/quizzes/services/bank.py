@@ -1,5 +1,6 @@
 """Per-chapter banks of check cards: model-written questions checked against the chapter text,
-with questions built from the chapter's key terms as the fallback and top-up."""
+with questions built from the chapter's key terms as the fallback and top-up. Every bank also has
+"type the missing term" questions from the key terms, for short-answer and matching cards."""
 
 import logging
 import random
@@ -147,6 +148,41 @@ def cloze_questions(chapter: Chapter, rng: random.Random | None = None) -> list[
     return [q for q in questions if valid(q)]
 
 
+def term_questions(chapter: Chapter) -> list[CheckQuestion]:
+    """One short answer per key term: the sentence that introduces it, with the term blanked."""
+    rows: list[CheckQuestion] = []
+    seen: set[str] = set()
+    for sentence in _sentences(chapter.body_md):
+        match = BOLD.search(sentence)
+        if not match:
+            continue
+        term = match.group(1).strip()
+        if term.lower() in seen or len(term) > 60:
+            continue
+        seen.add(term.lower())
+        plain = _plain(sentence)
+        rows.append(
+            CheckQuestion(
+                chapter=chapter,
+                type=CheckQuestion.Type.SHORT_ANSWER,
+                prompt=_plain(sentence.replace(match.group(0), "_____", 1))[:260],
+                answer=_plain(term),
+                explanation=plain[:300],
+                source_excerpt=plain[:400],
+                content_hash=chapter.content_hash,
+                origin=CheckQuestion.Origin.TERM,
+            )  # fmt: skip
+        )
+        if len(rows) >= TARGET:
+            break
+    return rows
+
+
+def ensure_terms(chapter: Chapter) -> None:
+    if not usable(chapter).filter(origin=CheckQuestion.Origin.TERM).exists():
+        CheckQuestion.objects.bulk_create(term_questions(chapter))
+
+
 def _rows(chapter: Chapter, questions: list[QuestionOut], origin: str) -> list[CheckQuestion]:
     return [
         CheckQuestion(
@@ -170,6 +206,7 @@ def rebuild_bank(chapter: Chapter, *, allow_ai: bool = True) -> int:
     builds key-term cards only, for when a student is waiting."""
     stale = CheckQuestion.objects.filter(chapter=chapter).exclude(content_hash=chapter.content_hash)
     stale.update(retired=True)
+    ensure_terms(chapter)
     use_ai = allow_ai and available()
     if not needs_cards(chapter, use_ai=use_ai):
         return 0
@@ -186,7 +223,7 @@ def rebuild_bank(chapter: Chapter, *, allow_ai: bool = True) -> int:
         extra = [q for q in cloze_questions(chapter) if normalize(q.question) not in seen]
         rows += _rows(chapter, extra[: TARGET - len(rows)], CheckQuestion.Origin.CLOZE)
     with transaction.atomic():
-        current = usable(chapter)
+        current = choices(chapter)
         if upgrade:
             # Model-written cards replace key-term ones; past answers keep their questions.
             current.filter(origin=CheckQuestion.Origin.CLOZE).update(retired=True)
@@ -197,8 +234,9 @@ def rebuild_bank(chapter: Chapter, *, allow_ai: bool = True) -> int:
 
 
 def needs_cards(chapter: Chapter, *, use_ai: bool) -> bool:
-    """True when the bank is short, or only has key-term cards and the model is available."""
-    current = usable(chapter)
+    """True when the bank is short of option questions, or only has key-term ones and the model
+    is available."""
+    current = choices(chapter)
     if current.count() < MIN_BANK:
         return True
     return use_ai and not current.filter(origin=CheckQuestion.Origin.AI).exists()
@@ -208,3 +246,8 @@ def usable(chapter: Chapter):
     return CheckQuestion.objects.filter(
         chapter=chapter, content_hash=chapter.content_hash, retired=False
     )
+
+
+def choices(chapter: Chapter):
+    """The bank's option questions (multiple choice and true/false)."""
+    return usable(chapter).exclude(type=CheckQuestion.Type.SHORT_ANSWER)

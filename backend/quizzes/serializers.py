@@ -75,18 +75,33 @@ def _latest_attempt(check: StudyCheck) -> CheckAttempt | None:
 
 
 class CardResultSerializer(serializers.Serializer):
-    chosen = serializers.IntegerField(help_text="position of the tapped option, as shown")
-    answer = serializers.IntegerField(help_text="position of the right option, as shown")
     correct = serializers.BooleanField()
     explanation = serializers.CharField()
     source_excerpt = serializers.CharField()
+    chosen = serializers.IntegerField(allow_null=True, help_text="choice: option tapped, as shown")
+    answer = serializers.IntegerField(allow_null=True, help_text="choice: right option, as shown")
+    given_text = serializers.CharField(allow_null=True, help_text="short: what was typed")
+    expected_text = serializers.CharField(allow_null=True, help_text="short: the key term")
+    pairs = serializers.ListField(
+        child=serializers.IntegerField(),
+        allow_null=True,
+        help_text="match: sentence picked per term",
+    )
+    right_pairs = serializers.ListField(
+        child=serializers.IntegerField(),
+        allow_null=True,
+        help_text="match: right sentence per term",
+    )
 
 
 class CheckCardSerializer(serializers.Serializer):
     position = serializers.IntegerField()
-    type = serializers.ChoiceField(choices=CheckQuestion.Type.choices)
+    kind = serializers.ChoiceField(choices=["choice", "short", "match"])
+    type = serializers.CharField(help_text="multiple_choice, true_false, short_answer or matching")
     front = serializers.CharField()
     options = serializers.ListField(child=serializers.CharField())
+    terms = serializers.ListField(child=serializers.CharField(), help_text="match: the key terms")
+    clues = serializers.ListField(child=serializers.CharField(), help_text="match: the sentences")
     source = serializers.CharField(help_text="e.g. CS 201 · Ch 4: Stacks and Queues")
     chapter_id = serializers.IntegerField()
     course_id = serializers.IntegerField()
@@ -97,48 +112,84 @@ class AttemptSerializer(serializers.Serializer):
     number = serializers.IntegerField()
     correct = serializers.IntegerField()
     finished = serializers.BooleanField()
+    timed_out = serializers.BooleanField()
+    expires_at = serializers.DateTimeField(allow_null=True)
+    xp = serializers.IntegerField()
     cards = CheckCardSerializer(many=True)
 
 
+def _source(q: CheckQuestion) -> str:
+    return f"{q.chapter.course.code} · Ch {q.chapter.order}: {q.chapter.title}"
+
+
+def _empty_result(given, q: CheckQuestion) -> dict:
+    return {
+        "correct": given.correct, "explanation": q.explanation, "source_excerpt": q.source_excerpt,
+        "chosen": None, "answer": None, "given_text": None, "expected_text": None,
+        "pairs": None, "right_pairs": None,
+    }  # fmt: skip
+
+
+def _card(position: int, item: dict, questions: dict, given) -> dict:
+    kind = item.get("kind", "choice")
+    if kind == "match":
+        qs = [questions[i] for i in item["question_ids"]]
+        clue_qs = [questions[i] for i in item["clues"]]
+        first = qs[0]
+        result = None
+        if given:
+            result = _empty_result(given, first)
+            result["explanation"] = "Each key term goes with the sentence that introduces it."
+            result["source_excerpt"] = " ".join(q.explanation for q in qs)[:600]
+            result["pairs"] = given.response.get("pairs")
+            result["right_pairs"] = [item["clues"].index(i) for i in item["question_ids"]]
+        sources = list(dict.fromkeys(_source(q) for q in qs))
+        return {
+            "position": position, "kind": kind, "type": "matching",
+            "front": "Match each key term to the sentence it completes.",
+            "options": [], "terms": [q.answer for q in qs], "clues": [q.prompt for q in clue_qs],
+            "source": "; ".join(sources), "chapter_id": first.chapter_id,
+            "course_id": first.chapter.course_id, "result": result,
+        }  # fmt: skip
+    q = questions[item["question_id"]]
+    result = _empty_result(given, q) if given else None
+    options: list[str] = []
+    if kind == "choice":
+        order = item["order"]
+        options = [q.options[i] for i in order]
+        if given:
+            result["chosen"] = order.index(given.chosen_index)
+            result["answer"] = order.index(q.correct_index)
+    elif given:
+        result["given_text"] = given.response.get("text", "")
+        result["expected_text"] = q.answer
+    return {
+        "position": position, "kind": kind, "type": q.type, "front": q.prompt, "options": options,
+        "terms": [], "clues": [], "source": _source(q), "chapter_id": q.chapter_id,
+        "course_id": q.chapter.course_id, "result": result,
+    }  # fmt: skip
+
+
 def attempt_data(attempt: CheckAttempt) -> dict:
-    """Cards as the student sees them. The right answer is only included once a card has been
-    answered."""
-    ids = [c["question_id"] for c in attempt.cards]
+    """Cards as the student sees them. Answers are only included once a card has been answered."""
+    from .services.checks import _question_ids
+
+    ids = [qid for c in attempt.cards for qid in _question_ids(c)]
     questions = {
         q.id: q for q in CheckQuestion.objects.filter(id__in=ids).select_related("chapter__course")
     }
     answers = {a.position: a for a in attempt.answers.all()}
-    cards = []
-    for position, item in enumerate(attempt.cards):
-        q = questions[item["question_id"]]
-        order = item["order"]
-        given = answers.get(position)
-        result = None
-        if given:
-            result = {
-                "chosen": order.index(given.chosen_index),
-                "answer": order.index(q.correct_index),
-                "correct": given.correct,
-                "explanation": q.explanation,
-                "source_excerpt": q.source_excerpt,
-            }
-        chapter = q.chapter
-        cards.append(
-            {
-                "position": position,
-                "type": q.type,
-                "front": q.prompt,
-                "options": [q.options[i] for i in order],
-                "source": f"{chapter.course.code} · Ch {chapter.order}: {chapter.title}",
-                "chapter_id": chapter.id,
-                "course_id": chapter.course_id,
-                "result": result,
-            }
-        )
+    cards = [_card(i, item, questions, answers.get(i)) for i, item in enumerate(attempt.cards)]
+    timed_out = bool(
+        attempt.finished_at and attempt.expires_at and attempt.finished_at == attempt.expires_at
+    )
     return {
         "number": attempt.number,
         "correct": attempt.correct,
         "finished": attempt.finished_at is not None,
+        "timed_out": timed_out,
+        "expires_at": attempt.expires_at,
+        "xp": attempt.xp,
         "cards": cards,
     }
 
@@ -167,8 +218,35 @@ class StudyCheckDetailSerializer(StudyCheckSerializer):
 
 
 class AnswerSerializer(serializers.Serializer):
+    """Send the field for the card's kind: choice, text or pairs."""
+
     position = serializers.IntegerField(min_value=0, max_value=9)
-    choice = serializers.IntegerField(min_value=0, max_value=3)
+    choice = serializers.IntegerField(min_value=0, max_value=3, required=False)
+    text = serializers.CharField(max_length=120, required=False, trim_whitespace=True)
+    pairs = serializers.ListField(
+        child=serializers.IntegerField(min_value=0, max_value=5), max_length=6, required=False
+    )
+
+
+class LeaderboardRowSerializer(serializers.Serializer):
+    rank = serializers.IntegerField()
+    student_id = serializers.IntegerField()
+    name = serializers.CharField()
+    xp = serializers.IntegerField()
+    streak = serializers.IntegerField()
+    is_me = serializers.BooleanField()
+
+
+class LeaderboardCourseSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    code = serializers.CharField()
+
+
+class LeaderboardSerializer(serializers.Serializer):
+    week_start = serializers.DateField()
+    course_id = serializers.IntegerField(allow_null=True)
+    courses = LeaderboardCourseSerializer(many=True)
+    rows = LeaderboardRowSerializer(many=True)
 
 
 class StreakEventSerializer(serializers.Serializer):

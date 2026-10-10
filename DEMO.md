@@ -41,10 +41,11 @@ Sign in as **sam@pulse.test**. Go to **Courses > CS 201 > Assignments > Problem 
 
 ## 6. A study check keeps the streak going
 
-Sign in as **maya@pulse.test** (6-check streak). Open **Quiz**: she has a study check open for the chapter she studied today, with the time left until it closes at the end of tomorrow.
+Sign in as **maya@pulse.test** (6-check streak). Open **Quiz**: under her streak is this week's leaderboard, with Maya highlighted among her classmates; the chips narrow it to one course. Below it, a study check is open for the chapters she studied today.
 
-- Open it and press **Start**. Each of the four cards is a question about the chapter; tap an answer and the card flips to show whether it was right, why, and the line of the chapter it comes from.
-- Three right out of four passes: the streak goes to 7 with the milestone celebration. A failed first try offers **Try again with new cards**. Answering again after it's settled doesn't count twice.
+- Open it and press **Start**. The 3-minute clock runs at the top right. The four cards mix kinds: pick an option, type the missing term, and, third, match three key terms to their sentences (tap a term, then its sentence). Each card shows right or wrong, why, and the line of the chapter it comes from.
+- Three right out of four passes: the streak goes to 7 with the milestone celebration and the XP earned. A failed first try offers **Try again with new cards**. Answering again after it's settled doesn't count twice.
+- To show the clock: start a try and wait three minutes. Unanswered cards count as wrong and the try ends.
 - To show a missed check: in Demo controls, click **+1 day** twice on Maya's row without passing it. The window closes, her saved freeze is spent, and the next miss resets the streak. Click **Back to now** afterwards.
 
 ## 6b. Ask Pulse to change the plan

@@ -19,14 +19,39 @@ test("a study check flips each card and settles the streak once", async ({ page,
     .click();
   await page.getByRole("button", { name: "Start" }).click();
 
+  await expect(page.getByRole("timer")).toBeVisible();
+  const kinds: string[] = [];
   for (let i = 0; i < check.card_count; i += 1) {
-    const options = page.getByRole("group", { name: "Choose an answer" }).getByRole("button");
-    await options.first().click();
-    await expect(page.getByRole("status")).toHaveText(/Right|Not quite/);
-    await expect(page.getByText(/From the chapter/)).toBeVisible();
+    const options = page.getByRole("group", { name: "Choose an answer" });
+    const typed = page.getByLabel("Your answer");
+    const terms = page.getByRole("list", { name: "Terms" });
+    await expect(options.or(typed).or(terms).first()).toBeVisible();
+    if (await terms.isVisible()) {
+      kinds.push("match");
+      const termButtons = terms.getByRole("button");
+      const clueButtons = page.getByRole("list", { name: "Sentences" }).getByRole("button");
+      for (let t = 0; t < 3; t += 1) {
+        await termButtons.nth(t).click();
+        await clueButtons.nth(t).click();
+      }
+      await page.getByRole("button", { name: "Check" }).click();
+      await expect(page.getByRole("status")).toHaveText(/matched/);
+    } else if (await typed.isVisible()) {
+      kinds.push("short");
+      await typed.fill("retrieval practice");
+      await page.getByRole("button", { name: "Check" }).click();
+      await expect(page.getByRole("status")).toHaveText(/Right|Not quite/);
+    } else {
+      kinds.push("choice");
+      await options.getByRole("button").first().click();
+      await expect(page.getByRole("status")).toHaveText(/Right|Not quite/);
+      await expect(page.getByText(/From the chapter/)).toBeVisible();
+    }
     const last = i === check.card_count - 1;
     await page.getByRole("button", { name: last ? "See how you did" : "Next card" }).click();
   }
+  expect(kinds).toContain("choice");
+  await expect(page.getByText(/\d+ XP/).first()).toBeVisible();
 
   const after = await api.get<Check>(`/api/v1/checks/${check.id}`);
   const streak = await api.get<Streak>("/api/v1/streak");

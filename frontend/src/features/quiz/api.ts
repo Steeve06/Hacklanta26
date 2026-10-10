@@ -7,12 +7,16 @@ export type CheckDetail = components["schemas"]["StudyCheckDetail"];
 export type CheckCard = components["schemas"]["CheckCard"];
 export type Streak = components["schemas"]["Streak"];
 export type StreakDay = components["schemas"]["StreakDay"];
+export type Leaderboard = components["schemas"]["Leaderboard"];
+export type LeaderboardRow = components["schemas"]["LeaderboardRow"];
+export type CardAnswer = { choice: number } | { text: string } | { pairs: number[] };
 
 export const checkKeys = {
   all: ["checks"] as const,
   list: (state: string) => ["checks", "list", state] as const,
   detail: (id: number) => ["checks", "detail", id] as const,
   streak: ["checks", "streak"] as const,
+  leaderboard: (course: number | null) => ["checks", "leaderboard", course] as const,
 };
 
 export function useChecks(state: "open" | "upcoming" | "past") {
@@ -46,6 +50,7 @@ function useStoreCheck(id: number) {
     if (check.state !== "open") {
       void client.invalidateQueries({ queryKey: checkKeys.all, refetchType: "inactive" });
       void client.invalidateQueries({ queryKey: checkKeys.streak });
+      void client.invalidateQueries({ queryKey: ["checks", "leaderboard"] });
       void client.invalidateQueries({ queryKey: ["pulse", "status"] });
       void client.invalidateQueries({ queryKey: ["notifications"] });
     }
@@ -66,7 +71,7 @@ export function useStartCheck(id: number) {
 export function useAnswerCard(id: number) {
   const store = useStoreCheck(id);
   return useMutation({
-    mutationFn: async (body: { position: number; choice: number }) =>
+    mutationFn: async (body: { position: number } & CardAnswer) =>
       unwrap(
         await api.POST("/api/v1/checks/{check_id}/answer", {
           params: { path: { check_id: id } },
@@ -74,5 +79,17 @@ export function useAnswerCard(id: number) {
         }),
       ),
     onSuccess: store,
+  });
+}
+
+export function useLeaderboard(courseId: number | null) {
+  return useQuery({
+    queryKey: checkKeys.leaderboard(courseId),
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/leaderboard", {
+          params: { query: courseId === null ? {} : { course_id: courseId } },
+        }),
+      ),
   });
 }

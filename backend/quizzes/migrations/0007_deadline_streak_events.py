@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("lms", "0001_initial"),
-        ("quizzes", "0005_study_checks"),
+        ("quizzes", "0006_study_checks"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

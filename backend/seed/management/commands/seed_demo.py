@@ -16,6 +16,7 @@ class Command(BaseCommand):
             lms_seed.mark_profiles(demo)
             quiz_seed.seed_banks()
             quiz_seed.seed_streaks(demo.students)
+            quiz_seed.seed_xp(demo.students, demo.classmates)
             pulse_seed.seed_plans(demo.students)
             pulse_seed.seed_onboarding(demo.students)
             reenrolled = lms_seed.reenroll_signups()

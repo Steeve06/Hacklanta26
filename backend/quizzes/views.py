@@ -11,11 +11,12 @@ from lms.models import Chapter
 from .models import CheckAttempt, StreakEvent, StudyCheck
 from .serializers import (
     AnswerSerializer,
+    LeaderboardSerializer,
     StreakSerializer,
     StudyCheckDetailSerializer,
     StudyCheckSerializer,
 )
-from .services.checks import answer, start_attempt
+from .services.checks import answer, settle_expired, start_attempt
 from .services.missed import missed_deadlines
 from .services.streaks import FREEZE_EVERY, MILESTONES, get_streak, sweep_student, week_of
 
@@ -34,7 +35,10 @@ def _own(request, check_id: int) -> StudyCheck:
 
 def _detail(request, check_id: int, milestone: int | None = None) -> Response:
     check = _own(request, check_id)
-    context = {"now": clock_now(request.user), "milestone": milestone}
+    now = clock_now(request.user)
+    if settle_expired(check, now):
+        check = _own(request, check_id)
+    context = {"now": now, "milestone": milestone}
     return Response(StudyCheckDetailSerializer(check, context=context).data)
 
 
@@ -80,12 +84,38 @@ class CheckAnswerView(APIView):
         check = _own(request, check_id)
         serializer = AnswerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        outcome = answer(check, **serializer.validated_data)
+        data = dict(serializer.validated_data)
+        position = data.pop("position")
+        outcome = answer(check, position, data)
         if outcome.milestone:
             from notifications.engine import notify_streak_milestone
 
             notify_streak_milestone(request.user, check, outcome.milestone)
         return _detail(request, check_id, outcome.milestone)
+
+
+class LeaderboardView(APIView):
+    @extend_schema(
+        parameters=[OpenApiParameter("course_id", int, required=False)],
+        responses=LeaderboardSerializer,
+    )
+    def get(self, request):
+        from lms.selectors import enrolled_courses
+
+        from .services.leaderboard import board
+
+        require_student(request.user)
+        course_id = request.query_params.get("course_id")
+        course_id = int(course_id) if course_id and course_id.isdigit() else None
+        courses = list(enrolled_courses(request.user).order_by("code").values("id", "code"))
+        if course_id not in {c["id"] for c in courses}:
+            course_id = None
+        start, rows = board(request.user, clock_now(request.user), course_id)
+        return Response(
+            LeaderboardSerializer(
+                {"week_start": start, "course_id": course_id, "courses": courses, "rows": rows}
+            ).data
+        )
 
 
 class StreakView(APIView):

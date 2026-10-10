@@ -1,6 +1,6 @@
 # Pulse and Learning Hub
 
-Pulse is a study planner for students. It reads courses, chapters and deadlines from Learning Hub, a small LMS in the same app, and builds a personal study schedule around the student's free time. It sends reminders with an opinionated mascot, shows how the student is doing (good, medium or bad), and keeps a streak of study checks: after the schedule gives a student a chapter, four flashcard questions on it open for that day and the next, and three right answers keep the streak going. Students can also ask Pulse, a chat panel on every page, to change their schedule in plain words.
+Pulse is a study planner for students. It reads courses, chapters and deadlines from Learning Hub, a small LMS in the same app, and builds a personal study schedule around the student's free time. It sends reminders with an opinionated mascot, shows how the student is doing (good, medium or bad), and keeps a streak of study checks: after the schedule gives a student a chapter, a 3-minute check of four cards on it (options, a short answer and a matching card) opens for that day and the next, three right answers keep the streak going, and every check earns XP for a weekly leaderboard among classmates. Students can also ask Pulse, a chat panel on every page, to change their schedule in plain words.
 
 - Backend: Python 3.12, Django 5.1, Django REST Framework, Celery and Redis, PostgreSQL (SQLite for quick local runs).
 - Frontend: React 18, TypeScript, Vite, TanStack Query, Tailwind, Framer Motion and Lottie.
@@ -88,7 +88,7 @@ All passwords are `pulse-demo`.
 
 | Account | Who |
 | --- | --- |
-| maya@pulse.test | Student, on track, 6-check streak with a study check open now |
+| maya@pulse.test | Student, on track, 6-check streak with a study check open now, top of this week's leaderboard |
 | sam@pulse.test | Student, slightly behind |
 | jordan@pulse.test | Student, badly behind, not enough study time |
 | alex@pulse.test | Student with an extension in CS 201, Central time |
@@ -138,7 +138,7 @@ Without Docker (virtualenv active): `pip install -r backend/requirements-dev.txt
 
 ```sh
 # backend (from backend/, virtualenv active)
-pytest                                   # 270 tests, about 25 s
+pytest                                   # 290 tests, about 25 s
 pytest --cov --cov-report=term-missing   # coverage, 93% overall
 
 # frontend (from frontend/)
@@ -201,7 +201,7 @@ backend/
   lms/            Learning Hub: courses, chapters, assessments, submissions
   pulse/          availability, planner and solver, sessions, status, demo controls
   notifications/  templates, triggers, delivery (in-app, push, email), guardrails
-  quizzes/        study checks, question banks, streaks
+  quizzes/        study checks, question banks, streaks, weekly XP leaderboard
   assistant/      the Ask Pulse chat: replies, proposed changes, keyword fallback
   ai/             provider client, prompts, schemas, cost log
   seed/           seed_demo command and course content

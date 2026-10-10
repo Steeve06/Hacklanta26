@@ -8,11 +8,14 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("lms", "0001_initial"),
-        ("quizzes", "0004_course_decks"),
+        ("quizzes", "0005_timed_sessions"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
+        migrations.DeleteModel(
+            name="DeckAnswer",
+        ),
         migrations.RemoveField(
             model_name="streakevent",
             name="deck",

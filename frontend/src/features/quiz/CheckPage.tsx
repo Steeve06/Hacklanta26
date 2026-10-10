@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { errorMessage } from "@/api/client";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -10,8 +11,24 @@ import { Button, ProgressBar, QueryView, Skeleton, toast } from "@/components/ui
 import { useNumericParam } from "@/features/lms/useIds";
 import { cx } from "@/lib/cx";
 import { formatExact, useTimezone } from "@/lib/time";
-import { useAnswerCard, useCheck, useStartCheck, type CheckCard, type CheckDetail } from "./api";
+import {
+  checkKeys,
+  useAnswerCard,
+  useCheck,
+  useStartCheck,
+  type CardAnswer,
+  type CheckCard,
+  type CheckDetail,
+} from "./api";
+import { Countdown } from "./Countdown";
+import { MatchCard } from "./MatchCard";
 import { TimeLeft } from "./TimeLeft";
+
+const KIND_LABEL: Record<CheckCard["kind"], string> = {
+  choice: "Pick one",
+  short: "Type the missing term",
+  match: "Match",
+};
 
 export function CheckPage() {
   const query = useCheck(useNumericParam("checkId"));
@@ -75,17 +92,22 @@ function Intro({ check }: { check: CheckDetail }) {
         <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-5">
           {retry ? (
             <p>
-              You got {check.attempt?.correct} of {check.card_count} last time. You have one more
-              try with {check.card_count} new cards; get {check.pass_mark} right to keep your
-              streak.
+              You got {check.attempt?.correct} of {check.card_count} last time
+              {check.attempt?.timed_out ? " before time ran out" : ""} and earned{" "}
+              {check.attempt?.xp ?? 0} XP. You have one more try with new cards; get{" "}
+              {check.pass_mark} right to keep your streak.
             </p>
           ) : (
             <p>
-              {check.card_count} cards on what you studied. Tap an answer and the card flips to show
-              if you were right. Get {check.pass_mark} of {check.card_count} right to keep your
-              streak.
+              {check.card_count} cards on what you studied: pick an answer, type a missing term, or
+              match terms to sentences. Each card shows if you were right. Get {check.pass_mark} of{" "}
+              {check.card_count} right to keep your streak.
             </p>
           )}
+          <p className="text-sm text-ink-soft">
+            You have 3 minutes once you press Start. Every right answer earns 10 XP, and answering
+            them all earns 20 more.
+          </p>
           <p className="text-sm">
             <TimeLeft closesAt={check.closes_at} /> ·{" "}
             <span className="text-ink-soft">closes {formatExact(check.closes_at, tz)}</span>
@@ -117,20 +139,29 @@ function Player({
   onShow: (position: number | null) => void;
 }) {
   const answer = useAnswerCard(check.id);
+  const client = useQueryClient();
+  const refresh = useCallback(
+    () => void client.invalidateQueries({ queryKey: checkKeys.detail(check.id) }),
+    [client, check.id],
+  );
   const cards = check.attempt?.cards ?? [];
   const next = cards.find((c) => c.result === null);
   const card = showing !== null ? cards[showing] : next;
   if (!card) return null;
   const answered = cards.filter((c) => c.result !== null).length;
 
-  const choose = (choice: number) =>
+  const send = (body: CardAnswer) =>
     answer.mutate(
-      { position: card.position, choice },
+      { position: card.position, ...body },
       {
         onSuccess: () => onShow(card.position),
-        onError: (e) => toast.error(errorMessage(e)),
+        onError: (e) => {
+          toast.error(errorMessage(e));
+          refresh();
+        },
       },
     );
+  const running = check.attempt && !check.attempt.finished && check.attempt.expires_at;
 
   return (
     <section aria-labelledby="check-heading" className="flex flex-col gap-4">
@@ -138,12 +169,17 @@ function Player({
         <h1 id="check-heading" className="text-2xl font-bold">
           Study check
         </h1>
-        <p className="text-sm">
-          <TimeLeft closesAt={check.closes_at} />
-          {check.attempt && check.attempt.number > 1 && (
-            <span className="text-ink-soft"> · second try</span>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="text-sm">
+            <TimeLeft closesAt={check.closes_at} />
+            {check.attempt && check.attempt.number > 1 && (
+              <span className="text-ink-soft"> · second try</span>
+            )}
+          </p>
+          {running && check.attempt?.expires_at && (
+            <Countdown expiresAt={check.attempt.expires_at} onExpire={refresh} />
           )}
-        </p>
+        </div>
         <ProgressBar
           value={(answered / Math.max(1, cards.length)) * 100}
           label={`Card ${Math.min(card.position + 1, cards.length)} of ${cards.length}`}
@@ -152,12 +188,21 @@ function Player({
         />
       </header>
       <AnimatePresence mode="wait">
-        <Flashcard
-          key={`${check.attempt?.number}-${card.position}`}
-          card={card}
-          pending={answer.isPending}
-          onChoose={choose}
-        />
+        {card.kind === "match" ? (
+          <MatchCard
+            key={`${check.attempt?.number}-${card.position}`}
+            card={card}
+            pending={answer.isPending}
+            onAnswer={(pairs) => send({ pairs })}
+          />
+        ) : (
+          <Flashcard
+            key={`${check.attempt?.number}-${card.position}`}
+            card={card}
+            pending={answer.isPending}
+            onAnswer={send}
+          />
+        )}
       </AnimatePresence>
       {card.result && (
         <Button className="self-end" onClick={() => onShow(null)}>
@@ -171,11 +216,11 @@ function Player({
 function Flashcard({
   card,
   pending,
-  onChoose,
+  onAnswer,
 }: {
   card: CheckCard;
   pending: boolean;
-  onChoose: (choice: number) => void;
+  onAnswer: (body: CardAnswer) => void;
 }) {
   const reduced = Boolean(useReducedMotion());
   const flipped = card.result !== null;
@@ -195,22 +240,26 @@ function Flashcard({
       >
         <Face side="front" hidden={flipped} reduced={reduced}>
           <span className="text-xs font-bold uppercase tracking-wide text-ink-soft">
-            {card.source}
+            {KIND_LABEL[card.kind]} · {card.source}
           </span>
           <p className="font-display text-xl font-bold">{card.front}</p>
-          <fieldset className="mt-auto flex flex-col gap-2" disabled={flipped || pending}>
-            <legend className="sr-only">Choose an answer</legend>
-            {card.options.map((option, i) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => onChoose(i)}
-                className="min-h-11 rounded-md border border-line bg-paper px-3 py-2 text-left font-bold hover:border-pine focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink disabled:opacity-60"
-              >
-                {option}
-              </button>
-            ))}
-          </fieldset>
+          {card.kind === "short" ? (
+            <ShortAnswer disabled={flipped || pending} pending={pending} onAnswer={onAnswer} />
+          ) : (
+            <fieldset className="mt-auto flex flex-col gap-2" disabled={flipped || pending}>
+              <legend className="sr-only">Choose an answer</legend>
+              {card.options.map((option, i) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => onAnswer({ choice: i })}
+                  className="min-h-11 rounded-md border border-line bg-paper px-3 py-2 text-left font-bold hover:border-pine focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink disabled:opacity-60"
+                >
+                  {option}
+                </button>
+              ))}
+            </fieldset>
+          )}
         </Face>
         <Face side="back" hidden={!flipped} reduced={reduced} tone={card.result?.correct}>
           {card.result && <Back card={card} />}
@@ -218,6 +267,56 @@ function Flashcard({
       </motion.div>
     </motion.div>
   );
+}
+
+function ShortAnswer({
+  disabled,
+  pending,
+  onAnswer,
+}: {
+  disabled: boolean;
+  pending: boolean;
+  onAnswer: (body: CardAnswer) => void;
+}) {
+  const [text, setText] = useState("");
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (text.trim()) onAnswer({ text: text.trim() });
+  };
+  return (
+    <form onSubmit={submit} className="mt-auto flex flex-col gap-2">
+      <label htmlFor="short-answer" className="text-sm font-bold">
+        Your answer
+      </label>
+      <input
+        id="short-answer"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        disabled={disabled}
+        autoComplete="off"
+        maxLength={120}
+        className="min-h-11 rounded-md border border-line bg-paper px-3 text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink"
+      />
+      <Button
+        type="submit"
+        className="self-start"
+        pending={pending}
+        disabled={disabled || !text.trim()}
+      >
+        Check
+      </Button>
+    </form>
+  );
+}
+
+/** The right answer in words, whatever the card kind. */
+function answerText(card: CheckCard): string {
+  const result = card.result;
+  if (!result) return "";
+  if (card.kind === "short") return result.expected_text ?? "";
+  if (card.kind === "match")
+    return card.terms.map((t, i) => `${t}: ${card.clues[result.right_pairs?.[i] ?? 0]}`).join("; ");
+  return result.answer === null ? "" : (card.options[result.answer] ?? "");
 }
 
 function Face({
@@ -267,9 +366,15 @@ function Back({ card }: { card: CheckCard }) {
           "Not quite"
         )}
       </p>
+      {card.kind === "short" && !result.correct && result.given_text && (
+        <p>
+          <span className="text-ink-soft">You wrote: </span>
+          {result.given_text}
+        </p>
+      )}
       <p>
         <span className="text-ink-soft">Answer: </span>
-        <span className="font-bold">{card.options[result.answer]}</span>
+        <span className="font-bold">{answerText(card)}</span>
       </p>
       <p>{result.explanation}</p>
       <blockquote className="mt-auto border-l-2 border-ink-faint pl-3 text-sm text-ink-soft">
@@ -301,6 +406,14 @@ function Result({ check }: { check: CheckDetail }) {
           <p className="text-ink-soft" role="status">
             {resultLine(check)}
           </p>
+          {check.attempt && (
+            <p className="font-display text-lg font-extrabold text-mustard-ink">
+              +{check.attempt.xp} XP
+              {check.attempt.timed_out && (
+                <span className="ml-2 font-body text-sm font-bold text-ink-soft">Time ran out</span>
+              )}
+            </p>
+          )}
         </div>
       </div>
       {cards.length > 0 && (
@@ -322,11 +435,13 @@ function Result({ check }: { check: CheckDetail }) {
                 <span className="sr-only">{c.result?.correct ? "Right" : "Not right"}</span>
               </span>
               <div className="flex flex-col gap-1">
-                <p className="font-bold">{c.front}</p>
-                {c.result && (
+                <p className="font-bold">{c.kind === "match" ? "Matching" : c.front}</p>
+                {c.result ? (
                   <p className="text-sm text-ink-soft">
-                    Answer: {c.options[c.result.answer]}. {c.result.explanation}
+                    Answer: {answerText(c)}.{c.kind === "match" ? "" : ` ${c.result.explanation}`}
                   </p>
+                ) : (
+                  <p className="text-sm text-ink-soft">Not answered before time ran out.</p>
                 )}
               </div>
             </li>
