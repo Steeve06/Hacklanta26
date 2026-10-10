@@ -9,7 +9,8 @@ import { Button, QueryView, Skeleton, toast } from "@/components/ui";
 import { useNumericParam } from "@/features/lms/useIds";
 import { formatExact, useTimezone } from "@/lib/time";
 import { useQuiz, useStartQuiz, useSubmitQuiz, type QuizDetail } from "./api";
-import { quizName, TimeLeft } from "./QuizCards";
+import { TimeLeft } from "./QuizCards";
+import { quizName } from "./quizName";
 
 export function QuizTakePage() {
   const id = useNumericParam("quizId");

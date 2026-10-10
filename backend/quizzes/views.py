@@ -24,7 +24,9 @@ CHAPTERS = Prefetch("chapters", queryset=Chapter.objects.select_related("course"
 def _own(request, quiz_id: int) -> ChapterQuiz:
     require_student(request.user)
     return get_object_or_404(
-        ChapterQuiz.objects.prefetch_related(CHAPTERS, "answers"), pk=quiz_id, student=request.user
+        ChapterQuiz.objects.select_related("streakevent").prefetch_related(CHAPTERS, "answers"),
+        pk=quiz_id,
+        student=request.user,
     )
 
 
@@ -38,7 +40,11 @@ class QuizListView(APIView):
     def get(self, request):
         require_student(request.user)
         now = clock_now(request.user)
-        qs = ChapterQuiz.objects.filter(student=request.user).prefetch_related(CHAPTERS)
+        qs = (
+            ChapterQuiz.objects.filter(student=request.user)
+            .select_related("streakevent")
+            .prefetch_related(CHAPTERS)
+        )
         state = request.query_params.get("state")
         if state == "open":
             qs = qs.filter(opens_at__lte=now, closes_at__gte=now, submitted_at__isnull=True)

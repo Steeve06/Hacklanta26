@@ -4,9 +4,8 @@ from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
-from django.db.models import Prefetch
-
-from .models import Assessment, Chapter, ChapterProgress, Course, Enrollment, SyllabusWeek
+from .catalog import catalogs
+from .models import ChapterProgress, Course, Enrollment
 from .status import deadline_for, is_done, load_state, status_for
 
 
@@ -97,42 +96,23 @@ def enrolled_courses(student):
 def student_snapshot(student, now: datetime) -> StudentSnapshot:
     courses = list(enrolled_courses(student))
     course_by_id = {c.id: c for c in courses}
-    chapters = list(
-        Chapter.objects.filter(course__in=courses)
-        .only(
-            "id",
-            "course_id",
-            "order",
-            "title",
-            "reading_minutes",
-            "objectives",
-            "available_from",
-            "content_hash",
-        )  # fmt: skip
-        .prefetch_related(
-            Prefetch(
-                "syllabus_weeks",
-                queryset=SyllabusWeek.objects.only("id", "week_number", "start_date"),
-            )
-        )
-    )
+    catalog = catalogs(course_by_id)
+    chapters = [row for c in catalog.values() for row in c.chapters]
+    assessments = [a for c in catalog.values() for a in c.assessments]
+    chapter_links = {k: v for c in catalog.values() for k, v in c.chapter_ids.items()}
     progress = {
         p.chapter_id: p
-        for p in ChapterProgress.objects.filter(student=student, chapter__in=chapters)
-    }
-    assessments = list(
-        Assessment.objects.filter(course__in=courses, published=True).prefetch_related(
-            Prefetch("chapters", queryset=Chapter.objects.only("id"))
+        for p in ChapterProgress.objects.filter(
+            student=student, chapter_id__in=[ch.id for ch in chapters]
         )
-    )
+    }
     state = load_state(student, [a.id for a in assessments])
 
     chapter_infos = []
     for ch in chapters:
-        week = min(ch.syllabus_weeks.all(), key=lambda w: w.week_number, default=None)
         week_end = (
-            datetime.combine(week.start_date + timedelta(days=7), time(0), tzinfo=student.tz)
-            if week
+            datetime.combine(ch.week_start + timedelta(days=7), time(0), tzinfo=student.tz)
+            if ch.week_start
             else None
         )
         p = progress.get(ch.id)
@@ -144,10 +124,10 @@ def student_snapshot(student, now: datetime) -> StudentSnapshot:
                 order=ch.order,
                 title=ch.title,
                 reading_minutes=ch.reading_minutes,
-                objectives=tuple(ch.objectives),
+                objectives=ch.objectives,
                 available_from=ch.available_from,
                 content_hash=ch.content_hash,
-                syllabus_week=week.week_number if week else None,
+                syllabus_week=ch.week_number,
                 week_end=week_end,
                 completed_at=p.completed_at if p else None,
                 opened_at=p.first_opened_at if p else None,
@@ -172,7 +152,7 @@ def student_snapshot(student, now: datetime) -> StudentSnapshot:
                 weight_pct=a.weight_pct,
                 points=a.points,
                 est_minutes=a.est_minutes,
-                chapter_ids=tuple(c.id for c in a.chapters.all()),
+                chapter_ids=chapter_links.get(a.id, ()),
                 status=status_for(a, state, now),
                 extended=deadline.extended,
                 submitted_at=latest.submitted_at if latest else None,

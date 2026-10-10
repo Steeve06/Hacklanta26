@@ -1,4 +1,10 @@
-.PHONY: up down demo test lint api-types
+.PHONY: setup up down demo test e2e lint api-types
+
+# Create .env from the example and fill in a secret key and Web Push keys.
+setup:
+	@test -f .env || cp .env.example .env
+	docker compose run --rm --no-deps --user "$$(id -u):$$(id -g)" \
+		-v "$(CURDIR)/.env:/tmp/pulse.env" web python manage.py init_env /tmp/pulse.env
 
 up:
 	docker compose up --build
@@ -6,6 +12,7 @@ up:
 down:
 	docker compose down
 
+# Reset the demo data and print the demo accounts. Run while `make up` is running.
 demo:
 	docker compose exec web python manage.py migrate --noinput
 	docker compose exec web python manage.py seed_demo
@@ -13,6 +20,9 @@ demo:
 test:
 	docker compose exec web pytest
 	cd frontend && npm test
+
+e2e:
+	cd frontend && npx playwright test
 
 lint:
 	cd backend && ruff check . && ruff format --check .

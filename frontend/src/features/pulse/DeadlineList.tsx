@@ -3,6 +3,7 @@ import { DueTime } from "@/components/Time";
 import { typeLabels } from "@/features/lms/labels";
 import { useNow } from "@/lib/useNow";
 import type { Deadline } from "./api";
+import { percent } from "@/lib/percent";
 
 export function DeadlineList({
   deadlines,
@@ -22,7 +23,7 @@ export function DeadlineList({
             className="flex min-h-11 flex-col gap-0.5 py-2 hover:underline"
           >
             <span className="text-xs font-bold text-ink-soft">
-              {d.course_code} · {typeLabels[d.type]} · {d.weight_pct}%
+              {d.course_code} · {typeLabels[d.type]} · {percent(d.weight_pct)}
               {d.extended ? " · extended" : ""}
             </span>
             <span className="font-bold">{d.title}</span>

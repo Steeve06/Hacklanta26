@@ -4,10 +4,7 @@ import { formatExact, useTimezone } from "@/lib/time";
 import { formatClock, useCountdown } from "@/lib/useCountdown";
 import { cx } from "@/lib/cx";
 import type { Quiz, Streak } from "./api";
-
-export function quizName(quiz: Pick<Quiz, "chapters">): string {
-  return quiz.chapters.map((c) => `${c.course_code} Ch ${c.order}`).join(" · ") || "Chapter quiz";
-}
+import { quizName } from "./quizName";
 
 export function TimeLeft({ closesAt }: { closesAt: string }) {
   const remaining = useCountdown(closesAt) ?? 0;

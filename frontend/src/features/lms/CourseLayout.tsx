@@ -1,7 +1,7 @@
-import { Outlet } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { ErrorState, RouteTabs, Skeleton } from "@/components/ui";
-import { errorMessage } from "@/api/client";
+import { EmptyState, ErrorState, RouteTabs, Skeleton } from "@/components/ui";
+import { errorMessage, isMissing } from "@/api/client";
 import { useCourse } from "./api";
 import { useNumericParam } from "./useIds";
 
@@ -9,6 +9,19 @@ export function CourseLayout() {
   const courseId = useNumericParam("courseId");
   const course = useCourse(courseId);
   const base = `/lms/courses/${courseId}`;
+  if (course.isError && isMissing(course.error)) {
+    return (
+      <EmptyState
+        title="Course not found"
+        body="It may have been removed, or you aren't enrolled in it."
+        action={
+          <Link to="/lms" className="font-bold text-pine underline">
+            Back to your courses
+          </Link>
+        }
+      />
+    );
+  }
   return (
     <div className="flex flex-col gap-4">
       <Breadcrumbs

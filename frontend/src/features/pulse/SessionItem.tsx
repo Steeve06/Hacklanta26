@@ -6,6 +6,7 @@ import { cx } from "@/lib/cx";
 import { formatTime, useTimezone } from "@/lib/time";
 import { useNow } from "@/lib/useNow";
 import { useRescheduleSession, useUpdateSession, type Session } from "./api";
+import { sessionLink } from "./sessionLink";
 
 const kindLabel: Record<string, string> = {
   study: "Reading",
@@ -21,13 +22,6 @@ const statusLabel: Record<string, string> = {
   skipped: "Skipped",
   rescheduled: "Moved",
 };
-
-export function sessionLink(session: Session, courseId: number): string {
-  if (session.kind === "chapter_quiz") return "/pulse/quiz";
-  if (session.source_type === "chapter")
-    return `/lms/courses/${courseId}/chapters/${session.source_id}`;
-  return `/lms/courses/${courseId}/assignments/${session.source_id}`;
-}
 
 export function SessionItem({
   session,

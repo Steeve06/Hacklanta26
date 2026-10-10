@@ -1140,6 +1140,158 @@
                 }
             }
         },
+        "/api/v1/demo/replan/{student_id}": {
+            "post": {
+                "operationId": "v1_demo_replan_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "student_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DemoStudent"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/demo/scan-notifications": {
+            "post": {
+                "operationId": "v1_demo_scan_notifications_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ScanRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ScanRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ScanRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ScanResult"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/demo/students": {
+            "get": {
+                "operationId": "v1_demo_students_list",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/DemoStudent"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/demo/time-travel": {
+            "post": {
+                "operationId": "v1_demo_time_travel_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TravelRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TravelRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TravelRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DemoStudent"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/me": {
             "get": {
                 "operationId": "v1_me_retrieve",
@@ -2689,9 +2841,8 @@
                     },
                     "points": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "weight_pct": {
                         "type": "string",
@@ -2700,28 +2851,24 @@
                     },
                     "est_minutes": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
+                        "maximum": 32767,
                         "minimum": 0,
-                        "format": "int64",
                         "nullable": true
                     },
                     "discussion_replies_required": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "time_limit_minutes": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "max_attempts": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "published": {
                         "type": "boolean"
@@ -2760,9 +2907,8 @@
                 "properties": {
                     "weekday": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
+                        "maximum": 32767,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "0 = Monday"
                     },
                     "start_time": {
@@ -2785,9 +2931,8 @@
                 "properties": {
                     "weekday": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
+                        "maximum": 32767,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "0 = Monday"
                     },
                     "start_time": {
@@ -3070,6 +3215,12 @@
                     "counted_for_streak": {
                         "type": "boolean",
                         "readOnly": true
+                    },
+                    "streak_result": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "How the quiz counted once its window settled: on_time, frozen or missed.",
+                        "readOnly": true
                     }
                 },
                 "required": [
@@ -3085,6 +3236,7 @@
                     "sharp",
                     "started_at",
                     "state",
+                    "streak_result",
                     "submitted_at"
                 ]
             },
@@ -3159,6 +3311,12 @@
                         "type": "boolean",
                         "readOnly": true
                     },
+                    "streak_result": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "How the quiz counted once its window settled: on_time, frozen or missed.",
+                        "readOnly": true
+                    },
                     "questions": {
                         "type": "array",
                         "items": {
@@ -3202,6 +3360,7 @@
                     "started_at",
                     "state",
                     "streak",
+                    "streak_result",
                     "submitted_at"
                 ]
             },
@@ -3229,9 +3388,8 @@
                 "properties": {
                     "order": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "title": {
                         "type": "string",
@@ -3250,9 +3408,8 @@
                     },
                     "reading_minutes": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "objectives": {
                         "type": "array",
@@ -3399,6 +3556,51 @@
                     "title",
                     "type",
                     "weight_pct"
+                ]
+            },
+            "DemoStudent": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "score": {
+                        "type": "integer"
+                    },
+                    "clock": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "offset_minutes": {
+                        "type": "integer"
+                    },
+                    "sass_level": {
+                        "type": "integer"
+                    },
+                    "supportive_mode": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "clock",
+                    "email",
+                    "id",
+                    "name",
+                    "offset_minutes",
+                    "sass_level",
+                    "score",
+                    "state",
+                    "supportive_mode"
                 ]
             },
             "Discussion": {
@@ -3659,15 +3861,25 @@
                             }
                         ],
                         "readOnly": true
+                    },
+                    "server_now": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "demo_mode": {
+                        "type": "boolean",
+                        "readOnly": true
                     }
                 },
                 "required": [
+                    "demo_mode",
                     "email",
                     "first_name",
                     "id",
                     "last_name",
                     "profile",
                     "role",
+                    "server_now",
                     "timezone"
                 ]
             },
@@ -3970,9 +4182,8 @@
                     },
                     "points": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "weight_pct": {
                         "type": "string",
@@ -3981,28 +4192,24 @@
                     },
                     "est_minutes": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
+                        "maximum": 32767,
                         "minimum": 0,
-                        "format": "int64",
                         "nullable": true
                     },
                     "discussion_replies_required": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "time_limit_minutes": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "max_attempts": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "published": {
                         "type": "boolean"
@@ -4020,9 +4227,8 @@
                 "properties": {
                     "order": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "title": {
                         "type": "string",
@@ -4041,9 +4247,8 @@
                     },
                     "reading_minutes": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "objectives": {
                         "type": "array",
@@ -4290,9 +4495,8 @@
                 "properties": {
                     "sass_level": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "max_hours_per_day": {
                         "type": "string",
@@ -4306,7 +4510,7 @@
                             }
                         ],
                         "minimum": 0,
-                        "maximum": 9223372036854775807
+                        "maximum": 32767
                     },
                     "earliest_time": {
                         "type": "string",
@@ -4464,9 +4668,8 @@
                     },
                     "order": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "type": {
                         "$ref": "#/components/schemas/QuestionTypeEnum"
@@ -4477,15 +4680,13 @@
                     "options": {},
                     "correct_index": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "points": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     }
                 },
                 "required": [
@@ -4502,9 +4703,8 @@
                 "properties": {
                     "order": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "type": {
                         "$ref": "#/components/schemas/QuestionTypeEnum"
@@ -4516,15 +4716,13 @@
                     "options": {},
                     "correct_index": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "points": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     }
                 },
                 "required": [
@@ -4783,6 +4981,33 @@
                     "student_id",
                     "submission_id",
                     "submitted_at"
+                ]
+            },
+            "ScanRequest": {
+                "type": "object",
+                "properties": {
+                    "student_id": {
+                        "type": "integer"
+                    },
+                    "ignore_quiet_hours": {
+                        "type": "boolean",
+                        "default": true
+                    }
+                }
+            },
+            "ScanResult": {
+                "type": "object",
+                "properties": {
+                    "created": {
+                        "type": "integer"
+                    },
+                    "sent": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "created",
+                    "sent"
                 ]
             },
             "Schedule": {
@@ -5310,6 +5535,26 @@
                     "start_date",
                     "topic",
                     "week_number"
+                ]
+            },
+            "TravelRequest": {
+                "type": "object",
+                "properties": {
+                    "student_id": {
+                        "type": "integer"
+                    },
+                    "hours": {
+                        "type": "integer",
+                        "maximum": 720,
+                        "minimum": -720
+                    },
+                    "reset": {
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "required": [
+                    "student_id"
                 ]
             },
             "TriggerEnum": {

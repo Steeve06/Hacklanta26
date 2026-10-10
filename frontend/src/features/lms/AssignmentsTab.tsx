@@ -7,6 +7,7 @@ import { useAssessments, type Assessment } from "./api";
 import { typeLabels } from "./labels";
 import { StatusPill } from "./StatusPill";
 import { useNumericParam } from "./useIds";
+import { percent } from "@/lib/percent";
 
 type TypeFilter = "all" | "homework" | "discussion" | "quiz";
 type StatusFilter = "all" | "todo" | "done" | "missed";
@@ -105,7 +106,7 @@ export function AssignmentsTab() {
                   >
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="text-xs font-bold text-ink-soft">
-                        {typeLabels[a.type]} · {a.weight_pct}% of grade
+                        {typeLabels[a.type]} · {percent(a.weight_pct)} of grade
                         {!a.published && " · Hidden from students"}
                       </span>
                       <span className="font-bold">{a.title}</span>

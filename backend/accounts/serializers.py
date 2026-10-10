@@ -1,5 +1,8 @@
+from django.conf import settings
 from django.contrib.auth import authenticate
 from rest_framework import serializers
+
+from accounts.clock import now as clock_now
 
 from .models import StudentProfile, User, validate_timezone
 
@@ -72,11 +75,22 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
 class MeSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(read_only=True)
+    server_now = serializers.SerializerMethodField()
+    demo_mode = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "email", "first_name", "last_name", "role", "timezone", "profile"]
+        fields = [
+            "id", "email", "first_name", "last_name", "role", "timezone", "profile", "server_now",
+            "demo_mode",
+        ]  # fmt: skip
         read_only_fields = fields
+
+    def get_server_now(self, obj) -> str:
+        return clock_now(obj).isoformat()
+
+    def get_demo_mode(self, obj) -> bool:
+        return settings.DEMO_MODE
 
 
 class MeUpdateSerializer(serializers.Serializer):

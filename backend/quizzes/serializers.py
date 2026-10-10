@@ -33,14 +33,23 @@ class ChapterQuizSerializer(serializers.ModelSerializer):
     state = serializers.SerializerMethodField()
     chapters = serializers.SerializerMethodField()
     question_count = serializers.SerializerMethodField()
+    streak_result = serializers.SerializerMethodField()
 
     class Meta:
         model = ChapterQuiz
         fields = [
             "id", "kind", "scheduled_date", "opens_at", "closes_at", "state", "chapters",
             "question_count", "started_at", "submitted_at", "score", "sharp", "counted_for_streak",
+            "streak_result",
         ]  # fmt: skip
         read_only_fields = fields
+
+    def get_streak_result(self, obj) -> str | None:
+        """How the quiz counted once its window settled: on_time, frozen or missed."""
+        if obj.submitted_at is None and obj.closes_at > self.context["now"]:
+            return None
+        event = getattr(obj, "streakevent", None)
+        return event.result if event else None
 
     def get_state(self, obj) -> str:
         from .services.attempts import state_of

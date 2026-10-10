@@ -1,8 +1,9 @@
 import { Card, EmptyState, QueryView, Skeleton } from "@/components/ui";
 import { formatShortDay, useTimezone } from "@/lib/time";
 import { Link } from "react-router-dom";
-import { useQuizzes, useStreak } from "./api";
-import { OpenQuizRow, quizName, StreakBadge, UpcomingQuizRow } from "./QuizCards";
+import { useQuizzes, useStreak, type Quiz } from "./api";
+import { OpenQuizRow, StreakBadge, UpcomingQuizRow } from "./QuizCards";
+import { quizName } from "./quizName";
 
 export function QuizHubPage() {
   const streak = useStreak();
@@ -111,10 +112,7 @@ export function QuizHubPage() {
                     >
                       <span className="font-bold">{quizName(q)}</span>
                       <span className="text-ink-soft">
-                        {formatShortDay(q.closes_at, tz)} ·{" "}
-                        {q.submitted_at
-                          ? `${Math.round((q.score ?? 0) * 100)}%${q.counted_for_streak ? "" : " (practice)"}`
-                          : "Missed · take it as practice"}
+                        Closed {formatShortDay(q.closes_at, tz)} · {pastResult(q)}
                       </span>
                     </Link>
                   </li>
@@ -126,4 +124,13 @@ export function QuizHubPage() {
       </section>
     </div>
   );
+}
+
+function pastResult(q: Quiz): string {
+  if (q.submitted_at) {
+    const score = `${Math.round((q.score ?? 0) * 100)}%`;
+    return q.counted_for_streak ? score : `${score} (practice)`;
+  }
+  if (q.streak_result === "frozen") return "Freeze used, streak kept · take it as practice";
+  return "Missed · take it as practice";
 }

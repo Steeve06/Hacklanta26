@@ -1,6 +1,7 @@
 import logging
 
 from celery import shared_task
+from django.conf import settings
 
 from accounts.models import User
 
@@ -12,25 +13,30 @@ BATCH = 200
 
 @shared_task
 def scan_all() -> int:
-    """Every 10 minutes: evaluate triggers for every onboarded student, then send what's due."""
-    created = 0
+    """Every 10 minutes: evaluate triggers for every onboarded student in batches of 200.
+
+    With a worker the batches run as parallel tasks; without one they run inline.
+    """
     ids = list(
         User.objects.filter(role=User.Role.STUDENT, profile__onboarding_done=True, is_active=True)
         .order_by("id")
         .values_list("id", flat=True)
     )
-    for start in range(0, len(ids), BATCH):
-        for student in User.objects.filter(id__in=ids[start : start + BATCH]).select_related(
-            "profile"
-        ):
-            try:
-                created += len(scan_student(student))
-            except Exception:
-                logger.exception("Notification scan failed for student %s", student.id)
-    dispatch_due()
-    return created
+    batches = [ids[start : start + BATCH] for start in range(0, len(ids), BATCH)]
+    if settings.CELERY_TASK_ALWAYS_EAGER:
+        return sum(scan_batch(batch) for batch in batches)
+    for batch in batches:
+        scan_batch.delay(batch)
+    return 0
 
 
 @shared_task
-def dispatch() -> int:
-    return dispatch_due()
+def scan_batch(student_ids: list[int]) -> int:
+    created = 0
+    for student in User.objects.filter(id__in=student_ids).select_related("profile"):
+        try:
+            created += len(scan_student(student))
+            dispatch_due(student=student)
+        except Exception:
+            logger.exception("Notification scan failed for student %s", student.id)
+    return created

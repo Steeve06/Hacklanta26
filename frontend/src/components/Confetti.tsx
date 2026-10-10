@@ -15,7 +15,11 @@ export function Confetti({ show }: { show: boolean }) {
   return (
     <AnimatePresence>
       {show && (
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-visible">
+        <div
+          aria-hidden="true"
+          data-testid="confetti"
+          className="pointer-events-none absolute inset-0 overflow-visible"
+        >
           {PIECES.map((p) => (
             <motion.span
               key={p.id}

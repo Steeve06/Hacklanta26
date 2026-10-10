@@ -3,6 +3,7 @@ import { QueryView, SkeletonLines } from "@/components/ui";
 import { formatShortDay, useTimezone } from "@/lib/time";
 import { useSyllabus } from "./api";
 import { useNumericParam } from "./useIds";
+import { percent } from "@/lib/percent";
 
 export function SyllabusTab() {
   const courseId = useNumericParam("courseId");
@@ -109,7 +110,7 @@ export function SyllabusTab() {
                   <div key={g.label} className="flex flex-col gap-1">
                     <div className="flex justify-between">
                       <dt>{g.label}</dt>
-                      <dd className="font-bold">{g.weight_pct}%</dd>
+                      <dd className="font-bold">{percent(g.weight_pct)}</dd>
                     </div>
                     <div className="h-1.5 rounded-full bg-sunken" aria-hidden="true">
                       <div

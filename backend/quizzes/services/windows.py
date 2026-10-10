@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 from django.db import transaction
 
 from accounts.clock import now as clock_now
+from accounts.models import StudentProfile
 from lms.models import Chapter, ChapterProgress
 from lms.selectors import enrolled_courses
 from pulse.models import Schedule, Session
@@ -54,6 +55,8 @@ def _study_days(schedule: Schedule | None, tz) -> dict[int, date]:
 @transaction.atomic
 def sync_windows(student) -> list[ChapterQuiz]:
     """Create, move or regroup this student's upcoming quiz windows. Open windows never move."""
+    # Serialise concurrent syncs for one student (two workers would otherwise both create a window).
+    StudentProfile.objects.select_for_update().filter(user_id=student.id).first()
     now = clock_now(student)
     tz = student.tz
     today = now.astimezone(tz).date()

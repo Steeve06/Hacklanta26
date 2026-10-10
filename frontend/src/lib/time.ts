@@ -1,4 +1,5 @@
 import { useMe } from "@/features/auth/hooks";
+import { serverNow } from "./serverClock";
 
 export function useTimezone(): string {
   const me = useMe();
@@ -54,7 +55,7 @@ export function localDateKey(iso: string | Date, timeZone: string): string {
     }, "");
 }
 
-export function relativeDue(iso: string, now: Date = new Date()): string {
+export function relativeDue(iso: string, now: Date = new Date(serverNow())): string {
   const diffMs = new Date(iso).getTime() - now.getTime();
   const past = diffMs < 0;
   const minutes = Math.round(Math.abs(diffMs) / 60_000);

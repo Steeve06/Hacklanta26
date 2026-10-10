@@ -339,3 +339,24 @@ def test_seed_demo_is_idempotent():
     assert (Course.objects.count(), Chapter.objects.count(), Assessment.objects.count()) == counts
     assert counts == (3, 24, 30)
     assert all(len(c.body_md.split()) >= 600 for c in Chapter.objects.all())
+
+
+@pytest.mark.parametrize("hour", [1, 9, 15, 23])
+def test_seed_gives_on_track_student_an_open_quiz_at_any_time_of_day(
+    hour, django_capture_on_commit_callbacks
+):
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    from django.core.management import call_command
+
+    from quizzes.models import ChapterQuiz
+
+    moment = datetime(2026, 10, 10, hour, 0, tzinfo=ZoneInfo("America/New_York"))
+    with time_machine.travel(moment, tick=False):
+        with django_capture_on_commit_callbacks(execute=True):
+            call_command("seed_demo", stdout=io.StringIO())
+        open_quizzes = ChapterQuiz.objects.filter(
+            student__email="maya@pulse.test", opens_at__lte=moment, closes_at__gt=moment
+        )
+        assert open_quizzes.count() == 1

@@ -324,6 +324,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/demo/replan/{student_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_demo_replan_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/demo/scan-notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_demo_scan_notifications_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/demo/students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_demo_students_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/demo/time-travel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_demo_time_travel_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -848,17 +912,12 @@ export interface components {
             due_at: string;
             /** Format: date-time */
             cutoff_at?: string | null;
-            /** Format: int64 */
             points?: number;
             /** Format: decimal */
             weight_pct?: string;
-            /** Format: int64 */
             est_minutes?: number | null;
-            /** Format: int64 */
             discussion_replies_required?: number;
-            /** Format: int64 */
             time_limit_minutes?: number;
-            /** Format: int64 */
             max_attempts?: number;
             published?: boolean;
             questions?: components["schemas"]["QuestionWriteRequest"][];
@@ -867,10 +926,7 @@ export interface components {
             blocks: components["schemas"]["AvailabilityBlock"][];
         };
         AvailabilityBlock: {
-            /**
-             * Format: int64
-             * @description 0 = Monday
-             */
+            /** @description 0 = Monday */
             weekday: number;
             /** Format: time */
             start_time: string;
@@ -878,10 +934,7 @@ export interface components {
             end_time: string;
         };
         AvailabilityBlockRequest: {
-            /**
-             * Format: int64
-             * @description 0 = Monday
-             */
+            /** @description 0 = Monday */
             weekday: number;
             /** Format: time */
             start_time: string;
@@ -954,6 +1007,8 @@ export interface components {
             readonly score: number | null;
             readonly sharp: boolean;
             readonly counted_for_streak: boolean;
+            /** @description How the quiz counted once its window settled: on_time, frozen or missed. */
+            readonly streak_result: string | null;
         };
         ChapterQuizDetail: {
             readonly id: number;
@@ -975,6 +1030,8 @@ export interface components {
             readonly score: number | null;
             readonly sharp: boolean;
             readonly counted_for_streak: boolean;
+            /** @description How the quiz counted once its window settled: on_time, frozen or missed. */
+            readonly streak_result: string | null;
             readonly questions: components["schemas"]["QuizQuestion"][];
             readonly results: components["schemas"]["QuizResult"][] | null;
             readonly milestone: number | null;
@@ -986,12 +1043,10 @@ export interface components {
             title: string;
         };
         ChapterWriteRequest: {
-            /** Format: int64 */
             order: number;
             title: string;
             body_md: string;
             links?: components["schemas"]["LinkRequest"][];
-            /** Format: int64 */
             reading_minutes?: number;
             objectives: string[];
             /** Format: date-time */
@@ -1027,6 +1082,19 @@ export interface components {
             /** Format: double */
             weight_pct: number;
             extended: boolean;
+        };
+        DemoStudent: {
+            id: number;
+            /** Format: email */
+            email: string;
+            name: string;
+            state: string;
+            score: number;
+            /** Format: date-time */
+            clock: string;
+            offset_minutes: number;
+            sass_level: number;
+            supportive_mode: boolean;
         };
         Discussion: {
             posts: components["schemas"]["DiscussionPost"][];
@@ -1094,6 +1162,8 @@ export interface components {
             readonly role: components["schemas"]["RoleEnum"];
             readonly timezone: string;
             readonly profile: components["schemas"]["Profile"];
+            readonly server_now: string;
+            readonly demo_mode: boolean;
         };
         Moment: {
             kind: components["schemas"]["MomentKindEnum"];
@@ -1179,28 +1249,21 @@ export interface components {
             due_at?: string;
             /** Format: date-time */
             cutoff_at?: string | null;
-            /** Format: int64 */
             points?: number;
             /** Format: decimal */
             weight_pct?: string;
-            /** Format: int64 */
             est_minutes?: number | null;
-            /** Format: int64 */
             discussion_replies_required?: number;
-            /** Format: int64 */
             time_limit_minutes?: number;
-            /** Format: int64 */
             max_attempts?: number;
             published?: boolean;
             questions?: components["schemas"]["QuestionWriteRequest"][];
         };
         PatchedChapterWriteRequest: {
-            /** Format: int64 */
             order?: number;
             title?: string;
             body_md?: string;
             links?: components["schemas"]["LinkRequest"][];
-            /** Format: int64 */
             reading_minutes?: number;
             objectives?: string[];
             /** Format: date-time */
@@ -1273,7 +1336,6 @@ export interface components {
             readonly plan_feedback: string;
         };
         ProfileUpdateRequest: {
-            /** Format: int64 */
             sass_level?: number;
             /** Format: decimal */
             max_hours_per_day?: string;
@@ -1325,25 +1387,19 @@ export interface components {
         QuestionTypeEnum: "multiple_choice" | "true_false";
         QuestionWrite: {
             readonly id: number;
-            /** Format: int64 */
             order: number;
             type: components["schemas"]["QuestionTypeEnum"];
             prompt: string;
             options: unknown;
-            /** Format: int64 */
             correct_index: number;
-            /** Format: int64 */
             points?: number;
         };
         QuestionWriteRequest: {
-            /** Format: int64 */
             order: number;
             type: components["schemas"]["QuestionTypeEnum"];
             prompt: string;
             options: unknown;
-            /** Format: int64 */
             correct_index: number;
-            /** Format: int64 */
             points?: number;
         };
         QuizAnswersRequest: {
@@ -1418,6 +1474,15 @@ export interface components {
             /** Format: decimal */
             score: string | null;
             has_file: boolean;
+        };
+        ScanRequest: {
+            student_id?: number;
+            /** @default true */
+            ignore_quiet_hours: boolean;
+        };
+        ScanResult: {
+            created: number;
+            sent: number;
         };
         Schedule: {
             readonly id: number;
@@ -1577,6 +1642,12 @@ export interface components {
             readonly start_date: string;
             readonly topic: string;
             readonly chapters: components["schemas"]["ChapterRef"][];
+        };
+        TravelRequest: {
+            student_id: number;
+            hours?: number;
+            /** @default false */
+            reset: boolean;
         };
         /**
          * @description * `session_starting` - Session Starting
@@ -2243,6 +2314,96 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Syllabus"];
+                };
+            };
+        };
+    };
+    v1_demo_replan_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoStudent"];
+                };
+            };
+        };
+    };
+    v1_demo_scan_notifications_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ScanRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ScanRequest"];
+                "multipart/form-data": components["schemas"]["ScanRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanResult"];
+                };
+            };
+        };
+    };
+    v1_demo_students_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoStudent"][];
+                };
+            };
+        };
+    };
+    v1_demo_time_travel_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TravelRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TravelRequest"];
+                "multipart/form-data": components["schemas"]["TravelRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoStudent"];
                 };
             };
         };

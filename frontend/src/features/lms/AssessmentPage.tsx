@@ -13,6 +13,7 @@ import { QuizPanel } from "./QuizPanel";
 import { typeLabels } from "./labels";
 import { StatusPill } from "./StatusPill";
 import { useNumericParam } from "./useIds";
+import { percent } from "@/lib/percent";
 
 export function AssessmentPage() {
   const courseId = useNumericParam("courseId");
@@ -105,7 +106,7 @@ function Header({
         <div>
           <dt className="text-ink-soft">Worth</dt>
           <dd className="font-bold">
-            {assessment.points} points · {assessment.weight_pct}% of grade
+            {assessment.points} points · {percent(assessment.weight_pct)} of grade
           </dd>
         </div>
       </dl>

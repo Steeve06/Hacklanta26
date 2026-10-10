@@ -1,6 +1,6 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { errorMessage } from "@/api/client";
+import { errorMessage, isMissing } from "@/api/client";
 import { DelayedSkeleton } from "./Skeleton";
 import { EmptyState, ErrorState } from "./States";
 
@@ -14,6 +14,10 @@ type Props<T> = {
 
 export function QueryView<T>({ query, skeleton, isEmpty, empty, children }: Props<T>) {
   if (query.isPending) return <DelayedSkeleton>{skeleton}</DelayedSkeleton>;
+  if (query.isError && isMissing(query.error))
+    return (
+      <EmptyState title="Not found" body="This page doesn't exist or isn't available to you." />
+    );
   if (query.isError)
     return (
       <ErrorState

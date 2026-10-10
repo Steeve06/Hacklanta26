@@ -24,10 +24,12 @@ import {
   useSaveAvailability,
   type AvailabilityBlock,
 } from "./api";
-import { AvailabilityEditor, totalHours } from "./AvailabilityEditor";
+import { AvailabilityEditor } from "./AvailabilityEditor";
+import { totalHours } from "./availability";
 import { BlackoutsEditor } from "./BlackoutsEditor";
 import { PlanProgress } from "./PlanProgress";
-import { preferenceErrors, PreferencesFields, type Preferences } from "./PreferencesFields";
+import { PreferencesFields, type Preferences } from "./PreferencesFields";
+import { preferenceErrors } from "./preferences";
 
 export function SettingsPage() {
   const me = useMe();

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useServerClock } from "./serverClock";
 
 export function useCountdown(targetIso: string | null | undefined): number | null {
+  const offset = useServerClock((s) => s.offsetMs);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!targetIso) return;
@@ -8,7 +10,7 @@ export function useCountdown(targetIso: string | null | undefined): number | nul
     return () => window.clearInterval(timer);
   }, [targetIso]);
   if (!targetIso) return null;
-  return Math.max(0, new Date(targetIso).getTime() - now);
+  return Math.max(0, new Date(targetIso).getTime() - now - offset);
 }
 
 export function formatClock(ms: number): string {

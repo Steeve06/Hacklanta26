@@ -15,3 +15,4 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {
     "regenerate": "5/hour",
 }
 AI_PARALLEL = False
+MIDDLEWARE = [m for m in MIDDLEWARE if "whitenoise" not in m]  # noqa: F405

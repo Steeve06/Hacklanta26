@@ -27,16 +27,16 @@ const adminNav: NavItem[] = [
   { to: "/demo", label: "Demo controls", icon: "roster", mobile: true },
 ];
 
-function navFor(role: string | undefined): NavItem[] {
+function navFor(role: string | undefined, demoMode: boolean): NavItem[] {
   if (role === "instructor") return instructorNav;
-  if (role === "admin") return adminNav;
+  if (role === "admin") return demoMode ? adminNav : adminNav.filter((i) => i.to !== "/demo");
   return studentNav;
 }
 
 export function AppShell() {
   const me = useMe();
   const logout = useLogout();
-  const items = navFor(me.data?.role);
+  const items = navFor(me.data?.role, Boolean(me.data?.demo_mode));
   const isStudent = me.data?.role === "student";
 
   return (

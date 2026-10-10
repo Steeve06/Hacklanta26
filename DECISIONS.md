@@ -77,3 +77,19 @@ Choices made where the build prompt left room, with the reason for each.
 - **The grace period is 15 minutes after close** for quizzes started inside the window; the streak sweep waits for it before recording a miss.
 - **Freezes: 1 per 5 on-time quizzes, 2 max**, spent automatically by the sweep.
 - **Milestones are 3, 7, 14, 30, 50 and 100**, the union of the quiz milestones and the win-notification list.
+
+## Demo-ready (M8)
+
+- **Demo controls are a page for the admin account**, backed by `/api/v1/demo/*`. Every endpoint returns 404 unless `DEMO_MODE=true`, and only admins can call them. "Send now even during quiet hours" also releases reminders that were already queued for the morning.
+- **Time-travel only moves forward.** The offset is per student and never negative, so a demo can't create quiz windows or deadlines in the past. "Back to now" resets it.
+- **The on-track demo student always has a quiz open.** The seed marks Maya's current chapters complete 30 minutes before seeding, which opens a quiz immediately whatever the time of day.
+- **Course data is cached per course.** Chapters, assignments and syllabus weeks are the same for every student, so the snapshot every scan and re-plan builds reads them from the cache, invalidated by model signals on any change. This halved the notification scan to about 10 ms per student on SQLite.
+- **The scan fans out in batches of 200.** With a worker, each batch is its own task; without one they run inline. Either way each batch sends its own due reminders.
+- **Periodic jobs have one entry point** (`config/periodic.py`), used by Celery Beat, `manage.py run_periodic` and `POST /api/cron` (header `X-Cron-Token`, off when `CRON_TOKEN` is empty). `USE_CELERY_BEAT=false` empties the Beat schedule so a cron job and Beat never both run.
+- **Render runs a worker plus a cron job, not Beat.** The cron job does the 10-minute scans; the worker handles plan, quiz and notification-batch tasks.
+- **Vercel proxies `/api` to Render**, so the refresh cookie is first-party and stays `SameSite=Lax`. `REFRESH_COOKIE_SAMESITE=None` is available if the API is called cross-site instead.
+- **`.env` is read by `manage.py`, wsgi and Celery** when it exists, so running without Docker uses the same file. Real environment variables win; pytest never reads it.
+- **`init_env` fills in secrets.** `make setup` (or `python manage.py init_env .env`) writes a fresh Django secret and a VAPID key pair into `.env`, so browser push works without generating keys by hand. The browser reads the public key from the API, so there is no frontend copy.
+- **Production refuses a weak secret.** `config.settings.prod` raises at startup if `DJANGO_SECRET_KEY` is the dev default or shorter than 40 characters.
+- **E2E runs against its own server pair** (Django on 8001 with a throwaway SQLite file, Vite on 5174), re-seeded at start, so it never touches the dev database.
+- **Quiz window sync locks the student's profile row**, so two workers syncing the same student can't both create a window.

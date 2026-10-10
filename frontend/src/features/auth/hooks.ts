@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, refreshAccess, unwrap } from "@/api/client";
 import type { components } from "@/api/schema";
+import { useServerClock } from "@/lib/serverClock";
 import { useAuth } from "./store";
 
 export type Me = components["schemas"]["Me"];
@@ -24,7 +25,11 @@ export function useMe() {
   const status = useAuth((s) => s.status);
   return useQuery({
     queryKey: meKey,
-    queryFn: async () => unwrap(await api.GET("/api/v1/me")),
+    queryFn: async () => {
+      const me = unwrap(await api.GET("/api/v1/me"));
+      useServerClock.getState().sync(me.server_now);
+      return me;
+    },
     enabled: status === "signed-in",
     staleTime: 60_000,
   });

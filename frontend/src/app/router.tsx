@@ -14,6 +14,7 @@ const lms = () => import("@/features/lms/pages");
 const pulse = () => import("@/features/pulse/pages");
 const notifications = () => import("@/features/notifications/InboxPage");
 const quiz = () => import("@/features/quiz/pages");
+const demo = () => import("@/features/demo/DemoPage");
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage />, errorElement: <RouteError /> },
@@ -41,6 +42,7 @@ export const router = createBrowserRouter([
             ],
           },
           { path: "lms", lazy: page(lms, "CourseListPage") },
+          { path: "demo", lazy: page(demo, "DemoPage") },
           {
             path: "lms/courses/:courseId",
             lazy: page(lms, "CourseLayout"),

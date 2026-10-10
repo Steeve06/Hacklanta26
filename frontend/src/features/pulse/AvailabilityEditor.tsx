@@ -1,16 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui";
 import type { AvailabilityBlock } from "./api";
-
-export const WEEKDAYS = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
+import { overlaps, shortTime, WEEKDAYS } from "./availability";
 
 const TIMES = Array.from(
   { length: 48 },
@@ -21,27 +12,6 @@ function label(t: string): string {
   const [h, m] = t.split(":").map(Number);
   const hour = (h ?? 0) % 12 || 12;
   return `${hour}:${String(m ?? 0).padStart(2, "0")} ${(h ?? 0) < 12 ? "am" : "pm"}`;
-}
-
-function short(t: string): string {
-  return t.slice(0, 5);
-}
-
-export function totalHours(blocks: AvailabilityBlock[]): number {
-  return blocks.reduce((sum, b) => {
-    const [sh = 0, sm = 0] = short(b.start_time).split(":").map(Number);
-    const [eh = 0, em = 0] = short(b.end_time).split(":").map(Number);
-    return sum + (eh * 60 + em - (sh * 60 + sm)) / 60;
-  }, 0);
-}
-
-export function overlaps(blocks: AvailabilityBlock[], candidate: AvailabilityBlock): boolean {
-  return blocks.some(
-    (b) =>
-      b.weekday === candidate.weekday &&
-      short(candidate.start_time) < short(b.end_time) &&
-      short(b.start_time) < short(candidate.end_time),
-  );
 }
 
 export function AvailabilityEditor({
@@ -108,11 +78,11 @@ function DayRow({
                 key={`${b.start_time}-${b.end_time}`}
                 className="flex min-h-11 items-center gap-1 rounded-full border border-pine bg-pine-soft pl-3 text-sm font-bold text-pine-strong"
               >
-                {label(short(b.start_time))}–{label(short(b.end_time))}
+                {label(shortTime(b.start_time))}–{label(shortTime(b.end_time))}
                 <button
                   type="button"
                   onClick={() => onRemove(b)}
-                  aria-label={`Remove ${name} ${label(short(b.start_time))} to ${label(short(b.end_time))}`}
+                  aria-label={`Remove ${name} ${label(shortTime(b.start_time))} to ${label(shortTime(b.end_time))}`}
                   className="flex min-h-11 min-w-11 items-center justify-center rounded-full hover:bg-pine/10"
                 >
                   ×

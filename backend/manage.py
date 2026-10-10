@@ -4,6 +4,9 @@ import sys
 
 
 def main():
+    from config.env import load_dotenv_file
+
+    load_dotenv_file()
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
     from django.core.management import execute_from_command_line
 

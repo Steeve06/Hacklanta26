@@ -60,6 +60,11 @@ export class ApiError extends Error {
   }
 }
 
+/** True for a 404 or 403: retrying won't help, so show "not found" instead of an error. */
+export function isMissing(error: unknown): boolean {
+  return error instanceof ApiError && (error.status === 404 || error.status === 403);
+}
+
 function messageFrom(error: unknown): { message: string; fields: Record<string, string[]> } {
   if (error && typeof error === "object") {
     const record = error as Record<string, unknown>;

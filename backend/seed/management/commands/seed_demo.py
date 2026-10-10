@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from lms import catalog
 from seed import lms_seed, pulse_seed, quiz_seed
 
 
@@ -16,6 +17,7 @@ class Command(BaseCommand):
             quiz_seed.seed_banks()
             quiz_seed.seed_streaks(demo.students)
             pulse_seed.seed_plans(demo.students)
+        catalog.invalidate_all()
         self.stdout.write(self.style.SUCCESS(f"Seeded {demo.term.name}, starting {demo.start}."))
         self.stdout.write("")
         self.stdout.write(f"All demo passwords: {lms_seed.PASSWORD}")

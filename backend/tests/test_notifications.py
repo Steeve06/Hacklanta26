@@ -283,3 +283,20 @@ def test_inbox_is_private():
     client.force_authenticate(other)
     assert client.post(f"/api/v1/notifications/{n.id}/read").status_code == 404
     assert client.get("/api/v1/notifications").data["results"] == []
+
+
+def test_scan_query_budget_and_catalog_cache(django_assert_max_num_queries):
+    student, course, _ = student_with(
+        {"due_at": timezone.now() + timedelta(hours=20), "est_minutes": 60},
+        {"due_at": timezone.now() + timedelta(days=3), "est_minutes": 60},
+    )
+    plan(student, reason="test")
+    scan_student(student)
+    with django_assert_max_num_queries(16):
+        scan_student(student)
+
+    AssessmentFactory(
+        course=course, title="Brand new essay", due_at=timezone.now() + timedelta(hours=2)
+    )
+    made = scan_student(student)
+    assert any("Brand new essay" in n.text or n.trigger == "code_red" for n in made)

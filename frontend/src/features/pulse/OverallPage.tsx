@@ -5,6 +5,7 @@ import { addDays, keyLabel, localDateKey, mondayOf, useTimezone } from "@/lib/ti
 import { useNow } from "@/lib/useNow";
 import { useSchedule, type Schedule } from "./api";
 import { OverloadPanel } from "./OverloadPanel";
+import { percent } from "@/lib/percent";
 
 export function OverallPage() {
   const schedule = useSchedule("overall");
@@ -110,7 +111,7 @@ function Timeline({ data }: { data: Schedule }) {
                           <Link
                             key={d.id}
                             to={`/lms/courses/${d.course}/assignments/${d.id}`}
-                            title={`${d.title} (${d.weight_pct}%)`}
+                            title={`${d.title} (${percent(d.weight_pct)})`}
                             aria-label={`Due: ${d.title}`}
                             className={cx(
                               "block h-3 w-3 rotate-45 border-2",

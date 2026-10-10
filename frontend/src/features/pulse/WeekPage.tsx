@@ -13,7 +13,8 @@ import {
 import { useNow } from "@/lib/useNow";
 import { useSchedule, type Deadline, type Schedule, type Session } from "./api";
 import { courseLookup } from "./courseColors";
-import { SessionItem, sessionLink } from "./SessionItem";
+import { SessionItem } from "./SessionItem";
+import { sessionLink } from "./sessionLink";
 
 const HOUR_PX = 56;
 
