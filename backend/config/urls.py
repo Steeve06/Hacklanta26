@@ -8,6 +8,7 @@ api_v1 = [
     path("", include("accounts.urls")),
     path("", include("lms.urls")),
     path("pulse/", include("pulse.urls")),
+    path("", include("notifications.urls")),
 ]
 
 urlpatterns = [

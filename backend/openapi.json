@@ -1332,6 +1332,139 @@
                 }
             }
         },
+        "/api/v1/notifications": {
+            "get": {
+                "operationId": "v1_notifications_retrieve",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Inbox"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications/{notification_id}/action": {
+            "post": {
+                "operationId": "v1_notifications_action_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "notification_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ActionRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ActionRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ActionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ActionResult"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications/{notification_id}/read": {
+            "post": {
+                "operationId": "v1_notifications_read_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "notification_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Notification"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications/read-all": {
+            "post": {
+                "operationId": "v1_notifications_read_all_create",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
         "/api/v1/pulse/availability": {
             "get": {
                 "operationId": "v1_pulse_availability_retrieve",
@@ -1799,6 +1932,93 @@
                 }
             }
         },
+        "/api/v1/push/subscribe": {
+            "get": {
+                "operationId": "v1_push_subscribe_retrieve",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PushConfig"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_push_subscribe_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PushSubscribeRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PushSubscribeRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PushSubscribeRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "No response body"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_push_subscribe_destroy",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "endpoint",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
         "/api/v1/submissions/{submission_id}/file": {
             "get": {
                 "operationId": "v1_submissions_file_retrieve",
@@ -1902,6 +2122,54 @@
                 "required": [
                     "access"
                 ]
+            },
+            "ActionEnum": {
+                "enum": [
+                    "open",
+                    "snooze",
+                    "tone_down"
+                ],
+                "type": "string",
+                "description": "* `open` - open\n* `snooze` - snooze\n* `tone_down` - tone_down"
+            },
+            "ActionRequest": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "$ref": "#/components/schemas/ActionEnum"
+                    }
+                },
+                "required": [
+                    "action"
+                ]
+            },
+            "ActionResult": {
+                "type": "object",
+                "properties": {
+                    "notification": {
+                        "$ref": "#/components/schemas/Notification"
+                    },
+                    "sass_level": {
+                        "type": "integer"
+                    },
+                    "supportive_mode": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "notification",
+                    "sass_level",
+                    "supportive_mode"
+                ]
+            },
+            "ActionTakenEnum": {
+                "enum": [
+                    "open",
+                    "snooze",
+                    "tone_down"
+                ],
+                "type": "string",
+                "description": "* `open` - Open\n* `snooze` - Snooze\n* `tone_down` - Tone Down"
             },
             "AnswersRequest": {
                 "type": "object",
@@ -2873,6 +3141,33 @@
                     "weight_pct"
                 ]
             },
+            "Inbox": {
+                "type": "object",
+                "properties": {
+                    "unread": {
+                        "type": "integer"
+                    },
+                    "supportive_mode": {
+                        "type": "boolean"
+                    },
+                    "support_url": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Notification"
+                        }
+                    }
+                },
+                "required": [
+                    "results",
+                    "support_url",
+                    "supportive_mode",
+                    "unread"
+                ]
+            },
             "Link": {
                 "type": "object",
                 "properties": {
@@ -3029,6 +3324,70 @@
                     "id",
                     "title",
                     "type"
+                ]
+            },
+            "Notification": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "trigger": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/TriggerEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "tier": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "heading": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "text": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "link": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "sent_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "read_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "action_taken": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ActionTakenEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "action_taken",
+                    "heading",
+                    "id",
+                    "link",
+                    "read_at",
+                    "sent_at",
+                    "text",
+                    "tier",
+                    "trigger"
                 ]
             },
             "OverloadItem": {
@@ -3585,6 +3944,56 @@
                         "maxLength": 300
                     }
                 }
+            },
+            "PushConfig": {
+                "type": "object",
+                "properties": {
+                    "public_key": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "enabled",
+                    "public_key"
+                ]
+            },
+            "PushKeysRequest": {
+                "type": "object",
+                "properties": {
+                    "p256dh": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "auth": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "auth",
+                    "p256dh"
+                ]
+            },
+            "PushSubscribeRequest": {
+                "type": "object",
+                "properties": {
+                    "endpoint": {
+                        "type": "string",
+                        "format": "uri",
+                        "minLength": 1,
+                        "maxLength": 600
+                    },
+                    "keys": {
+                        "$ref": "#/components/schemas/PushKeysRequest"
+                    }
+                },
+                "required": [
+                    "endpoint",
+                    "keys"
+                ]
             },
             "QuestionPublic": {
                 "type": "object",
@@ -4339,6 +4748,23 @@
                     "topic",
                     "week_number"
                 ]
+            },
+            "TriggerEnum": {
+                "enum": [
+                    "session_starting",
+                    "session_ignored",
+                    "upcoming_due",
+                    "falling_behind",
+                    "final_stretch",
+                    "code_red",
+                    "missed_late",
+                    "streak_at_risk",
+                    "streak_lost",
+                    "win",
+                    "digest"
+                ],
+                "type": "string",
+                "description": "* `session_starting` - Session Starting\n* `session_ignored` - Session Ignored\n* `upcoming_due` - Upcoming Due\n* `falling_behind` - Falling Behind\n* `final_stretch` - Final Stretch\n* `code_red` - Code Red\n* `missed_late` - Missed Late\n* `streak_at_risk` - Streak At Risk\n* `streak_lost` - Streak Lost\n* `win` - Win\n* `digest` - Digest"
             }
         },
         "securitySchemes": {

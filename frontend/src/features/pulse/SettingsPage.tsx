@@ -1,7 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, errorMessage } from "@/api/client";
-import { Button, Card, ConfirmModal, QueryView, Skeleton, Textarea, toast } from "@/components/ui";
+import {
+  Button,
+  Card,
+  ConfirmModal,
+  Input,
+  QueryView,
+  Skeleton,
+  Textarea,
+  toast,
+} from "@/components/ui";
+import { PushToggle } from "@/features/notifications/PushToggle";
+import { SupportiveBanner } from "@/features/notifications/SupportiveBanner";
 import { useLogout, useMe, useUpdateMe, type Me } from "@/features/auth/hooks";
 import { useAuth } from "@/features/auth/store";
 import { downloadFile } from "@/lib/download";
@@ -38,6 +49,7 @@ export function SettingsPage() {
                 </p>
                 <BlackoutsEditor />
               </Card>
+              <NotificationsSection me={data} />
               <RegenerateSection feedback={data.profile?.plan_feedback ?? ""} />
               <AccountSection />
             </>
@@ -152,6 +164,76 @@ function AvailabilityForm({ initial }: { initial: AvailabilityBlock[] }) {
         Save study time
       </Button>
     </div>
+  );
+}
+
+function NotificationsSection({ me }: { me: Me }) {
+  const update = useUpdateMe();
+  const [quietStart, setQuietStart] = useState((me.profile?.quiet_start ?? "22:00").slice(0, 5));
+  const [quietEnd, setQuietEnd] = useState((me.profile?.quiet_end ?? "08:00").slice(0, 5));
+  const [override, setOverride] = useState(Boolean(me.profile?.quiet_hours_override_for_deadlines));
+  return (
+    <Card aria-labelledby="notif-heading">
+      <h2 id="notif-heading" className="mb-3 text-lg font-bold">
+        Notifications
+      </h2>
+      <div className="flex flex-col gap-4">
+        <SupportiveBanner />
+        <PushToggle />
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            update.mutate(
+              {
+                profile: {
+                  quiet_start: quietStart,
+                  quiet_end: quietEnd,
+                  quiet_hours_override_for_deadlines: override,
+                },
+              },
+              {
+                onSuccess: () => toast.success("Quiet hours saved."),
+                onError: (err) => toast.error(errorMessage(err)),
+              },
+            );
+          }}
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input
+              label="Quiet hours start"
+              type="time"
+              value={quietStart}
+              onChange={(e) => setQuietStart(e.target.value)}
+            />
+            <Input
+              label="Quiet hours end"
+              type="time"
+              value={quietEnd}
+              onChange={(e) => setQuietEnd(e.target.value)}
+            />
+          </div>
+          <label className="flex min-h-11 items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={override}
+              onChange={(e) => setOverride(e.target.checked)}
+              className="h-5 w-5 accent-[rgb(var(--pine))]"
+            />
+            Still remind me during quiet hours if something is due during them
+          </label>
+          <Button
+            type="submit"
+            variant="secondary"
+            className="self-start"
+            pending={update.isPending}
+            pendingLabel="Saving…"
+          >
+            Save quiet hours
+          </Button>
+        </form>
+      </div>
+    </Card>
   );
 }
 

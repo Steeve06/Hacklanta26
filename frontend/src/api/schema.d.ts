@@ -372,6 +372,70 @@ export interface paths {
         patch: operations["v1_me_profile_partial_update"];
         trace?: never;
     };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_notifications_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/{notification_id}/action": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_notifications_action_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/{notification_id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_notifications_read_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_notifications_read_all_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pulse/availability": {
         parameters: {
             query?: never;
@@ -548,6 +612,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/push/subscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_push_subscribe_retrieve"];
+        put?: never;
+        post: operations["v1_push_subscribe_create"];
+        delete: operations["v1_push_subscribe_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/submissions/{submission_id}/file": {
         parameters: {
             query?: never;
@@ -587,6 +667,28 @@ export interface components {
         AccessToken: {
             access: string;
         };
+        /**
+         * @description * `open` - open
+         *     * `snooze` - snooze
+         *     * `tone_down` - tone_down
+         * @enum {string}
+         */
+        ActionEnum: "open" | "snooze" | "tone_down";
+        ActionRequest: {
+            action: components["schemas"]["ActionEnum"];
+        };
+        ActionResult: {
+            notification: components["schemas"]["Notification"];
+            sass_level: number;
+            supportive_mode: boolean;
+        };
+        /**
+         * @description * `open` - Open
+         *     * `snooze` - Snooze
+         *     * `tone_down` - Tone Down
+         * @enum {string}
+         */
+        ActionTakenEnum: "open" | "snooze" | "tone_down";
         AnswersRequest: {
             answers: {
                 [key: string]: number;
@@ -835,6 +937,13 @@ export interface components {
             /** Format: double */
             weight_pct: number;
         };
+        Inbox: {
+            unread: number;
+            supportive_mode: boolean;
+            /** Format: uri */
+            support_url: string;
+            results: components["schemas"]["Notification"][];
+        };
         Link: {
             label: string;
             /** Format: uri */
@@ -878,6 +987,19 @@ export interface components {
             type: string;
             /** Format: date-time */
             due_at: string;
+        };
+        Notification: {
+            readonly id: number;
+            readonly trigger: components["schemas"]["TriggerEnum"];
+            readonly tier: number;
+            readonly heading: string;
+            readonly text: string;
+            readonly link: string;
+            /** Format: date-time */
+            readonly sent_at: string | null;
+            /** Format: date-time */
+            readonly read_at: string | null;
+            readonly action_taken: components["schemas"]["ActionTakenEnum"];
         };
         OverloadItem: {
             source_type: string;
@@ -1043,6 +1165,19 @@ export interface components {
             onboarding_done?: boolean;
             push_prompt_seen?: boolean;
             plan_feedback?: string;
+        };
+        PushConfig: {
+            public_key: string;
+            enabled: boolean;
+        };
+        PushKeysRequest: {
+            p256dh: string;
+            auth: string;
+        };
+        PushSubscribeRequest: {
+            /** Format: uri */
+            endpoint: string;
+            keys: components["schemas"]["PushKeysRequest"];
         };
         QuestionPublic: {
             readonly id: number;
@@ -1270,6 +1405,21 @@ export interface components {
             readonly topic: string;
             readonly chapters: components["schemas"]["ChapterRef"][];
         };
+        /**
+         * @description * `session_starting` - Session Starting
+         *     * `session_ignored` - Session Ignored
+         *     * `upcoming_due` - Upcoming Due
+         *     * `falling_behind` - Falling Behind
+         *     * `final_stretch` - Final Stretch
+         *     * `code_red` - Code Red
+         *     * `missed_late` - Missed Late
+         *     * `streak_at_risk` - Streak At Risk
+         *     * `streak_lost` - Streak Lost
+         *     * `win` - Win
+         *     * `digest` - Digest
+         * @enum {string}
+         */
+        TriggerEnum: "session_starting" | "session_ignored" | "upcoming_due" | "falling_behind" | "final_stretch" | "code_red" | "missed_late" | "streak_at_risk" | "streak_lost" | "win" | "digest";
     };
     responses: never;
     parameters: never;
@@ -2069,6 +2219,91 @@ export interface operations {
             };
         };
     };
+    v1_notifications_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Inbox"];
+                };
+            };
+        };
+    };
+    v1_notifications_action_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notification_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ActionRequest"];
+                "multipart/form-data": components["schemas"]["ActionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionResult"];
+                };
+            };
+        };
+    };
+    v1_notifications_read_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notification_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notification"];
+                };
+            };
+        };
+    };
+    v1_notifications_read_all_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     v1_pulse_availability_retrieve: {
         parameters: {
             query?: never;
@@ -2350,6 +2585,69 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Status"];
                 };
+            };
+        };
+    };
+    v1_push_subscribe_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushConfig"];
+                };
+            };
+        };
+    };
+    v1_push_subscribe_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushSubscribeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PushSubscribeRequest"];
+                "multipart/form-data": components["schemas"]["PushSubscribeRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_push_subscribe_destroy: {
+        parameters: {
+            query: {
+                endpoint: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

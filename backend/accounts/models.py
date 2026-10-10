@@ -85,6 +85,7 @@ class StudentProfile(TimeStamped):
     quiet_end = models.TimeField(default=time(8, 0))
     quiet_hours_override_for_deadlines = models.BooleanField(default=False)
     supportive_mode = models.BooleanField(default=False)
+    supportive_dismissed_at = models.DateTimeField(null=True, blank=True)
     tone_down_streak = models.PositiveSmallIntegerField(default=0)
     onboarding_done = models.BooleanField(default=False)
     push_prompt_seen = models.BooleanField(default=False)

@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { Icon, type IconName } from "@/components/Icon";
 import { TopProgress } from "@/components/ui";
 import { useLogout, useMe } from "@/features/auth/hooks";
+import { useInbox } from "@/features/notifications/api";
 import { cx } from "@/lib/cx";
 import { ShellExtras } from "./ShellExtras";
 
@@ -146,5 +147,13 @@ function InboxLink() {
 }
 
 function UnreadDot() {
-  return null;
+  const inbox = useInbox();
+  const unread = inbox.data?.unread ?? 0;
+  if (!unread) return null;
+  return (
+    <span className="absolute right-1.5 top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-berry px-1 text-xs font-bold text-white">
+      {unread > 9 ? "9+" : unread}
+      <span className="sr-only"> unread</span>
+    </span>
+  );
 }

@@ -51,3 +51,17 @@ Choices made where the build prompt left room, with the reason for each.
 - **No sessions yet = full adherence.** A student with no past sessions isn't penalised for adherence, and a student with no history at all is shown as good with the fresh-start moment.
 - **One-shot moments come from the server** (`celebrate` after an on-time submission in the last 15 minutes, `gasp` when something is due within 3 hours, `fresh_start` for new students) with a stable key, and the browser remembers which keys it has already played in session storage.
 - **Mascot animations are generated, not hand-exported.** `frontend/scripts/make_mascot.py` writes small Lottie files (4–19 KB). They play through lottie-react's light build, loaded lazily, and fall back to a static SVG while loading or when reduced motion is on.
+
+## Notifications
+
+- **One reminder per assignment per scan: the most urgent.** An essay due in 2 hours fires `code_red`, not also `final_stretch` and `upcoming_due`.
+- **Supportive mode copy is its own level (0).** It's gentle, encouraging, adds the campus support link to emails, and is used whenever supportive mode is on.
+- **Extensions map to a tier-1 "upcoming" reminder at sass 1** and never produce missed/late reminders. Excused items produce nothing.
+- **Template choice skips any text already sent in 14 days.** Templates whose placeholders can't be filled are skipped too (a submission win never uses a streak line). If every variant has been used, the reminder is skipped rather than repeated.
+- **Storm = 4 or more new reminders in one scan.** They're stored in the inbox only and one digest is pushed/emailed.
+- **Caps apply within a scan as well as across the day**, so a single scan can't exceed 5 or put more than 2 (3 for tiers 4–5) on one assignment.
+- **Dismissing supportive mode lasts 14 days** before the automatic "3 missed items" rule can turn it on again.
+- **Snooze re-queues the same notification** an hour later; it's re-checked and re-sent like a new one.
+- **Push actions from the lock screen open the app** with `?notification=…&action=…`, because the service worker has no access token; the app performs the action.
+- **AI rewording of reminders is off by default** (`NOTIFICATION_AI_VARIATION=true` to enable). When on, a rewrite that fails the guardrails is dropped and the template text is sent.
+- **Unsubscribe uses `DELETE /push/subscribe?endpoint=…`** because OpenAPI tooling drops bodies on DELETE.

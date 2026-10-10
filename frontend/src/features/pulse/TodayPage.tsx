@@ -9,6 +9,7 @@ import { DeadlineList } from "./DeadlineList";
 import { OverloadPanel } from "./OverloadPanel";
 import { SessionItem } from "./SessionItem";
 import { StatusPanel } from "./StatusPanel";
+import { SupportiveBanner } from "@/features/notifications/SupportiveBanner";
 
 export function TodayPage() {
   const me = useMe();
@@ -23,6 +24,7 @@ export function TodayPage() {
           <p className="text-sm font-bold text-ink-soft">{formatDay(new Date(now), tz)}</p>
           <h1 className="text-2xl font-bold md:text-3xl">Today, {me.data?.first_name}</h1>
         </header>
+        <SupportiveBanner />
         <StatusPanel />
         <QueryView
           query={today}

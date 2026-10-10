@@ -12,6 +12,7 @@ function page<M extends Record<string, unknown>>(load: () => Promise<M>, name: k
 
 const lms = () => import("@/features/lms/pages");
 const pulse = () => import("@/features/pulse/pages");
+const notifications = () => import("@/features/notifications/InboxPage");
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage />, errorElement: <RouteError /> },
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
               { path: "week", lazy: page(pulse, "WeekPage") },
               { path: "overall", lazy: page(pulse, "OverallPage") },
               { path: "settings", lazy: page(pulse, "SettingsPage") },
+              { path: "inbox", lazy: page(notifications, "InboxPage") },
             ],
           },
           { path: "lms", lazy: page(lms, "CourseListPage") },

@@ -11,6 +11,8 @@ EXPORTED = [
     ("pulse", "AvailabilityBlock", "student"),
     ("pulse", "Blackout", "student"),
     ("pulse", "Schedule", "student"),
+    ("pulse", "StatusSnapshot", "student"),
+    ("notifications", "Notification", "student"),
 ]
 
 

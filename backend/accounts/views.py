@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from accounts.clock import now as clock_now
 from config.throttles import LoginThrottle
 
 from .export import build_export
@@ -112,7 +113,13 @@ class MeView(APIView):
                     profile, data=request.data["profile"], partial=True
                 )
                 profile_serializer.is_valid(raise_exception=True)
-                profile_serializer.save()
+                leaving_supportive = (
+                    profile.supportive_mode
+                    and profile_serializer.validated_data.get("supportive_mode") is False
+                )
+                profile_serializer.save(
+                    **({"supportive_dismissed_at": clock_now(user)} if leaving_supportive else {})
+                )
                 profile_changed = list(profile_serializer.validated_data)
         if user.is_student and (
             "timezone" in data
