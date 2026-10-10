@@ -1,0 +1,19 @@
+{
+  "note": "Recorded shape of a decompose_v1 response, generalised per item kind. 'share' is the fraction of baseline_minutes; '{ref}' is replaced with the item's source ref.",
+  "by_kind": [
+    {"kind": "study", "tasks": [
+      {"part": "read", "title": "Read and take notes", "share": 1.0, "depends_on": [], "min_chunk_minutes": 20, "splittable": true}
+    ]},
+    {"kind": "homework", "tasks": [
+      {"part": "draft", "title": "Work through the first questions", "share": 0.55, "depends_on": [], "needs_chapters": true, "min_chunk_minutes": 25, "splittable": true},
+      {"part": "finish", "title": "Finish, check and submit", "share": 0.45, "depends_on": ["{ref}:draft"], "min_chunk_minutes": 25, "splittable": true}
+    ]},
+    {"kind": "discussion", "tasks": [
+      {"part": "original", "title": "Write the original post", "share": 0.6, "depends_on": [], "needs_chapters": true, "min_chunk_minutes": 25, "splittable": false},
+      {"part": "replies", "title": "Reply to two classmates", "share": 0.4, "depends_on": ["{ref}:original"], "min_chunk_minutes": 15, "splittable": false}
+    ]},
+    {"kind": "quiz", "tasks": [
+      {"part": "take", "title": "Review notes and take the quiz", "share": 1.0, "depends_on": [], "needs_chapters": true, "min_chunk_minutes": 30, "splittable": false}
+    ]}
+  ]
+}

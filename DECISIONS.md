@@ -33,3 +33,13 @@ Choices made where the build prompt left room, with the reason for each.
 - **Re-plan debounce coalesces.** Automatic triggers set a 60-second "pending" flag per student; further triggers inside that window are absorbed because the queued job reads the latest data when it starts (5 seconds later with a worker, immediately without one).
 - **Chapter quizzes are sessions in the solver.** After placement, one 10-minute `chapter_quiz` session goes after the last study session of the chapters finishing that day, or on the next day, so it always sits inside the quiz window.
 - **OR-Tools is optional.** `SOLVER=cpsat` is accepted but falls back to the greedy solver (with a log line) unless `ortools` is installed; the greedy + local search meets every budget on its own.
+
+## AI layer
+
+- **Structured output via a forced tool call (Anthropic) or `json_schema` (OpenAI).** Either way the result is validated with Pydantic before anything uses it.
+- **Cache per work item, not per course.** Each item's decomposition is cached under a hash of its content and the prompt version, so a re-plan sends only new or changed items back to the model (one call per course that has any). Routine re-plans make zero calls.
+- **Titles and summary only on explicit generates.** Polished titles are cached per task and reused; re-plans use those titles and a template summary. This keeps a first schedule at ≤ 4 calls (one per course plus one polish) and routine re-plans at 0.
+- **Two kinds of retry.** A network error or schema mismatch is retried once after a short backoff inside the client; a response that parses but fails our checks (missing items, unknown or cyclic dependencies) is retried once with the problems listed. After that the course falls back to the heuristic and an `AICallLog` row records `fallback_used`.
+- **Estimates are scaled, not rejected.** If an item's task minutes add up to more than 1.5× or less than 0.5× the baseline, they are scaled proportionally into that range.
+- **Circuit breaker in the cache.** Five consecutive failures switch AI off for ten minutes for every worker sharing the cache.
+- **Prices are approximate.** `ai/client.py` holds a small per-model price table for the daily cost total in Django admin; unknown models log a cost of 0.

@@ -6,6 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+from django.conf import settings
 from django.db import transaction
 from django.dispatch import Signal
 
@@ -97,7 +98,7 @@ def plan(
         specs, result, free, constraints, inventory, blocks_exist=bool(free)
     )
     on_progress("polishing", 85)
-    titles, summary = polish(student, inventory, specs, result, overload, now)
+    titles, summary = polish(student, inventory, specs, result, overload, now, reason=reason)
     schedule = _persist(ctx, previous, history, specs, result, titles, summary, overload, {
         "reason": reason,
         "pace": pace,
@@ -275,6 +276,8 @@ def _pins(
 
 
 def _solve(specs, free, constraints, preferences, previous, now) -> SolveResult:
+    if settings.SOLVER == "cpsat":
+        logger.info("SOLVER=cpsat is not bundled in this build; using greedy + local search.")
     pins = _pins(previous, specs, free, now, constraints.tz)
     result = Solver(specs, free, constraints, preferences, pins).solve()
     if pins and result.shortfalls:

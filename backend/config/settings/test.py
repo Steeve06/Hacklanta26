@@ -14,3 +14,4 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {
     "login": "5/min",
     "regenerate": "5/hour",
 }
+AI_PARALLEL = False
