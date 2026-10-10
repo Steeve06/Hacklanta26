@@ -11,10 +11,10 @@ from django.views.decorators.http import require_POST
 def run_all() -> dict[str, int]:
     from notifications.tasks import scan_all
     from pulse.tasks import roll_forward_due_students
-    from quizzes.tasks import sweep_windows
+    from quizzes.tasks import sweep_streaks
 
     return {
-        "quiz_windows": sweep_windows(),
+        "streaks_settled": sweep_streaks(),
         "notifications": scan_all(),
         "rolled_forward": roll_forward_due_students(),
     }

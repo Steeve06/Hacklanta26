@@ -324,6 +324,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/decks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_decks_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/decks/{deck_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_decks_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/decks/{deck_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_decks_review_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/decks/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_decks_today_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/demo/replan/{student_id}": {
         parameters: {
             query?: never;
@@ -692,70 +756,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/quizzes": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["v1_quizzes_list"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/quizzes/{quiz_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["v1_quizzes_retrieve"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/quizzes/{quiz_id}/start": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["v1_quizzes_start_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/quizzes/{quiz_id}/submit": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["v1_quizzes_submit_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/streak": {
         parameters: {
             query?: never;
@@ -912,12 +912,17 @@ export interface components {
             due_at: string;
             /** Format: date-time */
             cutoff_at?: string | null;
+            /** Format: int64 */
             points?: number;
             /** Format: decimal */
             weight_pct?: string;
+            /** Format: int64 */
             est_minutes?: number | null;
+            /** Format: int64 */
             discussion_replies_required?: number;
+            /** Format: int64 */
             time_limit_minutes?: number;
+            /** Format: int64 */
             max_attempts?: number;
             published?: boolean;
             questions?: components["schemas"]["QuestionWriteRequest"][];
@@ -926,7 +931,10 @@ export interface components {
             blocks: components["schemas"]["AvailabilityBlock"][];
         };
         AvailabilityBlock: {
-            /** @description 0 = Monday */
+            /**
+             * Format: int64
+             * @description 0 = Monday
+             */
             weekday: number;
             /** Format: time */
             start_time: string;
@@ -934,7 +942,10 @@ export interface components {
             end_time: string;
         };
         AvailabilityBlockRequest: {
-            /** @description 0 = Monday */
+            /**
+             * Format: int64
+             * @description 0 = Monday
+             */
             weekday: number;
             /** Format: time */
             start_time: string;
@@ -987,66 +998,18 @@ export interface components {
             readonly completed_at: string | null;
             readonly opened_at: string | null;
         };
-        ChapterQuiz: {
-            readonly id: number;
-            readonly kind: components["schemas"]["QuizKindEnum"];
-            /** Format: date */
-            readonly scheduled_date: string;
-            /** Format: date-time */
-            readonly opens_at: string;
-            /** Format: date-time */
-            readonly closes_at: string;
-            readonly state: string;
-            readonly chapters: components["schemas"]["QuizChapter"][];
-            readonly question_count: number;
-            /** Format: date-time */
-            readonly started_at: string | null;
-            /** Format: date-time */
-            readonly submitted_at: string | null;
-            /** Format: double */
-            readonly score: number | null;
-            readonly sharp: boolean;
-            readonly counted_for_streak: boolean;
-            /** @description How the quiz counted once its window settled: on_time, frozen or missed. */
-            readonly streak_result: string | null;
-        };
-        ChapterQuizDetail: {
-            readonly id: number;
-            readonly kind: components["schemas"]["QuizKindEnum"];
-            /** Format: date */
-            readonly scheduled_date: string;
-            /** Format: date-time */
-            readonly opens_at: string;
-            /** Format: date-time */
-            readonly closes_at: string;
-            readonly state: string;
-            readonly chapters: components["schemas"]["QuizChapter"][];
-            readonly question_count: number;
-            /** Format: date-time */
-            readonly started_at: string | null;
-            /** Format: date-time */
-            readonly submitted_at: string | null;
-            /** Format: double */
-            readonly score: number | null;
-            readonly sharp: boolean;
-            readonly counted_for_streak: boolean;
-            /** @description How the quiz counted once its window settled: on_time, frozen or missed. */
-            readonly streak_result: string | null;
-            readonly questions: components["schemas"]["QuizQuestion"][];
-            readonly results: components["schemas"]["QuizResult"][] | null;
-            readonly milestone: number | null;
-            readonly streak: number | null;
-        };
         ChapterRef: {
             id: number;
             order: number;
             title: string;
         };
         ChapterWriteRequest: {
+            /** Format: int64 */
             order: number;
             title: string;
             body_md: string;
             links?: components["schemas"]["LinkRequest"][];
+            /** Format: int64 */
             reading_minutes?: number;
             objectives: string[];
             /** Format: date-time */
@@ -1068,6 +1031,37 @@ export interface components {
             title: string;
             color: string;
         };
+        DailyDeck: {
+            readonly id: number;
+            /** Format: date */
+            readonly day: string;
+            readonly state: string;
+            readonly card_count: number;
+            readonly focus: components["schemas"]["DeckFocus"];
+            /** Format: date-time */
+            readonly started_at: string | null;
+            /** Format: date-time */
+            readonly completed_at: string | null;
+            readonly knew: number;
+            readonly counted_for_streak: boolean;
+        };
+        DailyDeckDetail: {
+            readonly id: number;
+            /** Format: date */
+            readonly day: string;
+            readonly state: string;
+            readonly card_count: number;
+            readonly focus: components["schemas"]["DeckFocus"];
+            /** Format: date-time */
+            readonly started_at: string | null;
+            /** Format: date-time */
+            readonly completed_at: string | null;
+            readonly knew: number;
+            readonly counted_for_streak: boolean;
+            readonly cards: components["schemas"]["DeckCard"][];
+            readonly milestone: number | null;
+            readonly streak: number;
+        };
         Deadline: {
             id: number;
             course: number;
@@ -1083,6 +1077,34 @@ export interface components {
             weight_pct: number;
             extended: boolean;
         };
+        DeckCard: {
+            id: number;
+            topic: components["schemas"]["FlashcardTopicEnum"];
+            /** @description where the card comes from, e.g. CS 201 · Ch 5: Hashing */
+            source: string;
+            chapter_id: number | null;
+            course_id: number | null;
+            front: string;
+            back: string;
+            /** @description null until the card is rated */
+            knew: boolean | null;
+        };
+        DeckFocus: {
+            kind: components["schemas"]["DeckFocusKindEnum"];
+            course_id: number | null;
+            course_code: string | null;
+            assessment_id: number | null;
+            assessment_title: string | null;
+            /** Format: date-time */
+            due_at: string | null;
+        };
+        /**
+         * @description * `upcoming` - Prep for an upcoming deadline
+         *     * `review` - Review of course chapters
+         *     * `general` - General study cards
+         * @enum {string}
+         */
+        DeckFocusKindEnum: "upcoming" | "review" | "general";
         DemoStudent: {
             id: number;
             /** Format: email */
@@ -1123,6 +1145,19 @@ export interface components {
             student: number;
             excused: boolean;
         };
+        /**
+         * @description * `study_skills` - Study skills
+         *     * `memory` - Memory
+         *     * `focus` - Focus
+         *     * `wellbeing` - Well-being
+         *     * `money` - Money
+         *     * `digital` - Digital life
+         *     * `science` - Science
+         *     * `world` - World
+         *     * `course` - Course
+         * @enum {string}
+         */
+        FlashcardTopicEnum: "study_skills" | "memory" | "focus" | "wellbeing" | "money" | "digital" | "science" | "world" | "course";
         GenerateRequest: {
             feedback?: string;
         };
@@ -1249,21 +1284,28 @@ export interface components {
             due_at?: string;
             /** Format: date-time */
             cutoff_at?: string | null;
+            /** Format: int64 */
             points?: number;
             /** Format: decimal */
             weight_pct?: string;
+            /** Format: int64 */
             est_minutes?: number | null;
+            /** Format: int64 */
             discussion_replies_required?: number;
+            /** Format: int64 */
             time_limit_minutes?: number;
+            /** Format: int64 */
             max_attempts?: number;
             published?: boolean;
             questions?: components["schemas"]["QuestionWriteRequest"][];
         };
         PatchedChapterWriteRequest: {
+            /** Format: int64 */
             order?: number;
             title?: string;
             body_md?: string;
             links?: components["schemas"]["LinkRequest"][];
+            /** Format: int64 */
             reading_minutes?: number;
             objectives?: string[];
             /** Format: date-time */
@@ -1336,6 +1378,7 @@ export interface components {
             readonly plan_feedback: string;
         };
         ProfileUpdateRequest: {
+            /** Format: int64 */
             sass_level?: number;
             /** Format: decimal */
             max_hours_per_day?: string;
@@ -1387,25 +1430,26 @@ export interface components {
         QuestionTypeEnum: "multiple_choice" | "true_false";
         QuestionWrite: {
             readonly id: number;
+            /** Format: int64 */
             order: number;
             type: components["schemas"]["QuestionTypeEnum"];
             prompt: string;
             options: unknown;
+            /** Format: int64 */
             correct_index: number;
+            /** Format: int64 */
             points?: number;
         };
         QuestionWriteRequest: {
+            /** Format: int64 */
             order: number;
             type: components["schemas"]["QuestionTypeEnum"];
             prompt: string;
             options: unknown;
+            /** Format: int64 */
             correct_index: number;
+            /** Format: int64 */
             points?: number;
-        };
-        QuizAnswersRequest: {
-            answers: {
-                [key: string]: number;
-            };
         };
         QuizAttempt: {
             readonly id: number;
@@ -1424,33 +1468,18 @@ export interface components {
             readonly questions: components["schemas"]["QuestionPublic"][];
             readonly results: components["schemas"]["QuestionResult"][] | null;
         };
-        QuizChapter: {
-            id: number;
-            order: number;
-            title: string;
-            course_id: number;
-            course_code: string;
-        };
         /**
-         * @description * `scheduled` - Scheduled
-         *     * `early` - Early
+         * @description * `done` - done
+         *     * `frozen` - frozen
+         *     * `missed` - missed
+         *     * `open` - open
+         *     * `none` - none
          * @enum {string}
          */
-        QuizKindEnum: "scheduled" | "early";
-        QuizQuestion: {
-            position: number;
-            type: string;
-            prompt: string;
-            options: string[];
-        };
-        QuizResult: {
-            position: number;
-            chosen: number;
-            correct: number;
-            is_correct: boolean;
-            explanation: string;
-            chapter_id: number;
-            course_id: number;
+        ResultEnum: "done" | "frozen" | "missed" | "open" | "none";
+        ReviewRequest: {
+            card_id: number;
+            knew: boolean;
         };
         /**
          * @description * `student` - Student
@@ -1583,9 +1612,18 @@ export interface components {
             freezes: number;
             toward_next_freeze: number;
             next_milestone: number | null;
+            done_today: boolean;
+            week: components["schemas"]["StreakDay"][];
             recent: components["schemas"]["StreakEvent"][];
         };
+        StreakDay: {
+            /** Format: date */
+            day: string;
+            result: components["schemas"]["ResultEnum"];
+        };
         StreakEvent: {
+            /** Format: date */
+            day: string | null;
             result: string;
             streak_after: number;
             /** Format: date-time */
@@ -2318,6 +2356,92 @@ export interface operations {
             };
         };
     };
+    v1_decks_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyDeck"][];
+                };
+            };
+        };
+    };
+    v1_decks_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deck_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyDeckDetail"];
+                };
+            };
+        };
+    };
+    v1_decks_review_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deck_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReviewRequest"];
+                "multipart/form-data": components["schemas"]["ReviewRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyDeckDetail"];
+                };
+            };
+        };
+    };
+    v1_decks_today_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyDeckDetail"];
+                };
+            };
+        };
+    };
     v1_demo_replan_create: {
         parameters: {
             query?: never;
@@ -2982,96 +3106,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    v1_quizzes_list: {
-        parameters: {
-            query?: {
-                state?: "closed" | "open" | "upcoming";
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ChapterQuiz"][];
-                };
-            };
-        };
-    };
-    v1_quizzes_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                quiz_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ChapterQuizDetail"];
-                };
-            };
-        };
-    };
-    v1_quizzes_start_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                quiz_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ChapterQuizDetail"];
-                };
-            };
-        };
-    };
-    v1_quizzes_submit_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                quiz_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["QuizAnswersRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["QuizAnswersRequest"];
-                "multipart/form-data": components["schemas"]["QuizAnswersRequest"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ChapterQuizDetail"];
-                };
             };
         };
     };

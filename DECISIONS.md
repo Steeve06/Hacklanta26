@@ -31,7 +31,6 @@ Choices made where the build prompt left room, with the reason for each.
 - **Reschedule removes that slot only.** Rescheduling a session marks it `rescheduled` and keeps its time blocked for the re-plan, so the work lands somewhere else.
 - **Regenerate feedback is parsed, then remembered.** "Less on weekends" or "mornings" becomes day weights and an hour preference, stored on the profile so nightly re-plans keep honouring it.
 - **Re-plan debounce coalesces.** Automatic triggers set a 60-second "pending" flag per student; further triggers inside that window are absorbed because the queued job reads the latest data when it starts (5 seconds later with a worker, immediately without one).
-- **Chapter quizzes are sessions in the solver.** After placement, one 10-minute `chapter_quiz` session goes after the last study session of the chapters finishing that day, or on the next day, so it always sits inside the quiz window.
 - **OR-Tools is optional.** `SOLVER=cpsat` is accepted but falls back to the greedy solver (with a log line) unless `ortools` is installed; the greedy + local search meets every budget on its own.
 
 ## AI layer
@@ -66,30 +65,30 @@ Choices made where the build prompt left room, with the reason for each.
 - **AI rewording of reminders is off by default** (`NOTIFICATION_AI_VARIATION=true` to enable). When on, a rewrite that fails the guardrails is dropped and the template text is sent.
 - **Unsubscribe uses `DELETE /push/subscribe?endpoint=…`** because OpenAPI tooling drops bodies on DELETE.
 
-## Quizzes and streaks
+## Daily flashcards and streaks
 
-- **Windows are rebuilt, not edited.** After every re-plan, unopened and unsubmitted quiz windows are deleted and recreated from the new schedule. Windows that have already opened are never touched, so a later re-plan or time zone change can't shorten them.
-- **Only today and later.** Windows are created for chapters studied (or completed) today or later. Chapters finished before the quiz system knew about them don't create past windows that would immediately count as missed.
-- **Early completion groups by day.** Chapters completed early on the same day share one quiz that opens at the first completion and closes at the end of the next day.
-- **Combined quizzes split 10 questions evenly** (5 each for two chapters, 3 each for three).
-- **"Answering all questions" is required to submit.** The server refuses partial submissions and anything sent within 20 seconds of starting; both can simply be retried.
-- **Cloze fallback uses the chapter's bold key terms.** Fill-in-the-blank and true/false questions come from sentences containing bolded terms, with distractors from the other terms; objective-matching questions top up small banks. Banks are built at seed time and whenever a chapter's text changes.
-- **The grace period is 15 minutes after close** for quizzes started inside the window; the streak sweep waits for it before recording a miss.
-- **Freezes: 1 per 5 on-time quizzes, 2 max**, spent automatically by the sweep.
-- **Milestones are 3, 7, 14, 30, 50 and 100**, the union of the quiz milestones and the win-notification list.
+- **Quizzes are a daily habit built from coursework.** The quiz tab is a Duolingo-style deck of five flashcards a day. Chapter quiz windows, their question banks and the planner's `chapter_quiz` sessions were removed; old `chapter_quiz` session rows are still skipped where they appear.
+- **The deck follows what's coming up.** If a quiz or assignment with linked chapters is due in the next 7 days and isn't submitted, the deck preps for it (quizzes win over sooner homework, then the soonest due), topped up from the same course's released chapters. With nothing due, it's a review mix of released chapters, opened ones first. Students with no course chapters get the general library.
+- **Course cards come from the chapter text.** Each bold key term becomes a fill-in-the-blank card on the sentence that introduces it (up to 12 per chapter). Bold lead-ins ending in punctuation and short lowercase emphasis are skipped. Cards are built on first use and rebuilt when the chapter's content hash changes; old ones are retired, not deleted, so past decks still read. No model call, so it works without an API key.
+- **The general library lives in code.** `quizzes/cards.py` holds general study cards with stable slugs; a migration and `seed_demo` upsert them.
+- **One deck per student per local day.** It's created on first visit and its cards are fixed for the day. Self-rating is honest-by-design: finishing every card counts the day, whether the student knew the answers or not.
+- **Light spaced repetition.** Up to two cards rated "Still learning" come back first, then unseen cards, then the ones seen longest ago. Topics are spread so a deck rarely repeats one.
+- **Streaks count days, not decks.** Finishing a deck on its day adds one; a second visit the same day doesn't. A deck started before midnight and finished within 15 minutes after still counts. A deck from a past day can be finished as practice.
+- **Missed days are settled lazily and by the sweep.** Opening the quiz tab and the 10-minute sweep both walk the days since the streak last counted: each missed day spends a freeze, the first one with no freeze left resets the streak.
+- **Freezes: 1 per 5 days, 2 max.** **Milestones are 3, 7, 14, 30, 50 and 100.**
+- **"Streak at risk" fires in the last 4 hours of the day** when there's a streak and today's deck isn't done.
 
 ## Demo-ready (M8)
 
 - **Demo controls are a page for the admin account**, backed by `/api/v1/demo/*`. Every endpoint returns 404 unless `DEMO_MODE=true`, and only admins can call them. "Send now even during quiet hours" also releases reminders that were already queued for the morning.
 - **Time-travel only moves forward.** The offset is per student and never negative, so a demo can't create quiz windows or deadlines in the past. "Back to now" resets it.
-- **The on-track demo student always has a quiz open.** The seed marks Maya's current chapters complete 30 minutes before seeding, which opens a quiz immediately whatever the time of day.
+- **Demo streaks end yesterday.** The seed gives each student finished decks up to yesterday, so today's deck is always the one that keeps the streak going, whatever the time of day.
 - **Course data is cached per course.** Chapters, assignments and syllabus weeks are the same for every student, so the snapshot every scan and re-plan builds reads them from the cache, invalidated by model signals on any change. This halved the notification scan to about 10 ms per student on SQLite.
 - **The scan fans out in batches of 200.** With a worker, each batch is its own task; without one they run inline. Either way each batch sends its own due reminders.
 - **Periodic jobs have one entry point** (`config/periodic.py`), used by Celery Beat, `manage.py run_periodic` and `POST /api/cron` (header `X-Cron-Token`, off when `CRON_TOKEN` is empty). `USE_CELERY_BEAT=false` empties the Beat schedule so a cron job and Beat never both run.
-- **Render runs a worker plus a cron job, not Beat.** The cron job does the 10-minute scans; the worker handles plan, quiz and notification-batch tasks.
+- **Render runs a worker plus a cron job, not Beat.** The cron job does the 10-minute scans; the worker handles plan and notification-batch tasks.
 - **Vercel proxies `/api` to Render**, so the refresh cookie is first-party and stays `SameSite=Lax`. `REFRESH_COOKIE_SAMESITE=None` is available if the API is called cross-site instead.
 - **`.env` is read by `manage.py`, wsgi and Celery** when it exists, so running without Docker uses the same file. Real environment variables win; pytest never reads it.
 - **`init_env` fills in secrets.** `make setup` (or `python manage.py init_env .env`) writes a fresh Django secret and a VAPID key pair into `.env`, so browser push works without generating keys by hand. The browser reads the public key from the API, so there is no frontend copy.
 - **Production refuses a weak secret.** `config.settings.prod` raises at startup if `DJANGO_SECRET_KEY` is the dev default or shorter than 40 characters.
 - **E2E runs against its own server pair** (Django on 8001 with a throwaway SQLite file, Vite on 5174), re-seeded at start, so it never touches the dev database.
-- **Quiz window sync locks the student's profile row**, so two workers syncing the same student can't both create a window.
