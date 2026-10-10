@@ -1,123 +1,174 @@
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from .models import DailyDeck, Flashcard, Streak
+from .models import CheckAttempt, CheckQuestion, StudyCheck
+
+CHECK_STATES = ["upcoming", "open", "passed", "not_passed", "missed"]
 
 
-class DeckCardSerializer(serializers.Serializer):
+class CheckChapterSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    topic = serializers.ChoiceField(choices=Flashcard.Topic.choices)
-    source = serializers.CharField(
-        help_text="where the card comes from, e.g. CS 201 · Ch 5: Hashing"
-    )
-    chapter_id = serializers.IntegerField(allow_null=True)
-    course_id = serializers.IntegerField(allow_null=True)
-    front = serializers.CharField()
-    back = serializers.CharField()
-    knew = serializers.BooleanField(allow_null=True, help_text="null until the card is rated")
+    course_id = serializers.IntegerField()
+    course_code = serializers.CharField(source="course.code")
+    order = serializers.IntegerField()
+    title = serializers.CharField()
 
 
-class DeckFocusSerializer(serializers.Serializer):
-    kind = serializers.ChoiceField(choices=DailyDeck.Kind.choices)
-    course_id = serializers.IntegerField(allow_null=True)
-    course_code = serializers.CharField(allow_null=True)
-    assessment_id = serializers.IntegerField(allow_null=True)
-    assessment_title = serializers.CharField(allow_null=True)
-    due_at = serializers.DateTimeField(allow_null=True)
-
-
-class DailyDeckSerializer(serializers.ModelSerializer):
+class StudyCheckSerializer(serializers.ModelSerializer):
+    title = serializers.SerializerMethodField()
+    chapters = serializers.SerializerMethodField()
     state = serializers.SerializerMethodField()
+    tries_left = serializers.SerializerMethodField()
+    best_correct = serializers.SerializerMethodField()
     card_count = serializers.SerializerMethodField()
-    focus = serializers.SerializerMethodField()
+    pass_mark = serializers.SerializerMethodField()
 
     class Meta:
-        model = DailyDeck
+        model = StudyCheck
         fields = [
-            "id", "day", "state", "card_count", "focus", "started_at", "completed_at", "knew",
-            "counted_for_streak",
+            "id", "title", "chapters", "kind", "scheduled_date", "opens_at", "closes_at", "state",
+            "passed", "counted_for_streak", "tries_left", "best_correct", "card_count", "pass_mark",
         ]  # fmt: skip
         read_only_fields = fields
 
-    @extend_schema_field(DeckFocusSerializer)
-    def get_focus(self, obj):
-        """What the deck is about. due_at is the student's own deadline (extensions included)."""
-        assessment = obj.assessment
-        due_at = None
-        if assessment is not None:
-            from lms.models import DueDateOverride
+    def _chapters(self, obj):
+        return sorted(obj.chapters.all(), key=lambda c: (c.course.code, c.order))
 
-            override = DueDateOverride.objects.filter(
-                assessment=assessment, student_id=obj.student_id
-            ).first()
-            due_at = override.due_at if override else assessment.due_at
-        return {
-            "kind": obj.kind,
-            "course_id": obj.course_id,
-            "course_code": obj.course.code if obj.course else None,
-            "assessment_id": obj.assessment_id,
-            "assessment_title": assessment.title if assessment else None,
-            "due_at": due_at,
-        }
+    def get_title(self, obj) -> str:
+        return ", ".join(f"{c.course.code} Ch {c.order}" for c in self._chapters(obj))
 
+    @extend_schema_field(CheckChapterSerializer(many=True))
+    def get_chapters(self, obj):
+        return CheckChapterSerializer(self._chapters(obj), many=True).data
+
+    @extend_schema_field(serializers.ChoiceField(choices=CHECK_STATES))
     def get_state(self, obj) -> str:
-        from .services.decks import state_of
+        from .services.checks import state_of
 
         return state_of(obj, self.context["now"])
 
+    def get_tries_left(self, obj) -> int:
+        from .services.checks import MAX_ATTEMPTS
+
+        finished = sum(1 for a in obj.attempts.all() if a.finished_at)
+        return 0 if obj.passed else max(0, MAX_ATTEMPTS - finished)
+
+    def get_best_correct(self, obj) -> int | None:
+        finished = [a.correct for a in obj.attempts.all() if a.finished_at]
+        return max(finished) if finished else None
+
     def get_card_count(self, obj) -> int:
-        return len(obj.cards)
+        from django.conf import settings
+
+        latest = _latest_attempt(obj)
+        return len(latest.cards) if latest else settings.STUDY_CHECK_CARDS
+
+    def get_pass_mark(self, obj) -> int:
+        from .services.checks import pass_mark
+
+        return pass_mark(self.get_card_count(obj))
 
 
-class DailyDeckDetailSerializer(DailyDeckSerializer):
-    cards = serializers.SerializerMethodField()
+def _latest_attempt(check: StudyCheck) -> CheckAttempt | None:
+    attempts = sorted(check.attempts.all(), key=lambda a: a.number)
+    return attempts[-1] if attempts else None
+
+
+class CardResultSerializer(serializers.Serializer):
+    chosen = serializers.IntegerField(help_text="position of the tapped option, as shown")
+    answer = serializers.IntegerField(help_text="position of the right option, as shown")
+    correct = serializers.BooleanField()
+    explanation = serializers.CharField()
+    source_excerpt = serializers.CharField()
+
+
+class CheckCardSerializer(serializers.Serializer):
+    position = serializers.IntegerField()
+    type = serializers.ChoiceField(choices=CheckQuestion.Type.choices)
+    front = serializers.CharField()
+    options = serializers.ListField(child=serializers.CharField())
+    source = serializers.CharField(help_text="e.g. CS 201 · Ch 4: Stacks and Queues")
+    chapter_id = serializers.IntegerField()
+    course_id = serializers.IntegerField()
+    result = CardResultSerializer(allow_null=True, help_text="null until the card is answered")
+
+
+class AttemptSerializer(serializers.Serializer):
+    number = serializers.IntegerField()
+    correct = serializers.IntegerField()
+    finished = serializers.BooleanField()
+    cards = CheckCardSerializer(many=True)
+
+
+def attempt_data(attempt: CheckAttempt) -> dict:
+    """Cards as the student sees them. The right answer is only included once a card has been
+    answered."""
+    ids = [c["question_id"] for c in attempt.cards]
+    questions = {
+        q.id: q for q in CheckQuestion.objects.filter(id__in=ids).select_related("chapter__course")
+    }
+    answers = {a.position: a for a in attempt.answers.all()}
+    cards = []
+    for position, item in enumerate(attempt.cards):
+        q = questions[item["question_id"]]
+        order = item["order"]
+        given = answers.get(position)
+        result = None
+        if given:
+            result = {
+                "chosen": order.index(given.chosen_index),
+                "answer": order.index(q.correct_index),
+                "correct": given.correct,
+                "explanation": q.explanation,
+                "source_excerpt": q.source_excerpt,
+            }
+        chapter = q.chapter
+        cards.append(
+            {
+                "position": position,
+                "type": q.type,
+                "front": q.prompt,
+                "options": [q.options[i] for i in order],
+                "source": f"{chapter.course.code} · Ch {chapter.order}: {chapter.title}",
+                "chapter_id": chapter.id,
+                "course_id": chapter.course_id,
+                "result": result,
+            }
+        )
+    return {
+        "number": attempt.number,
+        "correct": attempt.correct,
+        "finished": attempt.finished_at is not None,
+        "cards": cards,
+    }
+
+
+class StudyCheckDetailSerializer(StudyCheckSerializer):
+    attempt = serializers.SerializerMethodField()
     milestone = serializers.SerializerMethodField()
     streak = serializers.SerializerMethodField()
 
-    class Meta(DailyDeckSerializer.Meta):
-        fields = [*DailyDeckSerializer.Meta.fields, "cards", "milestone", "streak"]
+    class Meta(StudyCheckSerializer.Meta):
+        fields = [*StudyCheckSerializer.Meta.fields, "attempt", "milestone", "streak"]
         read_only_fields = fields
 
-    @extend_schema_field(DeckCardSerializer(many=True))
-    def get_cards(self, obj):
-        cards = {
-            c.id: c
-            for c in Flashcard.objects.filter(id__in=obj.cards).select_related("chapter__course")
-        }
-        rated = dict(obj.reviews.values_list("card_id", "knew"))
-        return [
-            {
-                "id": c.id,
-                "topic": c.topic,
-                "source": _source(c),
-                "front": c.front,
-                "back": c.back,
-                "knew": rated.get(c.id),
-                "chapter_id": c.chapter_id,
-                "course_id": c.chapter.course_id if c.chapter else None,
-            }
-            for card_id in obj.cards
-            if (c := cards.get(card_id))
-        ]
+    @extend_schema_field(AttemptSerializer(allow_null=True))
+    def get_attempt(self, obj):
+        latest = _latest_attempt(obj)
+        return attempt_data(latest) if latest else None
 
     def get_milestone(self, obj) -> int | None:
         return self.context.get("milestone")
 
     def get_streak(self, obj) -> int:
-        streak = Streak.objects.filter(student=obj.student).first()
-        return streak.current if streak else 0
+        from .services.streaks import get_streak
+
+        return get_streak(obj.student).current
 
 
-def _source(card: Flashcard) -> str:
-    if card.chapter is None:
-        return card.get_topic_display()
-    chapter = card.chapter
-    return f"{chapter.course.code} · Ch {chapter.order}: {chapter.title}"
-
-
-class ReviewSerializer(serializers.Serializer):
-    card_id = serializers.IntegerField()
-    knew = serializers.BooleanField()
+class AnswerSerializer(serializers.Serializer):
+    position = serializers.IntegerField(min_value=0, max_value=9)
+    choice = serializers.IntegerField(min_value=0, max_value=3)
 
 
 class StreakEventSerializer(serializers.Serializer):
@@ -138,6 +189,5 @@ class StreakSerializer(serializers.Serializer):
     freezes = serializers.IntegerField()
     toward_next_freeze = serializers.IntegerField()
     next_milestone = serializers.IntegerField(allow_null=True)
-    done_today = serializers.BooleanField()
     week = StreakDaySerializer(many=True)
     recent = StreakEventSerializer(many=True)

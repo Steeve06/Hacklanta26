@@ -6,33 +6,39 @@ from notifications.candidates import Candidate
 from notifications.models import Trigger
 from notifications.templates_loader import TIERS
 
-from ..models import DailyDeck
-from .decks import day_end, today_deck
-from .streaks import at_risk, get_streak
+from ..models import StudyCheck
+from .streaks import AT_RISK_WINDOW, get_streak, open_checks
+
+
+def check_title(check: StudyCheck) -> str:
+    chapters = list(check.chapters.select_related("course").order_by("course__code", "order"))
+    return ", ".join(f"{c.course.code} Ch {c.order}" for c in chapters) or "Study check"
 
 
 def streak_candidates(student, now: datetime) -> list[Candidate]:
-    if at_risk(student, now) is None:
-        return []
-    deck = today_deck(student, now)
-    return [
-        Candidate(
-            trigger=Trigger.STREAK_AT_RISK,
-            tier=TIERS[Trigger.STREAK_AT_RISK],
-            source_type="daily_deck",
-            source_id=deck.id,
-            course_id=None,
-            variables={
-                "title": "Today's flashcards",
-                "course": "",
-                "streak_days": get_streak(student).current,
-            },
-            link="/pulse/quiz/today",
-            due_at=day_end(student, deck.day),
+    streak = get_streak(student)
+    found = []
+    for check in open_checks(student, now).filter(closes_at__lte=now + AT_RISK_WINDOW):
+        first = check.chapters.select_related("course").first()
+        found.append(
+            Candidate(
+                trigger=Trigger.STREAK_AT_RISK,
+                tier=TIERS[Trigger.STREAK_AT_RISK],
+                source_type="study_check",
+                source_id=check.id,
+                course_id=first.course_id if first else None,
+                variables={
+                    "title": check_title(check),
+                    "course": first.course.code if first else "",
+                    "streak_days": streak.current,
+                },
+                link=f"/pulse/quiz/{check.id}",
+                due_at=check.closes_at,
+            )
         )
-    ]
+    return found
 
 
-def deck_still_open(deck_id: int, now: datetime) -> bool:
-    deck = DailyDeck.objects.filter(pk=deck_id).select_related("student").first()
-    return bool(deck and deck.completed_at is None and now < day_end(deck.student, deck.day))
+def check_still_open(check_id: int, now: datetime) -> bool:
+    check = StudyCheck.objects.filter(pk=check_id).first()
+    return bool(check and not check.passed and not check.resolved and check.closes_at > now)

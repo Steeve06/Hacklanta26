@@ -365,4 +365,4 @@ def _quiz_title(p: Placement, specs: dict[str, TaskSpec]) -> str:
         for k in p.quiz_keys
         if k in specs
     ]
-    return "Chapter quiz: " + ", ".join(names) if names else "Chapter quiz"
+    return "Study check: " + ", ".join(names) if names else "Study check"

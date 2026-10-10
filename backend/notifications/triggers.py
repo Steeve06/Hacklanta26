@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from lms.selectors import AssessmentInfo, StudentSnapshot
 from pulse.models import Schedule, Session
-from quizzes.services.reminders import deck_still_open, streak_candidates
+from quizzes.services.reminders import check_still_open, streak_candidates
 
 from .candidates import Candidate
 from .models import Trigger
@@ -129,6 +129,6 @@ def still_true(notification, snapshot: StudentSnapshot, now: datetime) -> bool:
         return bool(
             session and session.status == Session.Status.PLANNED and session.schedule.is_active
         )
-    if notification.source_type == "daily_deck":
-        return deck_still_open(notification.source_id, now)
+    if notification.source_type == "study_check":
+        return check_still_open(notification.source_id, now)
     return True

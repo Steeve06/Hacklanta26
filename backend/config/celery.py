@@ -17,8 +17,8 @@ BEAT_SCHEDULE = {
         "task": "notifications.tasks.scan_all",
         "schedule": crontab(minute="*/10"),
     },
-    "streak-sweep": {
-        "task": "quizzes.tasks.sweep_streaks",
+    "study-check-sweep": {
+        "task": "quizzes.tasks.sweep_checks",
         "schedule": crontab(minute="*/10"),
     },
     "nightly-roll-forward": {

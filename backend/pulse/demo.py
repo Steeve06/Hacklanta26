@@ -13,7 +13,8 @@ from accounts.clock import now as clock_now
 from accounts.models import StudentProfile, User
 from notifications.engine import dispatch_due, scan_student
 from notifications.models import Notification
-from quizzes.services.streaks import settle
+from quizzes.services.streaks import sweep_student
+from quizzes.services.windows import sync_checks
 
 from .services import status
 from .services.planner import plan
@@ -72,10 +73,11 @@ def _row(student: User) -> dict:
 
 
 def _settle(student: User) -> None:
-    """After moving the clock: settle the daily streak, rebuild the plan, refresh status."""
-    settle(student)
+    """After moving the clock: settle closed checks, rebuild the plan, refresh status."""
+    sweep_student(student)
     if student.profile.onboarding_done:
         plan(student, reason="demo")
+    sync_checks(student)
     status.invalidate(student.id)
 
 

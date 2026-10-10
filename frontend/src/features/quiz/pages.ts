@@ -1,2 +1,2 @@
 export { QuizHubPage } from "./QuizHubPage";
-export { DeckPage, TodayDeckPage } from "./DeckPage";
+export { CheckPage } from "./CheckPage";

@@ -14,7 +14,7 @@ class Command(BaseCommand):
             demo = lms_seed.build_term()
             lms_seed.seed_history(demo)
             lms_seed.mark_profiles(demo)
-            quiz_seed.seed_cards()
+            quiz_seed.seed_banks()
             quiz_seed.seed_streaks(demo.students)
             pulse_seed.seed_plans(demo.students)
             pulse_seed.seed_onboarding(demo.students)

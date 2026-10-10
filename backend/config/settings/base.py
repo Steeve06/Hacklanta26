@@ -145,7 +145,8 @@ SPECTACULAR_SETTINGS = {
         "QuestionTypeEnum": "lms.models.QuizQuestion.Type",
         "SubmissionStatusEnum": "lms.models.Submission.Status",
         "SessionKindEnum": "pulse.models.Session.Kind",
-        "FlashcardTopicEnum": "quizzes.models.Flashcard.Topic",
+        "StudyCheckKindEnum": "quizzes.models.StudyCheck.Kind",
+        "StudyCheckStateEnum": "quizzes.serializers.CHECK_STATES",
         "PlanJobKindEnum": "pulse.models.PlanJob.Kind",
     },
 }
@@ -187,6 +188,9 @@ DEMO_MODE = env_bool("DEMO_MODE", False)
 CRON_TOKEN = env("CRON_TOKEN", "")
 FRONTEND_URL = env("FRONTEND_URL", "http://localhost:5173")
 CAMPUS_SUPPORT_URL = env("CAMPUS_SUPPORT_URL", "https://988lifeline.org/")
+STUDY_CHECK_CARDS = 4
+STUDY_CHECK_PASS_MARK = int(env("STUDY_CHECK_PASS_MARK", "3"))
+STUDY_CHECK_SECONDS_PER_CARD = int(env("STUDY_CHECK_SECONDS_PER_CARD", "4"))
 
 LOGGING = {
     "version": 1,

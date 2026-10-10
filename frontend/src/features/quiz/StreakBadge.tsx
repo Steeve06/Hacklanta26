@@ -1,7 +1,7 @@
 import { Icon } from "@/components/Icon";
 import { cx } from "@/lib/cx";
 import type { Streak, StreakDay } from "./api";
-import { formatDeckDay } from "./topics";
+import { formatPlainDay } from "./plainDay";
 
 export function StreakBadge({ streak, compact = false }: { streak: Streak; compact?: boolean }) {
   return (
@@ -9,7 +9,7 @@ export function StreakBadge({ streak, compact = false }: { streak: Streak; compa
       <span
         className={cx(
           "flex items-center justify-center rounded-full",
-          streak.done_today ? "bg-mustard-soft text-mustard-ink" : "bg-sunken text-ink-faint",
+          streak.current > 0 ? "bg-mustard-soft text-mustard-ink" : "bg-sunken text-ink-faint",
           compact ? "h-11 w-11" : "h-14 w-14",
         )}
       >
@@ -24,7 +24,7 @@ export function StreakBadge({ streak, compact = false }: { streak: Streak; compa
         >
           {streak.current}
           <span className="ml-1 text-base font-bold text-ink-soft">
-            {streak.current === 1 ? "day" : "days"} in a row
+            {streak.current === 1 ? "check" : "checks"} in a row
           </span>
         </p>
         {!compact && (
@@ -47,11 +47,11 @@ const DAY_STYLES: Record<StreakDay["result"], string> = {
 };
 
 const DAY_LABELS: Record<StreakDay["result"], string> = {
-  done: "done",
+  done: "passed",
   frozen: "freeze used",
   missed: "missed",
-  open: "today, not done yet",
-  none: "no deck",
+  open: "check still open",
+  none: "no check",
 };
 
 export function WeekStrip({ week }: { week: StreakDay[] }) {
@@ -71,14 +71,14 @@ export function WeekStrip({ week }: { week: StreakDay[] }) {
             ) : d.result === "frozen" ? (
               "❄"
             ) : (
-              formatDeckDay(d.day, { day: "numeric" })
+              formatPlainDay(d.day, { day: "numeric" })
             )}
             <span className="sr-only">
-              {formatDeckDay(d.day, { weekday: "long" })}: {DAY_LABELS[d.result]}
+              {formatPlainDay(d.day, { weekday: "long" })}: {DAY_LABELS[d.result]}
             </span>
           </span>
           <span aria-hidden="true" className="text-xs text-ink-soft">
-            {formatDeckDay(d.day, { weekday: "narrow" })}
+            {formatPlainDay(d.day, { weekday: "narrow" })}
           </span>
         </li>
       ))}

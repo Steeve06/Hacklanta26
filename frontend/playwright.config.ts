@@ -35,6 +35,7 @@ export default defineConfig({
         DEMO_MODE: "true",
         CORS_ALLOWED_ORIGINS: "http://localhost:5174",
         THROTTLE_AUTH: "1000/min",
+        STUDY_CHECK_SECONDS_PER_CARD: "0",
       },
     },
     {

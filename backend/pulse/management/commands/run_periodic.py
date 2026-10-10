@@ -9,7 +9,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         result = run_all()
         self.stdout.write(
-            f"Streak days settled: {result['streaks_settled']}. "
+            f"Study checks settled: {result['study_checks']}. "
             f"Notifications created: {result['notifications']}. "
             f"Students rolled forward: {result['rolled_forward']}."
         )

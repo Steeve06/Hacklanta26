@@ -2,13 +2,8 @@ from django.db import migrations
 
 
 def forwards(apps, schema_editor):
-    from quizzes.cards import CARDS
-
-    Flashcard = apps.get_model("quizzes", "Flashcard")
-    for slug, topic, front, back in CARDS:
-        Flashcard.objects.update_or_create(
-            slug=slug, defaults={"topic": topic, "front": front, "back": back, "active": True}
-        )
+    # The general flashcard library this migration used to load was removed when study checks
+    # replaced daily decks (0005 drops the table), so only the streak carry-over remains.
     # Streaks carried over from chapter quizzes become daily streaks that last ran on the day of
     # their latest event, so the first missed day after the switch is settled normally.
     Streak = apps.get_model("quizzes", "Streak")

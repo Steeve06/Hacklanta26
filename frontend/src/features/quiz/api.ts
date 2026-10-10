@@ -2,69 +2,77 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap } from "@/api/client";
 import type { components } from "@/api/schema";
 
-export type Deck = components["schemas"]["DailyDeck"];
-export type DeckDetail = components["schemas"]["DailyDeckDetail"];
-export type DeckCard = components["schemas"]["DeckCard"];
+export type Check = components["schemas"]["StudyCheck"];
+export type CheckDetail = components["schemas"]["StudyCheckDetail"];
+export type CheckCard = components["schemas"]["CheckCard"];
 export type Streak = components["schemas"]["Streak"];
 export type StreakDay = components["schemas"]["StreakDay"];
 
-export const deckKeys = {
-  list: ["decks"] as const,
-  today: ["decks", "today"] as const,
-  detail: (id: number) => ["decks", "detail", id] as const,
-  streak: ["decks", "streak"] as const,
+export const checkKeys = {
+  all: ["checks"] as const,
+  list: (state: string) => ["checks", "list", state] as const,
+  detail: (id: number) => ["checks", "detail", id] as const,
+  streak: ["checks", "streak"] as const,
 };
 
-export function useDecks() {
+export function useChecks(state: "open" | "upcoming" | "past") {
   return useQuery({
-    queryKey: deckKeys.list,
-    queryFn: async () => unwrap(await api.GET("/api/v1/decks")),
+    queryKey: checkKeys.list(state),
+    queryFn: async () => unwrap(await api.GET("/api/v1/checks", { params: { query: { state } } })),
+    refetchInterval: 60_000,
   });
 }
 
-export function useTodayDeck() {
+export function useCheck(id: number) {
   return useQuery({
-    queryKey: deckKeys.today,
-    queryFn: async () => unwrap(await api.GET("/api/v1/decks/today")),
-  });
-}
-
-export function useDeck(id: number) {
-  return useQuery({
-    queryKey: deckKeys.detail(id),
+    queryKey: checkKeys.detail(id),
     queryFn: async () =>
-      unwrap(await api.GET("/api/v1/decks/{deck_id}", { params: { path: { deck_id: id } } })),
+      unwrap(await api.GET("/api/v1/checks/{check_id}", { params: { path: { check_id: id } } })),
   });
 }
 
 export function useStreak() {
   return useQuery({
-    queryKey: deckKeys.streak,
+    queryKey: checkKeys.streak,
     queryFn: async () => unwrap(await api.GET("/api/v1/streak")),
     refetchInterval: 60_000,
   });
 }
 
-export function useReviewCard(deckId: number) {
+function useStoreCheck(id: number) {
   const client = useQueryClient();
+  return (check: CheckDetail) => {
+    client.setQueryData(checkKeys.detail(id), check);
+    if (check.state !== "open") {
+      void client.invalidateQueries({ queryKey: checkKeys.all, refetchType: "inactive" });
+      void client.invalidateQueries({ queryKey: checkKeys.streak });
+      void client.invalidateQueries({ queryKey: ["pulse", "status"] });
+      void client.invalidateQueries({ queryKey: ["notifications"] });
+    }
+  };
+}
+
+export function useStartCheck(id: number) {
+  const store = useStoreCheck(id);
   return useMutation({
-    mutationFn: async (body: { card_id: number; knew: boolean }) =>
+    mutationFn: async () =>
       unwrap(
-        await api.POST("/api/v1/decks/{deck_id}/review", {
-          params: { path: { deck_id: deckId } },
+        await api.POST("/api/v1/checks/{check_id}/start", { params: { path: { check_id: id } } }),
+      ),
+    onSuccess: store,
+  });
+}
+
+export function useAnswerCard(id: number) {
+  const store = useStoreCheck(id);
+  return useMutation({
+    mutationFn: async (body: { position: number; choice: number }) =>
+      unwrap(
+        await api.POST("/api/v1/checks/{check_id}/answer", {
+          params: { path: { check_id: id } },
           body,
         }),
       ),
-    onSuccess: (deck) => {
-      client.setQueryData(deckKeys.detail(deckId), deck);
-      const today = client.getQueryData<DeckDetail>(deckKeys.today);
-      if (today?.id === deckId) client.setQueryData(deckKeys.today, deck);
-      if (deck.completed_at) {
-        void client.invalidateQueries({ queryKey: deckKeys.list });
-        void client.invalidateQueries({ queryKey: deckKeys.streak });
-        void client.invalidateQueries({ queryKey: ["pulse", "status"] });
-        void client.invalidateQueries({ queryKey: ["notifications"] });
-      }
-    },
+    onSuccess: store,
   });
 }

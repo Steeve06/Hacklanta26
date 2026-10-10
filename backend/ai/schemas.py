@@ -41,3 +41,16 @@ class FeedbackPrefs(BaseModel):
     days: list[DayPreference] = Field(default_factory=list, max_length=7)
     preferred_hours: list[int] | None = Field(default=None, min_length=2, max_length=2)
     understood: bool = True
+
+
+class QuestionOut(BaseModel):
+    question: str = Field(min_length=8, max_length=220)
+    type: Literal["multiple_choice", "true_false"]
+    options: list[str] = Field(min_length=2, max_length=4)
+    correct_index: int = Field(ge=0, le=3)
+    explanation: str = Field(min_length=8, max_length=300)
+    source_excerpt: str = Field(min_length=10, max_length=400)
+
+
+class QuestionSet(BaseModel):
+    questions: list[QuestionOut] = Field(max_length=20)
