@@ -10,6 +10,8 @@ export type AvailabilityBlock = Schemas["AvailabilityBlock"];
 export type Blackout = Schemas["Blackout"];
 export type PlanJob = Schemas["PlanJob"];
 export type OverloadReport = Schemas["OverloadReport"];
+export type CourseCalendar = Schemas["CourseCalendar"];
+export type ChapterRelease = Schemas["ChapterRelease"];
 export type ScheduleView = "today" | "week" | "overall";
 
 export const pulseKeys = {
@@ -33,6 +35,14 @@ export function useSchedule(view: ScheduleView, from?: string, enabled = true) {
         }),
       ),
     refetchInterval: 60_000,
+  });
+}
+
+export function useCourseCalendar(from: string) {
+  return useQuery({
+    queryKey: ["pulse", "course-calendar", from],
+    queryFn: async () =>
+      unwrap(await api.GET("/api/v1/pulse/course-calendar", { params: { query: { from } } })),
   });
 }
 

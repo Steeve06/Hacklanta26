@@ -11,7 +11,8 @@ import {
   useTimezone,
 } from "@/lib/time";
 import { useNow } from "@/lib/useNow";
-import { useSchedule, type Deadline, type Schedule, type Session } from "./api";
+import { useSchedule, type Schedule, type Session } from "./api";
+import { CourseCalendarView } from "./CourseCalendar";
 import { courseLookup } from "./courseColors";
 import { SessionItem } from "./SessionItem";
 import { sessionLink } from "./sessionLink";
@@ -25,10 +26,15 @@ export function WeekPage() {
   const now = useNow();
   const [params, setParams] = useSearchParams();
   const thisMonday = mondayOf(localDateKey(new Date(now), tz));
-  const monday = params.get("from") ?? thisMonday;
-  const schedule = useSchedule("week", monday);
+  const monday = mondayOf(params.get("from") ?? thisMonday);
+  const calendar = params.get("calendar") === "course" ? "course" : "plan";
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
-  const go = (key: string) => setParams(key === thisMonday ? {} : { from: key });
+  const go = (key: string, to: "plan" | "course" = calendar) => {
+    const next: Record<string, string> = {};
+    if (key !== thisMonday) next.from = key;
+    if (to === "course") next.calendar = "course";
+    setParams(next);
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -54,19 +60,64 @@ export function WeekPage() {
           </Button>
         </nav>
       </header>
-      <QueryView query={schedule} skeleton={<Skeleton className="h-[32rem] w-full" />}>
-        {(data) => (
+      <div role="tablist" aria-label="Calendar" className="flex gap-1 border-b border-line">
+        {CALENDARS.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            role="tab"
+            id={`tab-${c.id}`}
+            aria-selected={calendar === c.id}
+            aria-controls={`panel-${c.id}`}
+            onClick={() => go(monday, c.id)}
+            className={cx(
+              "-mb-px min-h-11 border-b-2 px-3 font-bold",
+              calendar === c.id
+                ? "border-pine text-pine-strong"
+                : "border-transparent text-ink-soft hover:text-ink",
+            )}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" id={`panel-${calendar}`} aria-labelledby={`tab-${calendar}`}>
+        {calendar === "plan" ? (
+          <StudyPlan monday={monday} days={days} today={localDateKey(new Date(now), tz)} />
+        ) : (
           <>
-            <div className="hidden md:block">
-              <WeekGrid data={data} days={days} today={localDateKey(new Date(now), tz)} />
-            </div>
-            <div className="md:hidden">
-              <WeekList data={data} days={days} />
-            </div>
+            <p className="mb-3 text-sm text-ink-soft">
+              Due dates and new chapters from your courses. Your study sessions are under Study
+              plan.
+            </p>
+            <CourseCalendarView monday={monday} days={days} />
           </>
         )}
-      </QueryView>
+      </div>
     </div>
+  );
+}
+
+const CALENDARS = [
+  { id: "plan", label: "Study plan" },
+  { id: "course", label: "Course calendar" },
+] as const;
+
+function StudyPlan({ monday, days, today }: { monday: string; days: string[]; today: string }) {
+  const schedule = useSchedule("week", monday);
+  return (
+    <QueryView query={schedule} skeleton={<Skeleton className="h-[32rem] w-full" />}>
+      {(data) => (
+        <>
+          <div className="hidden md:block">
+            <WeekGrid data={data} days={days} today={today} />
+          </div>
+          <div className="md:hidden">
+            <WeekList data={data} days={days} />
+          </div>
+        </>
+      )}
+    </QueryView>
   );
 }
 
@@ -81,7 +132,6 @@ function WeekGrid({ data, days, today }: { data: Schedule; days: string[]; today
   const course = courseLookup(data);
   const sessions = data.sessions.filter((s) => s.status !== "rescheduled");
   const byDay = bucket(sessions, (s) => localDateKey(s.start, tz));
-  const dueByDay = bucket(data.deadlines, (d) => localDateKey(d.due_at, tz));
   const starts = sessions.map((s) => localMinutes(s.start, tz));
   const ends = sessions.map((s) => localMinutes(s.start, tz) + s.minutes);
   const first = Math.min(8 * 60, ...starts);
@@ -103,11 +153,6 @@ function WeekGrid({ data, days, today }: { data: Schedule; days: string[]; today
               {keyLabel(day, { weekday: "short", day: "numeric" })}
               {day === today && <span className="sr-only"> (today)</span>}
             </p>
-            <ul className="mt-1 flex flex-col gap-1">
-              {(dueByDay.get(day) ?? []).map((d) => (
-                <DueMarker key={d.id} deadline={d} color={course(d.course).color} />
-              ))}
-            </ul>
           </div>
         ))}
       </div>
@@ -187,27 +232,11 @@ function GridSession({ session, color, top }: { session: Session; color: string;
   );
 }
 
-function DueMarker({ deadline, color }: { deadline: Deadline; color: string }) {
-  return (
-    <li>
-      <Link
-        to={`/lms/courses/${deadline.course}/assignments/${deadline.id}`}
-        className="flex items-center gap-1 rounded-sm border border-dashed px-1 text-xs font-bold leading-5 hover:underline"
-        style={{ borderColor: color }}
-        title={`Due: ${deadline.title}`}
-      >
-        <span className="text-ink-soft">Due</span>
-        <span className="truncate">{deadline.title}</span>
-      </Link>
-    </li>
-  );
-}
-
 function WeekList({ data, days }: { data: Schedule; days: string[] }) {
   const tz = useTimezone();
   const course = courseLookup(data);
   const sessions = data.sessions.filter((s) => s.status !== "rescheduled");
-  if (sessions.length === 0 && data.deadlines.length === 0) {
+  if (sessions.length === 0) {
     return (
       <EmptyState
         title="Nothing planned this week"
@@ -219,8 +248,7 @@ function WeekList({ data, days }: { data: Schedule; days: string[] }) {
     <div className="flex flex-col gap-5">
       {days.map((day) => {
         const daySessions = sessions.filter((s) => localDateKey(s.start, tz) === day);
-        const due = data.deadlines.filter((d) => localDateKey(d.due_at, tz) === day);
-        if (daySessions.length === 0 && due.length === 0) return null;
+        if (daySessions.length === 0) return null;
         return (
           <section
             key={day}
@@ -230,13 +258,6 @@ function WeekList({ data, days }: { data: Schedule; days: string[] }) {
             <h2 className="font-bold">
               {keyLabel(day, { weekday: "long", month: "short", day: "numeric" })}
             </h2>
-            {due.length > 0 && (
-              <ul className="flex flex-col gap-1">
-                {due.map((d) => (
-                  <DueMarker key={d.id} deadline={d} color={course(d.course).color} />
-                ))}
-              </ul>
-            )}
             {daySessions.map((s) => (
               <SessionItem key={s.id} session={s} color={course(s.course).color} />
             ))}

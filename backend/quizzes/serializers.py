@@ -183,6 +183,18 @@ class StreakDaySerializer(serializers.Serializer):
     result = serializers.ChoiceField(choices=["done", "frozen", "missed", "open", "none"])
 
 
+class MissedDeadlineSerializer(serializers.Serializer):
+    assessment_id = serializers.IntegerField()
+    course_id = serializers.IntegerField()
+    course_code = serializers.CharField()
+    title = serializers.CharField()
+    due_at = serializers.DateTimeField()
+    late_until = serializers.DateTimeField(allow_null=True)
+    streak_result = serializers.ChoiceField(
+        choices=["frozen", "missed"], allow_null=True, help_text="what it did to the streak"
+    )
+
+
 class StreakSerializer(serializers.Serializer):
     current = serializers.IntegerField()
     longest = serializers.IntegerField()
@@ -191,3 +203,7 @@ class StreakSerializer(serializers.Serializer):
     next_milestone = serializers.IntegerField(allow_null=True)
     week = StreakDaySerializer(many=True)
     recent = StreakEventSerializer(many=True)
+    missed_deadlines = MissedDeadlineSerializer(
+        many=True,
+        help_text="past-due work from the last 7 days; each one counts against the streak",
+    )

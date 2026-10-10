@@ -113,9 +113,20 @@ class StreakEvent(TimeStamped):
     study_check = models.OneToOneField(
         StudyCheck, null=True, blank=True, on_delete=models.SET_NULL, related_name="event"
     )
+    assessment = models.ForeignKey(
+        "lms.Assessment", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="streak_events", help_text="a deadline that passed without a submission",
+    )  # fmt: skip
     day = models.DateField(null=True, blank=True)
     result = models.CharField(max_length=10, choices=Result.choices)
     streak_after = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["-created_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student", "assessment"],
+                condition=models.Q(assessment__isnull=False),
+                name="one_streak_event_per_missed_deadline",
+            )
+        ]

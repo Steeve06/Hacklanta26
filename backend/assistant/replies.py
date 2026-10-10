@@ -70,6 +70,7 @@ def confirm(message: ChatMessage) -> ChatMessage:
     student = message.conversation.student
     stored = [{k: v for k, v in a.items() if k != "summary"} for a in message.actions]
     try:
+        link = actions.link_for(student, stored[0]) if stored else None
         actions.apply_all(student, stored)
     except Exception as exc:  # noqa: BLE001 - every failure becomes a plain note on the card
         if not isinstance(exc, actions.Rejected):
@@ -79,5 +80,6 @@ def confirm(message: ChatMessage) -> ChatMessage:
     else:
         message.proposal = ChatMessage.Proposal.APPLIED
         message.proposal_note = ""
-    message.save(update_fields=["proposal", "proposal_note", "updated_at"])
+        message.link = link
+    message.save(update_fields=["proposal", "proposal_note", "link", "updated_at"])
     return message

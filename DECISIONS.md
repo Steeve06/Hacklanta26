@@ -34,8 +34,10 @@ Choices made where the build prompt left room, with the reason for each.
 - **OR-Tools is optional.** `SOLVER=cpsat` is accepted but falls back to the greedy solver (with a log line) unless `ortools` is installed; the greedy + local search meets every budget on its own.
 
 - **Urgency flows back through dependencies.** A task that something due sooner depends on (reading a chapter before a discussion post due tonight) is ordered as if it were due then. It still only has to finish by its own deadline.
-- **Replies don't wait for classmates on late work.** The one-day gap before discussion replies is dropped when the discussion is overdue or due within 12 hours of that gap.
+- **Replies don't wait for classmates when time is short.** The one-day gap before discussion replies is dropped when the discussion is due within 12 hours of that gap.
 - **Tonight's sessions stay put unless something due within a day would be missed.** Re-planning keeps sessions in the next 24 hours where they were, but if dropping that rule covers more work due within a day, the new plan wins even if it's slightly worse overall.
+- **The plan is for keeping up, not catching up.** Past-due work leaves the plan (it can still be submitted late from Learning Hub) and counts against the streak instead. The plan summary says what it left out.
+- **A tight plan is a note, not an alarm.** When some work won't fully fit, Today shows one closed line (only for work due in the next 7 days) with the details and suggestions inside. It no longer forces the mascot to "bad"; work that won't fit in the next 3 days is listed as a reason. Only having no study time at all is an alert and forces "bad".
 - **Overload advice names what's actually full.** If unused free time sits behind a full daily or weekly limit, the advice says to raise that limit. Free-time advice only names days before the deadline, and work due within a day gets its own line.
 
 ## AI layer
@@ -76,10 +78,16 @@ Choices made where the build prompt left room, with the reason for each.
 - **Four cards, shown as flashcards.** Each card is a multiple-choice or true/false question; tapping an answer flips the card to show right or wrong, the explanation, and the chapter line it comes from. Three right out of four passes (`STUDY_CHECK_PASS_MARK`). A failed first try leaves one more try with new cards; after that the check is settled.
 - **Questions are written by the model and grounded.** Each question must quote the chapter (checked as a substring after whitespace normalisation); questions with duplicate options or more than one right answer are dropped. Without AI, or if too few survive, cards come from the chapter's bold key terms. Banks are rebuilt when a chapter's text changes; no model call happens when a student opens a check.
 - **Anti-gaming:** answers are graded on the server one card at a time, the right answer is only sent after the student answers, and a pass needs at least 4 seconds per card in total.
+- **Missed deadlines count against the streak.** Coursework that passes its due date without a submission settles once per assessment, like a missed check: it spends a freeze, otherwise resets the streak. Excused work and work with an extension (which moves the due date) don't count; submitting late afterwards doesn't undo it. Misses from the last 7 days are listed under the streak with what they did and, while the late window is open, a link to submit. The sweep runs every 10 minutes and whenever the streak is shown.
 - **Streak rules:** consecutive checks passed inside their windows (15 minutes of grace after the close). A missed check spends a freeze (1 earned per 5 passes, 2 max) or resets the streak. Days without a check don't count either way. Milestones at 3, 7, 14, 30, 50 and 100.
+
+## Two calendars
+
+- **Week has two tabs.** *Study plan* is the schedule Pulse builds. *Course calendar* is what the courses set: due dates (with any extension) and chapter release dates from Learning Hub. Learning Hub has no class meeting times, so there are none to show.
 
 ## Ask Pulse (the chat)
 
+- **After Confirm, go to the change.** The panel closes and opens where the change shows: the week containing the session or busy time, or the study time or preferences section of Settings.
 - **Suggest, then confirm.** The chat never changes anything on its own. A reply can carry a list of changes; the student presses **Confirm** or **Not now**. A newer suggestion replaces an older one that wasn't answered.
 - **A fixed set of changes.** Skip, mark done, reschedule, move to a specific time, keep a one-off time free, replace one weekday's free time, change limits (weekly, daily, session length, study window), and rebuild the plan around a note. Each goes through the same services as the app's buttons, so the planner's hard constraints still hold.
 - **Checked twice.** Every change is validated against the student's own data when the reply is made (invalid ones are dropped and the reply says why) and again on Confirm, inside one transaction: if any change no longer applies, none are applied and the card says why.

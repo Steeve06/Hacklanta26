@@ -4,7 +4,7 @@ import { apiAs, signIn } from "./helpers";
 type Session = { start: string; end: string; kind: string; status: string; task_title: string };
 type Schedule = { sessions: Session[] };
 
-test("asking Pulse to skip the next session changes nothing until it's confirmed", async ({
+test("asking Pulse to skip the next session changes nothing until confirmed, then shows it", async ({
   page,
   request,
 }) => {
@@ -28,7 +28,9 @@ test("asking Pulse to skip the next session changes nothing until it's confirmed
   expect(pending.sessions.find((s) => s.start === next?.start)?.status).toBe("planned");
 
   await changes.getByRole("button", { name: "Confirm" }).click();
-  await expect(panel.getByText(/Applied\. Your schedule updates/)).toBeVisible();
+  await expect(page).toHaveURL(/\/pulse\/week\?from=\d{4}-\d{2}-\d{2}$/);
+  await expect(panel).toBeHidden();
+  await expect(page.getByRole("tab", { name: "Study plan", selected: true })).toBeVisible();
   const after = await api.get<Schedule>("/api/v1/pulse/schedule?view=overall");
   expect(after.sessions.find((s) => s.start === next?.start)?.status).toBe("skipped");
 });

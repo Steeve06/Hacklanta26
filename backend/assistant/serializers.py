@@ -9,8 +9,14 @@ class ProposedChangeSerializer(serializers.Serializer):
     summary = serializers.CharField()
 
 
+class ChangeLinkSerializer(serializers.Serializer):
+    to = serializers.CharField()
+    label = serializers.CharField()
+
+
 class ChatMessageSerializer(serializers.ModelSerializer):
     changes = serializers.SerializerMethodField()
+    link = ChangeLinkSerializer(allow_null=True, read_only=True)
 
     class Meta:
         model = ChatMessage
@@ -22,6 +28,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
             "changes",
             "proposal",
             "proposal_note",
+            "link",
             "created_at",
         ]
 

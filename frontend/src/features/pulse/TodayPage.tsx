@@ -42,7 +42,7 @@ export function TodayPage() {
             const sessions = data.sessions.filter((s) => s.status !== "rescheduled");
             return (
               <>
-                {data.overload_report && <OverloadPanel report={data.overload_report} />}
+                {data.overload_report && <OverloadPanel report={data.overload_report} soonOnly />}
                 <section aria-labelledby="sessions-heading" className="flex flex-col gap-3">
                   <h2 id="sessions-heading" className="text-lg font-bold">
                     Your sessions

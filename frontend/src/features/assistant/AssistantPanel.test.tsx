@@ -3,6 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { useAuth } from "@/features/auth/store";
 import { json, mockFetch } from "@/test/fetchMock";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { renderRoute } from "@/test/render";
 import type { ChatMessage, Conversation } from "./api";
 import { AssistantPanel } from "./AssistantPanel";
@@ -31,6 +34,7 @@ function message(over: Partial<ChatMessage>): ChatMessage {
     changes: [],
     proposal: "none",
     proposal_note: "",
+    link: null,
     created_at: NOW,
     ...over,
   };
@@ -111,5 +115,38 @@ describe("AssistantPanel", () => {
     await userEvent.type(box, "Move tonight's session{Enter}");
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(/throttled/));
     expect(box).toHaveValue("Move tonight's session");
+  });
+
+  it("closes and opens the page where an applied change shows", async () => {
+    const closed: boolean[] = [];
+    mockFetch({
+      "GET /api/v1/assistant/conversation": () => json(conversation([question, proposal])),
+      "POST /api/v1/assistant/messages/2/confirm": () =>
+        json({
+          ...proposal,
+          proposal: "applied",
+          link: { to: "/pulse/week?from=2026-10-14", label: "See it in your week" },
+        }),
+    });
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          element: <AssistantPanel open onClose={() => closed.push(true)} />,
+        },
+        { path: "/pulse/week", element: <p>Week page</p> },
+      ],
+      { initialEntries: ["/"] },
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Confirm" }));
+    expect(await screen.findByText("Week page")).toBeVisible();
+    expect(router.state.location.search).toBe("?from=2026-10-14");
+    expect(closed).toEqual([true]);
   });
 });

@@ -2374,6 +2374,41 @@
                 }
             }
         },
+        "/api/v1/pulse/course-calendar": {
+            "get": {
+                "operationId": "v1_pulse_course_calendar_retrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "from",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Local date YYYY-MM-DD"
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CourseCalendar"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/pulse/jobs/{job_id}": {
             "get": {
                 "operationId": "v1_pulse_jobs_retrieve",
@@ -3514,6 +3549,21 @@
                     "source_excerpt"
                 ]
             },
+            "ChangeLink": {
+                "type": "object",
+                "properties": {
+                    "to": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "label",
+                    "to"
+                ]
+            },
             "ChapterDetail": {
                 "type": "object",
                 "properties": {
@@ -3667,6 +3717,42 @@
                     "title"
                 ]
             },
+            "ChapterRelease": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "course": {
+                        "type": "integer"
+                    },
+                    "course_code": {
+                        "type": "string"
+                    },
+                    "order": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "completed": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "available_from",
+                    "completed",
+                    "course",
+                    "course_code",
+                    "id",
+                    "order",
+                    "title"
+                ]
+            },
             "ChapterWriteRequest": {
                 "type": "object",
                 "properties": {
@@ -3763,6 +3849,15 @@
                         "type": "string",
                         "readOnly": true
                     },
+                    "link": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ChangeLink"
+                            }
+                        ],
+                        "readOnly": true,
+                        "nullable": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -3773,6 +3868,7 @@
                     "changes",
                     "created_at",
                     "id",
+                    "link",
                     "proposal",
                     "proposal_note",
                     "role",
@@ -3951,6 +4047,45 @@
                     "instructor_name",
                     "next_due",
                     "title"
+                ]
+            },
+            "CourseCalendar": {
+                "type": "object",
+                "description": "The course schedule from Learning Hub for one week: due dates (with extensions applied)\nand chapter releases. Separate from the study plan Pulse builds.",
+                "properties": {
+                    "start": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "end": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deadlines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Deadline"
+                        }
+                    },
+                    "chapters": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ChapterRelease"
+                        }
+                    },
+                    "courses": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CourseRef"
+                        }
+                    }
+                },
+                "required": [
+                    "chapters",
+                    "courses",
+                    "deadlines",
+                    "end",
+                    "start"
                 ]
             },
             "CourseRef": {
@@ -4375,6 +4510,53 @@
                 "type": "string",
                 "description": "* `student` - Student\n* `instructor` - Instructor\n* `admin` - Admin"
             },
+            "MissedDeadline": {
+                "type": "object",
+                "properties": {
+                    "assessment_id": {
+                        "type": "integer"
+                    },
+                    "course_id": {
+                        "type": "integer"
+                    },
+                    "course_code": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "late_until": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "streak_result": {
+                        "nullable": true,
+                        "description": "what it did to the streak\n\n* `frozen` - frozen\n* `missed` - missed",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/StreakResultEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/NullEnum"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "assessment_id",
+                    "course_code",
+                    "course_id",
+                    "due_at",
+                    "late_until",
+                    "streak_result",
+                    "title"
+                ]
+            },
             "Moment": {
                 "type": "object",
                 "properties": {
@@ -4523,6 +4705,11 @@
                     "quiet_end",
                     "quiet_start",
                     "sass_level"
+                ]
+            },
+            "NullEnum": {
+                "enum": [
+                    null
                 ]
             },
             "OnboardingState": {
@@ -5999,12 +6186,20 @@
                         "items": {
                             "$ref": "#/components/schemas/StreakEvent"
                         }
+                    },
+                    "missed_deadlines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MissedDeadline"
+                        },
+                        "description": "past-due work from the last 7 days; each one counts against the streak"
                     }
                 },
                 "required": [
                     "current",
                     "freezes",
                     "longest",
+                    "missed_deadlines",
                     "next_milestone",
                     "recent",
                     "toward_next_freeze",
@@ -6052,6 +6247,14 @@
                     "result",
                     "streak_after"
                 ]
+            },
+            "StreakResultEnum": {
+                "enum": [
+                    "frozen",
+                    "missed"
+                ],
+                "type": "string",
+                "description": "* `frozen` - frozen\n* `missed` - missed"
             },
             "StudyCheck": {
                 "type": "object",

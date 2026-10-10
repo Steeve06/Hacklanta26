@@ -44,6 +44,15 @@ def record_pass(check: StudyCheck) -> tuple[Streak, int | None]:
     return streak, streak.current if streak.current in MILESTONES else None
 
 
+def _spend_freeze_or_reset(streak: Streak) -> str:
+    if streak.freezes > 0:
+        streak.freezes -= 1
+        return StreakEvent.Result.FROZEN
+    streak.current = 0
+    streak.on_time_toward_freeze = 0
+    return StreakEvent.Result.MISSED
+
+
 @transaction.atomic
 def record_missed(check: StudyCheck) -> StreakEvent:
     """A check closed (or ran out of tries) without a pass: spend a freeze, else reset."""
@@ -51,13 +60,7 @@ def record_missed(check: StudyCheck) -> StreakEvent:
     existing = StreakEvent.objects.filter(study_check=check).first()
     if existing:
         return existing
-    if streak.freezes > 0:
-        streak.freezes -= 1
-        result = StreakEvent.Result.FROZEN
-    else:
-        streak.current = 0
-        streak.on_time_toward_freeze = 0
-        result = StreakEvent.Result.MISSED
+    result = _spend_freeze_or_reset(streak)
     streak.save()
     StudyCheck.objects.filter(pk=check.pk).update(resolved=True)
     return StreakEvent.objects.create(
@@ -69,13 +72,37 @@ def record_missed(check: StudyCheck) -> StreakEvent:
     )
 
 
+@transaction.atomic
+def record_missed_deadline(student, assessment_id: int, day: date) -> StreakEvent | None:
+    """Coursework that passed its due date without a submission counts like a missed check,
+    once per assessment. Returns None if it was already counted."""
+    streak = Streak.objects.select_for_update().get_or_create(student=student)[0]
+    if StreakEvent.objects.filter(student=student, assessment_id=assessment_id).exists():
+        return None
+    result = _spend_freeze_or_reset(streak)
+    streak.save()
+    return StreakEvent.objects.create(
+        student=student, assessment_id=assessment_id, day=day, result=result,
+        streak_after=streak.current,
+    )  # fmt: skip
+
+
 def sweep_student(student, now: datetime | None = None) -> list[StreakEvent]:
-    """Settle checks whose window (plus the grace period) is over without a pass."""
+    """Settle checks whose window (plus the grace period) is over without a pass, and deadlines
+    that passed without a submission."""
+    from .missed import missed_deadlines
+
     now = now or clock_now(student)
     overdue = StudyCheck.objects.filter(
         student=student, resolved=False, passed=False, closes_at__lt=now - GRACE
     )
-    return [record_missed(check) for check in overdue]
+    events = [record_missed(check) for check in overdue]
+    for row in missed_deadlines(student, now):
+        day = row["due_at"].astimezone(student.tz).date()
+        event = record_missed_deadline(student, row["assessment_id"], day)
+        if event:
+            events.append(event)
+    return events
 
 
 def open_checks(student, now: datetime):

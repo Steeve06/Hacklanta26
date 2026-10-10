@@ -54,8 +54,11 @@ def build_overload_report(
     minutes = sum(e["minutes_short"] for e in short.values())
     latest_due = max(by_key[g.task_key].deadline for g in result.shortfalls)
     first = min(short.values(), key=lambda e: e["due_at"])
-    suggestions = _urgent_suggestion(first, constraints)
-    suggestions += _capacity_suggestions(result, free, constraints, latest_due)
+    if not blocks_exist:
+        suggestions = list(_no_availability()["suggestions"])
+    else:
+        suggestions = _urgent_suggestion(first, constraints)
+        suggestions += _capacity_suggestions(result, free, constraints, latest_due)
     for entry in sorted(short.values(), key=lambda e: e["due_at"]):
         if entry["source_type"] == "assessment":
             suggestions.append(

@@ -17,6 +17,7 @@ from .onboarding import replace_availability
 from .serializers import (
     AvailabilitySerializer,
     BlackoutSerializer,
+    CourseCalendarSerializer,
     GenerateSerializer,
     PlanJobSerializer,
     ScheduleSerializer,
@@ -159,6 +160,45 @@ def _deadline(a, snapshot) -> dict:
         "weight_pct": float(a.weight_pct),
         "extended": a.extended,
     }
+
+
+class CourseCalendarView(StudentView):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("from", str, required=False, description="Local date YYYY-MM-DD")
+        ],
+        responses=CourseCalendarSerializer,
+    )
+    def get(self, request):
+        user = request.user
+        snapshot = student_snapshot(user, clock_now(user))
+        start, end = _range("week", request.query_params.get("from"), user, snapshot)
+        deadlines = [
+            _deadline(a, snapshot)
+            for a in snapshot.assessments
+            if a.status != "excused" and start <= a.due_at < end
+        ]
+        chapters = [
+            {
+                "id": ch.id,
+                "course": ch.course_id,
+                "course_code": ch.course_code,
+                "order": ch.order,
+                "title": ch.title,
+                "available_from": ch.available_from,
+                "completed": ch.completed_at is not None,
+            }
+            for ch in snapshot.chapters
+            if start <= ch.available_from < end
+        ]
+        data = {
+            "start": start,
+            "end": end,
+            "deadlines": sorted(deadlines, key=lambda d: d["due_at"]),
+            "chapters": sorted(chapters, key=lambda c: c["available_from"]),
+            "courses": [c.__dict__ for c in snapshot.courses],
+        }
+        return Response(CourseCalendarSerializer(data).data)
 
 
 class ScheduleView(StudentView):

@@ -5,7 +5,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from lms.models import Submission
-from pulse.models import Session
+from pulse.models import Schedule, Session
 from pulse.services import status
 from pulse.services.planner import plan
 
@@ -73,20 +73,35 @@ def test_missed_heavy_item_forces_at_least_medium():
     assert any("Missed" in r for r in result["overall"]["reasons"])
 
 
-def test_unresolved_overload_forces_bad():
-    student, course = student_in_course(blocks=[(0, time(19), time(19, 30))])
-    AssessmentFactory(course=course, est_minutes=400, due_at=timezone.now() + timedelta(days=2))
+def with_history(student, course):
     done = AssessmentFactory(course=course, due_at=timezone.now() - timedelta(days=2))
     Submission.objects.create(
-        assessment=done,
-        student=student,
-        status="submitted",
+        assessment=done, student=student, status="submitted",
         submitted_at=timezone.now() - timedelta(days=3),
-    )
+    )  # fmt: skip
+
+
+def test_a_tight_week_is_a_reason_not_a_bad_status():
+    student, course = student_in_course(blocks=[(0, time(19), time(19, 30))])
+    with_history(student, course)
+    AssessmentFactory(
+        course=course, title="Big essay", est_minutes=400,
+        due_at=timezone.now() + timedelta(days=2),
+    )  # fmt: skip
     plan(student, reason="test")
     result = status.compute(student)
-    assert result["overall"]["state"] == "bad"
-    assert 1 <= len(result["overall"]["reasons"]) <= 3
+    assert result["overall"]["state"] != "bad"
+    assert any("Big essay" in r and "won't fully fit" in r for r in result["overall"]["reasons"])
+
+
+def test_no_study_time_at_all_forces_bad():
+    student, course = student_in_course(blocks=[])
+    with_history(student, course)
+    AssessmentFactory(course=course, due_at=timezone.now() + timedelta(days=2))
+    plan(student, reason="test")
+    report = Schedule.objects.get(student=student, is_active=True).overload_report
+    assert report["suggestions"][0]["text"] == "Add at least one weekly study block."
+    assert status.compute(student)["overall"]["state"] == "bad"
 
 
 def test_reasons_mention_due_soon_and_not_started():

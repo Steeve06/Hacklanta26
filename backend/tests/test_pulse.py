@@ -105,19 +105,20 @@ class TestGeneration:
         assert report["extra_hours_needed"] > 0
         assert any(s["type"] == "request_extension" for s in report["suggestions"])
 
-    def test_overdue_with_open_late_window_goes_first(self):
+    def test_overdue_work_is_left_out_of_the_plan(self):
         student = make_student()
         course = CourseFactory()
         enroll(student, course)
         now = timezone.now()
-        late = AssessmentFactory(course=course, est_minutes=30, weight_pct=5,
+        late = AssessmentFactory(course=course, est_minutes=30, weight_pct=5, title="Late one",
                                  due_at=now - timedelta(hours=3), cutoff_at=now + timedelta(days=2))  # fmt: skip
         AssessmentFactory(
             course=course, est_minutes=30, weight_pct=30, due_at=now + timedelta(days=3)
         )
         schedule = plan(student, reason="test")
-        first = schedule.sessions.order_by("start").first()
-        assert first.task.source_id == late.id
+        assert not schedule.sessions.filter(task__source_id=late.id).exists()
+        assert schedule.overload_report is None
+        assert "Late one is past due" in schedule.summary
 
     def test_overdue_with_closed_window_is_excluded_and_noted(self):
         student = make_student()
@@ -341,3 +342,25 @@ def test_availability_merges_overlaps_and_validates_length():
     assert bad.status_code == 400
     backwards = {"blocks": [{"weekday": 0, "start_time": "18:00", "end_time": "17:00"}]}
     assert client.put("/api/v1/pulse/availability", backwards, format="json").status_code == 400
+
+
+class TestCourseCalendar:
+    def test_week_of_due_dates_and_chapter_releases(self, setup):
+        student, course, chapter, homework = setup
+        local = homework.due_at.astimezone(student.tz).date()
+        data = client_for(student).get(f"/api/v1/pulse/course-calendar?from={local}").data
+        assert [d["id"] for d in data["deadlines"]] == [homework.id]
+        assert data["courses"][0]["code"] == course.code
+        future = ChapterFactory(course=course, available_from=homework.due_at)
+        data = client_for(student).get(f"/api/v1/pulse/course-calendar?from={local}").data
+        assert future.id in [c["id"] for c in data["chapters"]]
+
+    def test_extensions_move_the_due_date(self, setup):
+        from lms.models import DueDateOverride
+
+        student, _, _, homework = setup
+        later = homework.due_at + timedelta(days=14)
+        DueDateOverride.objects.create(assessment=homework, student=student, due_at=later)
+        local = later.astimezone(student.tz).date()
+        data = client_for(student).get(f"/api/v1/pulse/course-calendar?from={local}").data
+        assert data["deadlines"][0]["extended"] is True

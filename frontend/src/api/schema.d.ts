@@ -773,6 +773,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pulse/course-calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_pulse_course_calendar_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pulse/jobs/{job_id}": {
         parameters: {
             query?: never;
@@ -1141,6 +1157,10 @@ export interface components {
             explanation: string;
             source_excerpt: string;
         };
+        ChangeLink: {
+            to: string;
+            label: string;
+        };
         ChapterDetail: {
             readonly id: number;
             readonly order: number;
@@ -1174,6 +1194,16 @@ export interface components {
             order: number;
             title: string;
         };
+        ChapterRelease: {
+            id: number;
+            course: number;
+            course_code: string;
+            order: number;
+            title: string;
+            /** Format: date-time */
+            available_from: string;
+            completed: boolean;
+        };
         ChapterWriteRequest: {
             order: number;
             title: string;
@@ -1192,6 +1222,7 @@ export interface components {
             readonly changes: components["schemas"]["ProposedChange"][];
             readonly proposal: components["schemas"]["ProposalEnum"];
             readonly proposal_note: string;
+            readonly link: components["schemas"]["ChangeLink"] | null;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -1243,6 +1274,19 @@ export interface components {
             readonly chapters_total: number;
             readonly chapters_completed: number;
             readonly next_due: components["schemas"]["NextDue"] | null;
+        };
+        /**
+         * @description The course schedule from Learning Hub for one week: due dates (with extensions applied)
+         *     and chapter releases. Separate from the study plan Pulse builds.
+         */
+        CourseCalendar: {
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            deadlines: components["schemas"]["Deadline"][];
+            chapters: components["schemas"]["ChapterRelease"][];
+            courses: components["schemas"]["CourseRef"][];
         };
         CourseRef: {
             id: number;
@@ -1359,6 +1403,23 @@ export interface components {
          * @enum {string}
          */
         MeRoleEnum: "student" | "instructor" | "admin";
+        MissedDeadline: {
+            assessment_id: number;
+            course_id: number;
+            course_code: string;
+            title: string;
+            /** Format: date-time */
+            due_at: string;
+            /** Format: date-time */
+            late_until: string | null;
+            /**
+             * @description what it did to the streak
+             *
+             *     * `frozen` - frozen
+             *     * `missed` - missed
+             */
+            streak_result: (components["schemas"]["StreakResultEnum"] | components["schemas"]["NullEnum"]) | null;
+        };
         Moment: {
             kind: components["schemas"]["MomentKindEnum"];
             key: string;
@@ -1401,6 +1462,8 @@ export interface components {
             /** Format: time */
             quiet_end: string;
         };
+        /** @enum {unknown} */
+        NullEnum: null;
         OnboardingState: {
             step: number;
             completed_steps: number[];
@@ -1830,6 +1893,8 @@ export interface components {
             next_milestone: number | null;
             week: components["schemas"]["StreakDay"][];
             recent: components["schemas"]["StreakEvent"][];
+            /** @description past-due work from the last 7 days; each one counts against the streak */
+            missed_deadlines: components["schemas"]["MissedDeadline"][];
         };
         StreakDay: {
             /** Format: date */
@@ -1844,6 +1909,12 @@ export interface components {
             /** Format: date-time */
             created_at: string;
         };
+        /**
+         * @description * `frozen` - frozen
+         *     * `missed` - missed
+         * @enum {string}
+         */
+        StreakResultEnum: "frozen" | "missed";
         StudyCheck: {
             readonly id: number;
             readonly title: string;
@@ -3409,6 +3480,28 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    v1_pulse_course_calendar_retrieve: {
+        parameters: {
+            query?: {
+                /** @description Local date YYYY-MM-DD */
+                from?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseCalendar"];
+                };
             };
         };
     };

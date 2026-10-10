@@ -280,5 +280,29 @@ def _apply(student, data: dict) -> None:
     transaction.on_commit(lambda: start_generate_job(student, data["note"]))
 
 
+def link_for(student, data: dict) -> dict:
+    """Where the student can see a change once it's applied. Worked out before applying, since
+    re-planning replaces the session rows."""
+    kind = data["type"]
+    tz = student.tz
+    moment = None
+    if kind in SESSION_ACTIONS:
+        if data.get("start"):
+            moment = parse_local(data["start"], tz)
+        else:
+            session = Session.objects.filter(pk=data["session_id"]).first()
+            moment = session.start if session else None
+    elif kind == "block_time":
+        moment = parse_local(data["start"], tz)
+    if kind == "set_day_availability":
+        return {"to": "/settings#availability", "label": "See your study time"}
+    if kind == "set_limits":
+        return {"to": "/settings#preferences", "label": "See your study preferences"}
+    if moment is not None:
+        day = moment.astimezone(tz).date().isoformat()
+        return {"to": f"/pulse/week?from={day}", "label": "See it in your week"}
+    return {"to": "/pulse/week", "label": "See your new plan"}
+
+
 def describe_rejection(exc: Exception) -> str:
     return str(exc) if isinstance(exc, Rejected | DRFError) else "Something went wrong."

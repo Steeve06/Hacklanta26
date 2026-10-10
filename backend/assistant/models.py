@@ -44,6 +44,7 @@ class ChatMessage(TimeStamped):
     proposal = models.CharField(max_length=10, choices=Proposal.choices, default=Proposal.NONE)
     proposal_note = models.CharField(max_length=300, blank=True)
     used_ai = models.BooleanField(default=False)
+    link = models.JSONField(null=True, blank=True, help_text="where to see an applied change")
 
     class Meta:
         ordering = ["created_at", "id"]

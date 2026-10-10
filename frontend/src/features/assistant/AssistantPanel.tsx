@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { errorMessage } from "@/api/client";
 import { Icon } from "@/components/Icon";
 import { Button, ErrorState, Spinner } from "@/components/ui";
@@ -81,7 +82,7 @@ function Chat({ onClose }: { onClose: () => void }) {
         ) : conversation.isPending ? (
           <LoadingLine label="Loading your conversation…" />
         ) : (
-          <Messages messages={messages} />
+          <Messages messages={messages} onLeave={onClose} />
         )}
       </div>
       <Composer
@@ -103,7 +104,7 @@ function LoadingLine({ label }: { label: string }) {
   );
 }
 
-function Messages({ messages }: { messages: ChatMessage[] }) {
+function Messages({ messages, onLeave }: { messages: ChatMessage[]; onLeave: () => void }) {
   const end = useRef<HTMLDivElement>(null);
   const last = messages.at(-1);
   useEffect(() => {
@@ -132,7 +133,7 @@ function Messages({ messages }: { messages: ChatMessage[] }) {
             {m.text}
           </p>
         ) : (
-          <Reply key={m.id} message={m} />
+          <Reply key={m.id} message={m} onLeave={onLeave} />
         ),
       )}
       <div ref={end} />
@@ -140,7 +141,7 @@ function Messages({ messages }: { messages: ChatMessage[] }) {
   );
 }
 
-function Reply({ message }: { message: ChatMessage }) {
+function Reply({ message, onLeave }: { message: ChatMessage; onLeave: () => void }) {
   if (message.state === "pending") return <LoadingLine label="Thinking…" />;
   return (
     <div className="mr-8 flex flex-col gap-2">
@@ -148,12 +149,14 @@ function Reply({ message }: { message: ChatMessage }) {
         <span className="sr-only">Pulse: </span>
         {message.text}
       </p>
-      {message.changes.length > 0 && <Proposal message={message} />}
+      {message.changes.length > 0 && <Proposal message={message} onLeave={onLeave} />}
     </div>
   );
 }
 
-function Proposal({ message }: { message: ChatMessage }) {
+/** Once a change is applied, the panel closes and opens the page where it shows. */
+function Proposal({ message, onLeave }: { message: ChatMessage; onLeave: () => void }) {
+  const navigate = useNavigate();
   const confirm = useConfirmChanges();
   const decline = useDeclineChanges();
   const busy = confirm.isPending || decline.isPending;
@@ -175,7 +178,15 @@ function Proposal({ message }: { message: ChatMessage }) {
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
             size="sm"
-            onClick={() => confirm.mutate(message.id)}
+            onClick={() =>
+              confirm.mutate(message.id, {
+                onSuccess: (applied) => {
+                  if (applied.proposal !== "applied" || !applied.link) return;
+                  onLeave();
+                  navigate(applied.link.to);
+                },
+              })
+            }
             pending={confirm.isPending}
             pendingLabel="Applying…"
             disabled={busy}
@@ -197,18 +208,25 @@ function Proposal({ message }: { message: ChatMessage }) {
           {errorMessage(error)}
         </p>
       )}
-      <ProposalOutcome message={message} />
+      <ProposalOutcome message={message} onLeave={onLeave} />
     </section>
   );
 }
 
-function ProposalOutcome({ message }: { message: ChatMessage }) {
+function ProposalOutcome({ message, onLeave }: { message: ChatMessage; onLeave: () => void }) {
   if (message.proposal === "applied")
     return (
-      <p className="mt-2 flex items-center gap-1 text-sm font-bold text-pine-strong">
-        <Icon name="check" className="h-4 w-4" />
-        Applied. Your schedule updates in a few seconds.
-      </p>
+      <div className="mt-2 flex flex-col gap-1 text-sm">
+        <p className="flex items-center gap-1 font-bold text-pine-strong">
+          <Icon name="check" className="h-4 w-4" />
+          Applied. Your schedule updates in a few seconds.
+        </p>
+        {message.link && (
+          <Link to={message.link.to} onClick={onLeave} className="font-bold text-pine underline">
+            {message.link.label}
+          </Link>
+        )}
+      </div>
     );
   if (message.proposal === "declined")
     return <p className="mt-2 text-sm text-ink-soft">{message.proposal_note || "Not applied."}</p>;

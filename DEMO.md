@@ -52,7 +52,7 @@ Sign in as **maya@pulse.test** (6-check streak). Open **Quiz**: she has a study 
 Still as Maya, click **Ask Pulse** in the sidebar.
 
 - Send "I'm busy tomorrow evening". The reply shows the change it would make ("Keep ... free (Busy)"). Nothing has moved yet: check **Week**.
-- Press **Confirm**. Within a few seconds the evening is empty in **Week** and its sessions have moved to other free time.
+- Press **Confirm**. The chat closes and opens **Week** at that day; within a few seconds the evening is empty and its sessions have moved to other free time.
 - Send "Keep Sundays free", then **Not now**: nothing changes. **Start over** clears the chat.
 
 ## 7. An instructor extension

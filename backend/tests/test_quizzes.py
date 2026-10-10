@@ -448,3 +448,53 @@ def test_progress_marks_and_streak_status_component(setup):
     from quizzes.services.streaks import streak_component
 
     assert streak_component(student, datetime.now(tz=NY))[0] == 1.0
+
+
+class TestMissedDeadlines:
+    def test_a_missed_deadline_spends_a_freeze_then_resets_once_each(self, setup):
+        from .factories import AssessmentFactory
+
+        student, course, _ = setup
+        now = timezone.now()
+        late = AssessmentFactory(course=course, title="Late essay",
+                                 due_at=now - timedelta(hours=5), cutoff_at=now + timedelta(days=1))  # fmt: skip
+        AssessmentFactory(course=course, title="Ancient", due_at=now - timedelta(days=20))
+        Streak.objects.update_or_create(student=student, defaults={"current": 4, "freezes": 1})
+        client = client_for(student)
+
+        data = client.get("/api/v1/streak").data
+        assert [m["title"] for m in data["missed_deadlines"]] == ["Late essay"]
+        assert data["missed_deadlines"][0]["late_until"] is not None
+        assert data["missed_deadlines"][0]["streak_result"] == "frozen"
+        assert (data["current"], data["freezes"]) == (4, 0)
+
+        again = client.get("/api/v1/streak").data
+        assert (again["current"], again["freezes"]) == (4, 0)
+
+        AssessmentFactory(course=course, title="Quiz 3", due_at=now - timedelta(hours=1))
+        reset = client.get("/api/v1/streak").data
+        assert reset["current"] == 0
+        assert {m["title"]: m["streak_result"] for m in reset["missed_deadlines"]} == {
+            "Late essay": "frozen",
+            "Quiz 3": "missed",
+        }
+        assert late.pk in StreakEvent.objects.filter(student=student).values_list(
+            "assessment_id", flat=True
+        )
+
+    def test_excused_and_extended_work_does_not_count(self, setup):
+        from lms.models import DueDateOverride, Submission
+
+        from .factories import AssessmentFactory
+
+        student, course, _ = setup
+        now = timezone.now()
+        excused = AssessmentFactory(course=course, due_at=now - timedelta(hours=2))
+        Submission.objects.create(assessment=excused, student=student, status="excused")
+        extended = AssessmentFactory(course=course, due_at=now - timedelta(hours=2))
+        DueDateOverride.objects.create(
+            assessment=extended, student=student, due_at=now + timedelta(days=2)
+        )
+        Streak.objects.update_or_create(student=student, defaults={"current": 3})
+        data = client_for(student).get("/api/v1/streak").data
+        assert data["missed_deadlines"] == [] and data["current"] == 3

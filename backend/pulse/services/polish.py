@@ -42,7 +42,7 @@ def template_summary(inventory: Inventory, specs, result: SolveResult, overload,
         parts.append("A few deadlines are close, so those sessions come first.")
     for excluded in inventory.excluded[:2]:
         parts.append(
-            f"{excluded.course_code} {excluded.title} is past its cut-off, so it's not in the plan."
+            f"{excluded.course_code} {excluded.title} is past due, so it's not in the plan."
         )
     return " ".join(parts)
 

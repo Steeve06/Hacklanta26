@@ -3,6 +3,7 @@ import { Card, QueryView, Skeleton } from "@/components/ui";
 import { formatExact, useTimezone } from "@/lib/time";
 import { useChecks, useStreak, type Check } from "./api";
 import { OpenCheckRow } from "./CheckRow";
+import { MissedDeadlines } from "./MissedDeadlines";
 import { formatPlainDay } from "./plainDay";
 import { StreakBadge, WeekStrip } from "./StreakBadge";
 
@@ -50,9 +51,11 @@ export function QuizHubPage() {
               </div>
               <WeekStrip week={data.week} />
               <p className="text-xs text-ink-soft">
-                Every 5 checks in a row earns a freeze (up to 2). A freeze covers a check you miss.
-                Days without a check don&apos;t count either way.
+                Every 5 checks in a row earns a freeze (up to 2). A freeze covers a missed check or
+                a deadline that passes without a submission. Days without a check don&apos;t count
+                either way.
               </p>
+              <MissedDeadlines items={data.missed_deadlines} />
             </div>
           )}
         </QueryView>

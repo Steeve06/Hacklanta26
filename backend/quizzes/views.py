@@ -16,6 +16,7 @@ from .serializers import (
     StudyCheckSerializer,
 )
 from .services.checks import answer, start_attempt
+from .services.missed import missed_deadlines
 from .services.streaks import FREEZE_EVERY, MILESTONES, get_streak, sweep_student, week_of
 
 CHAPTERS = Prefetch("chapters", queryset=Chapter.objects.select_related("course"))
@@ -105,6 +106,7 @@ class StreakView(APIView):
                     "next_milestone": upcoming[0] if upcoming else None,
                     "week": week_of(request.user, now),
                     "recent": StreakEvent.objects.filter(student=request.user)[:10],
+                    "missed_deadlines": missed_deadlines(request.user, now),
                 }
             ).data
         )

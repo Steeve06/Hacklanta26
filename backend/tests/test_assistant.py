@@ -91,6 +91,11 @@ class TestConversation:
 
         done = client.post(f"{URL}/messages/{reply['id']}/confirm")
         assert done.status_code == 200 and done.data["proposal"] == "applied"
+        day = target.start.astimezone(student.tz).date().isoformat()
+        assert done.data["link"] == {
+            "to": f"/pulse/week?from={day}",
+            "label": "See it in your week",
+        }
         target.refresh_from_db()
         assert target.status == "skipped"
         again = client.post(f"{URL}/messages/{reply['id']}/confirm")
@@ -304,3 +309,8 @@ class TestFallbackLimits:
         with django_capture_on_commit_callbacks(execute=True):
             actions.apply_all(student, [actions.check(student, result.actions[0]).data])
         assert Schedule.objects.get(student=student, is_active=True).version > before
+
+
+def test_settings_changes_link_to_settings(student):
+    data = actions.check(student, {"type": "set_limits", "max_hours_per_week": 12}).data
+    assert actions.link_for(student, data)["to"] == "/settings#preferences"
