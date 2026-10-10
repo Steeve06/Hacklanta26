@@ -66,7 +66,7 @@ class AvailabilitySerializer(serializers.Serializer):
 
     def validate_blocks(self, blocks):
         if len(blocks) > 50:
-            raise serializers.ValidationError("That's more blocks than Pulse can use.")
+            raise serializers.ValidationError("That's more blocks than Leon can use.")
         return blocks
 
 
@@ -159,14 +159,23 @@ class ChapterReleaseSerializer(serializers.Serializer):
     completed = serializers.BooleanField()
 
 
+class ClassTimeSerializer(serializers.Serializer):
+    course = serializers.IntegerField()
+    course_code = serializers.CharField()
+    start = serializers.DateTimeField()
+    end = serializers.DateTimeField()
+    location = serializers.CharField()
+
+
 class CourseCalendarSerializer(serializers.Serializer):
-    """The course schedule from Learning Hub for one week: due dates (with extensions applied)
-    and chapter releases. Separate from the study plan Pulse builds."""
+    """The course schedule from Learning Hub for one week: class meetings, due dates (with
+    extensions applied) and chapter releases. Separate from the study plan Leon builds."""
 
     start = serializers.DateTimeField()
     end = serializers.DateTimeField()
     deadlines = DeadlineSerializer(many=True)
     chapters = ChapterReleaseSerializer(many=True)
+    classes = ClassTimeSerializer(many=True)
     courses = CourseRefSerializer(many=True)
 
 

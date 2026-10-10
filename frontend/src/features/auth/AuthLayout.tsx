@@ -17,7 +17,7 @@ export function AuthLayout({
       <main className="mx-auto grid min-h-dvh max-w-5xl items-center gap-8 px-4 py-10 md:grid-cols-[1fr_minmax(0,26rem)] md:gap-10 md:px-8">
         <div className="flex flex-col gap-4">
           <MascotStill mood="good" size={96} />
-          <p className="font-display text-3xl font-extrabold">Pulse</p>
+          <p className="font-display text-3xl font-extrabold">Leon</p>
           <p className="max-w-md text-lg text-ink-soft">
             Your courses, your deadlines and one very invested study buddy who will notice if you
             skip.

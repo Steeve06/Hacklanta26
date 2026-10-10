@@ -25,6 +25,6 @@ describe("redirects", () => {
     expect(safeNext("https://evil.example")).toBeNull();
     expect(safeNext("//evil.example")).toBeNull();
     expect(safeNext("/login")).toBeNull();
-    expect(safeNext("/pulse/quiz/3")).toBe("/pulse/quiz/3");
+    expect(safeNext("/pulse/checks/3")).toBe("/pulse/checks/3");
   });
 });

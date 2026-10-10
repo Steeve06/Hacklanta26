@@ -13,12 +13,16 @@ const TYPE_LABEL: Record<string, string> = {
 };
 const DONE = new Set(["submitted", "graded"]);
 
+type ClassTime = CourseCalendar["classes"][number];
+
 type Entry =
+  | { kind: "class"; at: string; meeting: ClassTime }
   | { kind: "due"; at: string; deadline: Deadline }
   | { kind: "chapter"; at: string; chapter: ChapterRelease };
 
 function entriesByDay(data: CourseCalendar, tz: string): Map<string, Entry[]> {
   const entries: Entry[] = [
+    ...data.classes.map((c): Entry => ({ kind: "class", at: c.start, meeting: c })),
     ...data.deadlines.map((d): Entry => ({ kind: "due", at: d.due_at, deadline: d })),
     ...data.chapters.map((c): Entry => ({ kind: "chapter", at: c.available_from, chapter: c })),
   ].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
@@ -30,8 +34,8 @@ function entriesByDay(data: CourseCalendar, tz: string): Map<string, Entry[]> {
   return map;
 }
 
-/** The course schedule from Learning Hub: due dates (with any extension) and chapter releases.
- * It shows what the courses expect, not the study plan. */
+/** The course schedule from Learning Hub: class meetings, due dates (with any extension) and
+ * chapter releases. It shows what the courses expect, not the study plan. */
 export function CourseCalendarView({ monday, days }: { monday: string; days: string[] }) {
   const calendar = useCourseCalendar(monday);
   return (
@@ -80,8 +84,10 @@ function Calendar({ data, days }: { data: CourseCalendar; days: string[] }) {
             </h2>
             <ul className="flex flex-col gap-2">
               {entries.map((e) => (
-                <li key={`${e.kind}-${e.kind === "due" ? e.deadline.id : e.chapter.id}`}>
-                  {e.kind === "due" ? (
+                <li key={`${e.kind}-${e.at}-${entryId(e)}`}>
+                  {e.kind === "class" ? (
+                    <ClassItem meeting={e.meeting} data={data} />
+                  ) : e.kind === "due" ? (
                     <DueItem deadline={e.deadline} data={data} now={now} />
                   ) : (
                     <ChapterItem chapter={e.chapter} data={data} />
@@ -92,6 +98,27 @@ function Calendar({ data, days }: { data: CourseCalendar; days: string[] }) {
           </section>
         );
       })}
+    </div>
+  );
+}
+
+function entryId(e: Entry): number {
+  if (e.kind === "class") return e.meeting.course;
+  return e.kind === "due" ? e.deadline.id : e.chapter.id;
+}
+
+function ClassItem({ meeting, data }: { meeting: ClassTime; data: CourseCalendar }) {
+  const tz = useTimezone();
+  const course = courseLookup(data)(meeting.course);
+  return (
+    <div
+      className="rounded-md px-2 py-1.5 text-sm text-white md:text-xs"
+      style={{ backgroundColor: course.color }}
+    >
+      <span className="block font-bold">
+        {course.code} class · {formatTime(meeting.start, tz)}–{formatTime(meeting.end, tz)}
+      </span>
+      {meeting.location && <span className="block opacity-90">{meeting.location}</span>}
     </div>
   );
 }

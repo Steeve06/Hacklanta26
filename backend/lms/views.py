@@ -69,6 +69,7 @@ class CourseListView(APIView):
         courses = list(
             visible_courses(user)
             .select_related("instructor")
+            .prefetch_related("meetings")
             .annotate(
                 chapters_total=Count("chapters", distinct=True),
                 chapters_completed=Count(
@@ -118,6 +119,7 @@ class CourseDetailView(APIView):
         course = (
             type(course)
             .objects.select_related("instructor")
+            .prefetch_related("meetings")
             .annotate(
                 chapters_total=Count("chapters", distinct=True),
                 chapters_completed=Count(
@@ -498,7 +500,7 @@ class SyllabusView(APIView):
         course = get_course(request.user, course_id)
         syllabus = (
             Syllabus.objects.select_related("course__instructor")
-            .prefetch_related("weeks__chapters")
+            .prefetch_related("weeks__chapters", "course__meetings")
             .filter(course=course)
             .first()
         )

@@ -14,16 +14,18 @@ type NavItem = {
   icon: IconName;
   end?: boolean;
   mobile?: boolean;
+  /** Label in the phone's bottom bar, where space is tight. */
+  short?: string;
   external?: boolean;
 };
 
 const studentNav: NavItem[] = [
   { to: "/pulse/today", label: "Today", icon: "today", mobile: true },
   { to: "/pulse/week", label: "Week", icon: "week", mobile: true },
-  { to: "/pulse/overall", label: "Overall", icon: "overall" },
-  { to: "/pulse/quiz", label: "Quiz", icon: "quiz", mobile: true },
+  { to: "/pulse/checks", label: "Study checks", short: "Checks", icon: "quiz", mobile: true },
+  { to: "/pulse/leaderboard", label: "Leaderboard", short: "Ranks", icon: "trophy", mobile: true },
   { to: "/lms", label: "Courses", icon: "courses", mobile: true },
-  { to: "/settings", label: "Settings", icon: "settings", mobile: true },
+  { to: "/settings", label: "Settings", icon: "settings" },
 ];
 
 const instructorNav: NavItem[] = [
@@ -63,7 +65,7 @@ export function AppShell() {
       </a>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-surface md:flex">
         <div className="flex shrink-0 items-center justify-between px-5 py-5">
-          <span className="font-display text-2xl font-extrabold text-pine">Pulse</span>
+          <span className="font-display text-2xl font-extrabold text-pine">Leon</span>
           {isStudent && <InboxLink />}
         </div>
         <nav aria-label="Main" className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
@@ -92,7 +94,7 @@ export function AppShell() {
               className="mt-4 flex min-h-11 w-full items-center gap-3 rounded-md border border-line px-3 font-bold text-ink hover:bg-sunken"
             >
               <Icon name="chat" />
-              Ask Pulse
+              Ask Leon
             </button>
           )}
         </nav>
@@ -110,7 +112,7 @@ export function AppShell() {
       </aside>
 
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-surface/95 px-4 py-2 backdrop-blur md:hidden">
-        <span className="font-display text-xl font-extrabold text-pine">Pulse</span>
+        <span className="font-display text-xl font-extrabold text-pine">Leon</span>
         <div className="flex items-center">
           {canAsk && (
             <button
@@ -119,10 +121,23 @@ export function AppShell() {
               aria-haspopup="dialog"
               className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md hover:bg-sunken"
             >
-              <Icon name="chat" label="Ask Pulse" />
+              <Icon name="chat" label="Ask Leon" />
             </button>
           )}
           {isStudent && <InboxLink />}
+          {isStudent && (
+            <NavLink
+              to="/settings"
+              className={({ isActive }) =>
+                cx(
+                  "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md hover:bg-sunken",
+                  isActive && "text-pine",
+                )
+              }
+            >
+              <Icon name="settings" label="Settings" />
+            </NavLink>
+          )}
         </div>
       </header>
 
@@ -140,6 +155,7 @@ export function AppShell() {
             .map((item) => (
               <li key={item.to} className="flex-1">
                 <NavEntry
+                  compact
                   item={item}
                   className={(isActive) =>
                     cx(
@@ -161,21 +177,24 @@ export function AppShell() {
 function NavEntry({
   item,
   className,
+  compact = false,
 }: {
   item: NavItem;
   className: (isActive: boolean) => string;
+  compact?: boolean;
 }) {
+  const label = compact ? (item.short ?? item.label) : item.label;
   if (item.external)
     return (
       <a href={item.to} className={className(false)}>
         <Icon name={item.icon} />
-        {item.label}
+        {label}
       </a>
     );
   return (
     <NavLink to={item.to} end={item.end} className={({ isActive }) => className(isActive)}>
       <Icon name={item.icon} />
-      {item.label}
+      {label}
     </NavLink>
   );
 }

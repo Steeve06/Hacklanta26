@@ -4,6 +4,7 @@ import { DueTime } from "@/components/Time";
 import { useMe } from "@/features/auth/hooks";
 import { CourseMoodBadge } from "@/features/pulse/CourseMoodBadge";
 import { useCourses, type Course } from "./api";
+import { meetingLines } from "./meetings";
 import { typeLabels } from "./labels";
 
 export function CourseListPage() {
@@ -54,6 +55,11 @@ function CourseRow({ course, showMood }: { course: Course; showMood: boolean }) 
           <p className="text-sm font-bold text-ink-soft">{course.code}</p>
           <h2 className="text-lg font-bold group-hover:underline">{course.title}</h2>
           <p className="text-sm text-ink-soft">{course.instructor_name}</p>
+          {meetingLines(course.meetings).map((line) => (
+            <p key={line} className="text-sm">
+              {line}
+            </p>
+          ))}
         </div>
         {showMood && <CourseMoodBadge courseId={course.id} />}
       </div>

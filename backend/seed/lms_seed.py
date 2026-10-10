@@ -16,6 +16,7 @@ from lms.models import (
     Chapter,
     ChapterProgress,
     Course,
+    CourseMeeting,
     DiscussionPost,
     DueDateOverride,
     Enrollment,
@@ -30,7 +31,7 @@ from lms.models import (
 from . import catalog
 
 CONTENT_DIR = Path(__file__).parent / "content"
-CAMPUS_TZ = ZoneInfo("America/New_York")
+CAMPUS_TZ = ZoneInfo(settings.CAMPUS_TIMEZONE)
 PASSWORD = "pulse-demo"
 TERM_WEEKS = 15
 STUDY_WORDS_PER_MINUTE = 70
@@ -146,6 +147,16 @@ def build_course(term: Term, start: date, spec: dict, students: list[User]) -> C
         color=spec["color"],
     )
     Enrollment.objects.create(user=instructor, course=course, role=Enrollment.Role.INSTRUCTOR)
+    CourseMeeting.objects.bulk_create(
+        CourseMeeting(
+            course=course,
+            weekday=day,
+            start_time=time.fromisoformat(begins),
+            end_time=time.fromisoformat(ends),
+            location=room,
+        )  # fmt: skip
+        for day, begins, ends, room in spec["meetings"]
+    )
     Enrollment.objects.bulk_create(Enrollment(user=s, course=course) for s in students)
 
     chapters = []

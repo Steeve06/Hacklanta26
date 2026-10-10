@@ -48,7 +48,7 @@ function Chat({ onClose }: { onClose: () => void }) {
     <div className="flex h-full flex-col">
       <header className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
         <h2 id="assistant-title" className="font-display text-lg font-bold">
-          Ask Pulse
+          Ask Leon
         </h2>
         <div className="flex items-center gap-1">
           {messages.length > 0 && (
@@ -146,7 +146,7 @@ function Reply({ message, onLeave }: { message: ChatMessage; onLeave: () => void
   return (
     <div className="mr-8 flex flex-col gap-2">
       <p className={cx("whitespace-pre-wrap", message.state === "failed" && "text-ink-soft")}>
-        <span className="sr-only">Pulse: </span>
+        <span className="sr-only">Leon: </span>
         {message.text}
       </p>
       {message.changes.length > 0 && <Proposal message={message} onLeave={onLeave} />}

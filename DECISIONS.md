@@ -56,7 +56,7 @@ Choices made where the build prompt left room, with the reason for each.
 - **"Unresolved overload" means any item in the overload report.** If adding hours or getting an extension would fix it, the student still needs to act, so the mascot stays in the bad state until the plan fits.
 - **No sessions yet = full adherence.** A student with no past sessions isn't penalised for adherence, and a student with no history at all is shown as good with the fresh-start moment.
 - **One-shot moments come from the server** (`celebrate` after an on-time submission in the last 15 minutes, `gasp` when something is due within 3 hours, `fresh_start` for new students) with a stable key, and the browser remembers which keys it has already played in session storage.
-- **Mascot animations are generated, not hand-exported.** `frontend/scripts/make_mascot.py` writes small Lottie files (4–19 KB). They play through lottie-react's light build, loaded lazily, and fall back to a static SVG while loading or when reduced motion is on.
+- **Leon is seven pictures, moved in code.** The team's chameleon art (calm, nudge, started, voice note, disappointed, breakup, redemption) is cropped and saved as 384 px WebP (25–40 KB each). Moods map to calm (good), disappointed (medium) and voice note (bad); moments to redemption (celebrate), breakup (gasp) and started (fresh start). Framer Motion adds a slow loop per mood and a one-off move per moment; with reduced motion it's the still picture. The reminder-style preview uses calm, nudge, disappointed and voice note for levels 1 to 4. Lottie is gone.
 
 ## Notifications
 
@@ -85,11 +85,18 @@ Choices made where the build prompt left room, with the reason for each.
 - **Missed deadlines count against the streak.** Coursework that passes its due date without a submission settles once per assessment, like a missed check: it spends a freeze, otherwise resets the streak. Excused work and work with an extension (which moves the due date) don't count; submitting late afterwards doesn't undo it. Misses from the last 7 days are listed under the streak with what they did and, while the late window is open, a link to submit. The sweep runs every 10 minutes and whenever the streak is shown.
 - **Streak rules:** consecutive checks passed inside their windows (15 minutes of grace after the close). A missed check spends a freeze (1 earned per 5 passes, 2 max) or resets the streak. Days without a check don't count either way. Milestones at 3, 7, 14, 30, 50 and 100.
 
+## Leon
+
+- **The app is called Leon**, after the chameleon mascot. Everything users see says Leon; code modules (`pulse`, `features/pulse`) and the `/pulse/...` web addresses keep their names so links and imports don't break.
+- **Learning quizzes are "study checks" everywhere,** including the tab and the address (`/pulse/checks`; old `/pulse/quiz` links redirect). "Quiz" now only means a graded course quiz in Learning Hub.
+- **Leaderboard has its own tab, in place of Overall.** It shows the student's rank, weekly XP, streak and next milestone above the board. The study checks page is back to streak, open, coming up and past. The term overview is still there, linked from Week.
+- **Fixed class times.** Each course has weekly meetings (`CourseMeeting`: weekday, start, end, room) in the campus time zone. They're expanded to real moments within the term, shown on course cards, the syllabus and the course calendar, and treated as busy by the planner and by chat moves. Demo times avoid each other and the instructors' office hours.
+
 ## Two calendars
 
-- **Week has two tabs.** *Study plan* is the schedule Pulse builds. *Course calendar* is what the courses set: due dates (with any extension) and chapter release dates from Learning Hub. Learning Hub has no class meeting times, so there are none to show.
+- **Week has two tabs.** *Study plan* is the schedule Leon builds. *Course calendar* is what the courses set: due dates (with any extension) and chapter release dates from Learning Hub. Learning Hub has no class meeting times, so there are none to show.
 
-## Ask Pulse (the chat)
+## Ask Leon (the chat)
 
 - **After Confirm, go to the change.** The panel closes and opens where the change shows: the week containing the session or busy time, or the study time or preferences section of Settings.
 - **Suggest, then confirm.** The chat never changes anything on its own. A reply can carry a list of changes; the student presses **Confirm** or **Not now**. A newer suggestion replaces an older one that wasn't answered.

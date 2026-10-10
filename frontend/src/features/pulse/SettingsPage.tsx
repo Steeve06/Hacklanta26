@@ -165,7 +165,7 @@ function AvailabilityForm({ initial }: { initial: AvailabilityBlock[] }) {
       </details>
       {blocks.length === 0 && (
         <p className="text-sm font-bold text-berry">
-          With no study time, Pulse can't plan anything.
+          With no study time, Leon can't plan anything.
         </p>
       )}
       <Button
@@ -271,7 +271,7 @@ function RegenerateSection({ feedback: saved }: { feedback: string }) {
         Rebuild your schedule
       </h2>
       <p className="mb-3 text-sm text-ink-soft">
-        Pulse re-plans automatically when things change. Rebuild if you want a fresh start or
+        Leon re-plans automatically when things change. Rebuild if you want a fresh start or
         different emphasis.
       </p>
       {running && current ? (

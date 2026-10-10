@@ -4,7 +4,7 @@ About 10 minutes. It follows the acceptance criteria in the build brief.
 
 **Before you start:** run `make demo` (or `python manage.py seed_demo`) to reset the data. This also clears any time-travel. Use one normal browser window for students and a private window for the admin and instructor, so you can stay signed in to both. All passwords are `pulse-demo`.
 
-**Optional opener: a new student.** Click **Create an account** on the sign-in page, sign up, and go through the five onboarding steps: courses, study time on the grid, preferences, reminder style with its live sample, then the schedule Pulse builds. Press **Looks good** to land on Today. (Or sign in as `casey@pulse.test`, who stopped at step 3.)
+**Optional opener: a new student.** Click **Create an account** on the sign-in page, sign up, and go through the five onboarding steps: courses, study time on the grid, preferences, reminder style with its live sample, then the schedule Leon builds. Press **Looks good** to land on Today. (Or sign in as `casey@pulse.test`, who stopped at step 3.)
 
 ## 1. A student who is badly behind
 
@@ -41,20 +41,24 @@ Sign in as **sam@pulse.test**. Go to **Courses > CS 201 > Assignments > Problem 
 
 ## 6. A study check keeps the streak going
 
-Sign in as **maya@pulse.test** (6-check streak). Open **Quiz**: under her streak is this week's leaderboard, with Maya highlighted among her classmates; the chips narrow it to one course. Below it, a study check is open for the chapters she studied today.
+Sign in as **maya@pulse.test** (6-check streak). Open **Study checks**: a check is open for the chapters she studied today. Open **Leaderboard** to see her rank and XP this week, with her row highlighted among her classmates; the chips narrow it to one course.
 
 - Open it and press **Start**. The 3-minute clock runs at the top right. The four cards mix kinds: pick an option, type the missing term, and, third, match three key terms to their sentences (tap a term, then its sentence). Each card shows right or wrong, why, and the line of the chapter it comes from.
 - Three right out of four passes: the streak goes to 7 with the milestone celebration and the XP earned. A failed first try offers **Try again with new cards**. Answering again after it's settled doesn't count twice.
 - To show the clock: start a try and wait three minutes. Unanswered cards count as wrong and the try ends.
 - To show a missed check: in Demo controls, click **+1 day** twice on Maya's row without passing it. The window closes, her saved freeze is spent, and the next miss resets the streak. Click **Back to now** afterwards.
 
-## 6b. Ask Pulse to change the plan
+## 6b. Ask Leon to change the plan
 
-Still as Maya, click **Ask Pulse** in the sidebar.
+Still as Maya, click **Ask Leon** in the sidebar.
 
 - Send "I'm busy tomorrow evening". The reply shows the change it would make ("Keep ... free (Busy)"). Nothing has moved yet: check **Week**.
 - Press **Confirm**. The chat closes and opens **Week** at that day; within a few seconds the evening is empty and its sessions have moved to other free time.
 - Send "Keep Sundays free", then **Not now**: nothing changes. **Start over** clears the chat.
+
+## 6c. Class times shape the plan
+
+Still as Maya, open **Week** and switch to **Course calendar**: CS 201 meets Monday and Wednesday 10:00–11:15, PSY 101 Tuesday and Thursday 11:00–12:15, BUS 210 Tuesday and Thursday 15:30–16:45. Switch back to **Study plan**: no study session overlaps a class. The same times are listed on each course card in **Courses** and in each syllabus.
 
 ## 7. An instructor extension
 

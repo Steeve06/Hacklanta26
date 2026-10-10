@@ -10,7 +10,7 @@ export function OnboardingLayout() {
     <div className="min-h-dvh bg-paper">
       <TopProgress />
       <header className="flex items-center justify-between border-b border-line bg-surface px-4 py-2 md:px-8">
-        <span className="font-display text-xl font-extrabold text-pine">Pulse</span>
+        <span className="font-display text-xl font-extrabold text-pine">Leon</span>
         <div className="flex items-center gap-2">
           <span className="hidden text-sm text-ink-soft sm:inline">{me.data?.email}</span>
           <button

@@ -12,7 +12,7 @@ export function OverallPage() {
   return (
     <div className="flex flex-col gap-4">
       <header>
-        <h1 className="text-2xl font-bold">Overall</h1>
+        <h1 className="text-2xl font-bold">Term overview</h1>
         <p className="text-ink-soft">
           The whole term by course: planned study per week and every due date.
         </p>

@@ -1,4 +1,12 @@
 import { MascotStill } from "@/components/mascot/MascotStill";
+import type { MascotPose } from "@/components/mascot/types";
+
+const SASS_POSE: Record<number, MascotPose> = {
+  1: "calm",
+  2: "nudge",
+  3: "disappointed",
+  4: "voice-note",
+};
 import { Input } from "@/components/ui";
 import { cx } from "@/lib/cx";
 import { SASS_LEVELS, styleErrors, type NotificationStyle } from "./preferences";
@@ -48,7 +56,7 @@ export function NotificationStyleFields({
       </fieldset>
       {selected && (
         <figure className="flex items-start gap-3" aria-live="polite">
-          <MascotStill mood={value.sass_level >= 3 ? "medium" : "good"} size={48} />
+          <MascotStill pose={SASS_POSE[value.sass_level] ?? "calm"} size={56} />
           <blockquote className="rounded-lg rounded-tl-none border border-line bg-surface px-4 py-3">
             <p>{selected.sample}</p>
             <figcaption className="mt-1 text-xs text-ink-soft">

@@ -138,7 +138,7 @@ REFRESH_COOKIE_SECURE = False
 REFRESH_COOKIE_SAMESITE = "Lax"
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Pulse API",
+    "TITLE": "Leon API",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
@@ -182,7 +182,7 @@ EMAIL_PORT = int(env("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "Pulse <pulse@example.com>")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "Leon <leon@example.com>")
 
 SOLVER = env("SOLVER", "greedy")
 TERM_START_DATE = env("TERM_START_DATE", "")
@@ -190,6 +190,8 @@ DEMO_MODE = env_bool("DEMO_MODE", False)
 CRON_TOKEN = env("CRON_TOKEN", "")
 FRONTEND_URL = env("FRONTEND_URL", "http://localhost:5173")
 CAMPUS_SUPPORT_URL = env("CAMPUS_SUPPORT_URL", "https://988lifeline.org/")
+# Class meeting times are entered in this zone and shown in each student's own.
+CAMPUS_TIMEZONE = env("CAMPUS_TIMEZONE", "America/New_York")
 STUDY_CHECK_CARDS = 4
 STUDY_CHECK_PASS_MARK = int(env("STUDY_CHECK_PASS_MARK", "3"))
 STUDY_CHECK_SECONDS_PER_CARD = int(env("STUDY_CHECK_SECONDS_PER_CARD", "4"))

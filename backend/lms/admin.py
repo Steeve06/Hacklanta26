@@ -4,6 +4,7 @@ from .models import (
     Assessment,
     Chapter,
     Course,
+    CourseMeeting,
     DiscussionPost,
     DueDateOverride,
     Enrollment,
@@ -16,9 +17,15 @@ from .models import (
 admin.site.register(Term)
 
 
+class MeetingInline(admin.TabularInline):
+    model = CourseMeeting
+    extra = 0
+
+
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     list_display = ["code", "title", "instructor", "term"]
+    inlines = [MeetingInline]
 
 
 admin.site.register(Enrollment, list_display=["user", "course", "role"], list_filter=["course"])

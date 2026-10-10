@@ -3,6 +3,7 @@ import { QueryView, SkeletonLines } from "@/components/ui";
 import { formatShortDay, useTimezone } from "@/lib/time";
 import { useSyllabus } from "./api";
 import { useNumericParam } from "./useIds";
+import { campusNote, meetingLines } from "./meetings";
 import { percent } from "@/lib/percent";
 
 export function SyllabusTab() {
@@ -95,6 +96,19 @@ export function SyllabusTab() {
               <a href={`mailto:${data.instructor_email}`} className="text-sm text-pine underline">
                 {data.instructor_email}
               </a>
+              {data.meetings.length > 0 && (
+                <>
+                  <h3 className="mt-3 text-sm font-bold">Class meets</h3>
+                  {meetingLines(data.meetings).map((line) => (
+                    <p key={line} className="text-sm">
+                      {line}
+                    </p>
+                  ))}
+                  {campusNote(data.meetings, tz) && (
+                    <p className="text-xs text-ink-soft">{campusNote(data.meetings, tz)}</p>
+                  )}
+                </>
+              )}
               <h3 className="mt-3 text-sm font-bold">Office hours</h3>
               <p className="text-sm">{data.office_hours}</p>
             </section>

@@ -31,7 +31,7 @@ If you copied the files without the `.git` folder:
 ```sh
 git init -b main
 git add .
-git commit -m "Pulse and Learning Hub"
+git commit -m "Leon and Learning Hub"
 ```
 
 Then follow the GitHub steps above.

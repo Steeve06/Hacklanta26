@@ -147,7 +147,7 @@ export function SessionItem({
                   pending={reschedule.isPending}
                   onClick={() =>
                     reschedule.mutate(session.id, {
-                      onSuccess: () => toast.success("Moved. Pulse found another slot."),
+                      onSuccess: () => toast.success("Moved. Leon found another slot."),
                       onError: (err) => toast.error(errorMessage(err)),
                     })
                   }

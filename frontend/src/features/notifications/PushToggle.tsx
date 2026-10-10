@@ -9,7 +9,7 @@ const explain: Record<PushState, string> = {
     "Push isn't set up on this server. Reminders still appear in your inbox and by email.",
   blocked:
     "Notifications are blocked for this site in your browser settings. Your inbox still works.",
-  off: "Get reminders on this device even when Pulse isn't open.",
+  off: "Get reminders on this device even when Leon isn't open.",
   on: "Reminders are sent to this device.",
 };
 

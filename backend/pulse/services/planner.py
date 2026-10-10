@@ -21,6 +21,7 @@ from ..planning.inventory import Inventory, WorkItem, build_inventory
 from ..planning.slots import free_time
 from ..planning.solver import Solver, check_hard_constraints
 from ..planning.types import Constraints, Interval, Placement, Preferences, SolveResult, TaskSpec
+from .classes import in_class
 from .decomposition import decompose
 from .feedback import preferences_from_feedback
 from .overload import build_overload_report
@@ -255,7 +256,7 @@ def _free_time(ctx: PlanContext, history: list[Session]) -> dict:
     ]
     return free_time(
         blocks,
-        [*blackouts, *avoided],
+        [*blackouts, *avoided, *in_class(ctx.student, ctx.now, ctx.horizon_end)],
         tz=ctx.tz,
         start=ctx.now,
         end=ctx.horizon_end,

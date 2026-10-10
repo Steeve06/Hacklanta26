@@ -1,36 +1,49 @@
-import { useReducedMotion } from "framer-motion";
-import { lazy, Suspense, useEffect, useState, type ComponentType, type CSSProperties } from "react";
+import { motion, useReducedMotion, type TargetAndTransition } from "framer-motion";
+import { useEffect, useState } from "react";
 import { MascotStill } from "./MascotStill";
+import { MOMENT_POSE, MOOD_POSE, POSE_SRC } from "./poses";
 import type { MascotMood, MascotMoment } from "./types";
 
-type PlayerProps = {
-  src: object;
-  loop: boolean;
-  autoplay: boolean;
-  className?: string;
-  style?: CSSProperties;
-  subscriptions?: { complete?: () => void };
-  "aria-hidden"?: boolean;
+const PLAYED_PREFIX = "leon-moment:";
+const MOMENT_MS = 1800;
+
+/** A slow loop per mood: Leon breathes when things are fine, side-eyes when they're slipping,
+ * and droops when they're not. */
+const MOOD_LOOP: Record<MascotMood, TargetAndTransition> = {
+  good: {
+    scale: [1, 1.03, 1],
+    y: [0, -2, 0],
+    transition: { duration: 3.2, repeat: Infinity, ease: "easeInOut" },
+  },
+  medium: {
+    rotate: [0, -3, 0, 3, 0],
+    transition: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+  },
+  bad: {
+    y: [0, 4, 0],
+    scaleY: [1, 0.97, 1],
+    transition: { duration: 2.6, repeat: Infinity, ease: "easeInOut" },
+  },
 };
 
-const Lottie = lazy(() =>
-  import("lottie-react").then((m) => ({
-    default: m.LottieLight as unknown as ComponentType<PlayerProps>,
-  })),
-);
-
-type Clip = MascotMood | MascotMoment;
-
-const loaders: Record<Clip, () => Promise<{ default: unknown }>> = {
-  good: () => import("./animations/good.json"),
-  medium: () => import("./animations/medium.json"),
-  bad: () => import("./animations/bad.json"),
-  celebrate: () => import("./animations/celebrate.json"),
-  gasp: () => import("./animations/gasp.json"),
-  fresh_start: () => import("./animations/fresh_start.json"),
+/** One-shot moments, played once per key and then back to the mood. */
+const MOMENT_PLAY: Record<MascotMoment, TargetAndTransition> = {
+  celebrate: {
+    y: [0, -18, 0, -10, 0],
+    rotate: [0, -6, 6, -3, 0],
+    scale: [1, 1.08, 1, 1.04, 1],
+    transition: { duration: 1.6, ease: "easeOut" },
+  },
+  gasp: {
+    x: [0, -6, 6, -4, 4, 0],
+    transition: { duration: 0.8, ease: "easeInOut" },
+  },
+  fresh_start: {
+    scale: [0.6, 1.1, 1],
+    opacity: [0, 1, 1],
+    transition: { duration: 0.9, ease: "easeOut" },
+  },
 };
-
-const PLAYED_PREFIX = "pulse-moment:";
 
 function alreadyPlayed(key: string): boolean {
   try {
@@ -48,20 +61,6 @@ function markPlayed(key: string): void {
   }
 }
 
-function useClip(clip: Clip): unknown {
-  const [loaded, setLoaded] = useState<{ clip: Clip; data: unknown } | null>(null);
-  useEffect(() => {
-    let alive = true;
-    void loaders[clip]().then((module) => {
-      if (alive) setLoaded({ clip, data: module.default });
-    });
-    return () => {
-      alive = false;
-    };
-  }, [clip]);
-  return loaded?.clip === clip ? loaded.data : null;
-}
-
 type Props = {
   mood: MascotMood;
   moment?: { kind: MascotMoment; key: string } | null;
@@ -69,36 +68,37 @@ type Props = {
   className?: string;
 };
 
-/** The mascot's state machine: loops the mood, interrupts once per new moment, then returns. */
+/** Leon's state machine: loops the mood, interrupts once per new moment, then returns. */
 export function Mascot({ mood, moment, size = 160, className }: Props) {
   const reduced = useReducedMotion();
   const [finished, setFinished] = useState<string | null>(null);
   const playing =
     moment && finished !== moment.key && !alreadyPlayed(moment.key) ? moment.kind : null;
 
-  const clip: Clip = playing ?? mood;
-  const data = useClip(clip);
-  const still = <MascotStill mood={mood} size={size} className={className} />;
+  useEffect(() => {
+    if (!playing || !moment) return;
+    const timer = window.setTimeout(() => {
+      markPlayed(moment.key);
+      setFinished(moment.key);
+    }, MOMENT_MS);
+    return () => window.clearTimeout(timer);
+  }, [playing, moment]);
 
-  if (reduced || !data) return still;
+  const pose = playing ? MOMENT_POSE[playing] : MOOD_POSE[mood];
+  if (reduced) return <MascotStill pose={pose} size={size} className={className} />;
   return (
-    <Suspense fallback={still}>
-      <Lottie
-        key={clip}
-        src={data as object}
-        loop={!playing}
-        autoplay
-        style={{ width: size, height: size }}
-        className={className}
-        aria-hidden
-        subscriptions={{
-          complete: () => {
-            if (!moment) return;
-            markPlayed(moment.key);
-            setFinished(moment.key);
-          },
-        }}
-      />
-    </Suspense>
+    <motion.img
+      key={playing ?? mood}
+      src={POSE_SRC[pose]}
+      alt=""
+      aria-hidden="true"
+      width={size}
+      height={size}
+      draggable={false}
+      decoding="async"
+      className={className}
+      style={{ width: size, height: size, objectFit: "contain", transformOrigin: "50% 85%" }}
+      animate={playing ? MOMENT_PLAY[playing] : MOOD_LOOP[mood]}
+    />
   );
 }

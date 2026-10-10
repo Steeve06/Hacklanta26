@@ -15,7 +15,7 @@ export function SupportiveBanner({ supportUrl }: { supportUrl?: string }) {
         Reminders are in supportive mode
       </h2>
       <p className="max-w-prose text-sm">
-        Things look heavy right now, so Pulse switched to gentle, encouraging reminders. If you'd
+        Things look heavy right now, so Leon switched to gentle, encouraging reminders. If you'd
         like to talk to someone, your campus has support available.
       </p>
       <div className="flex flex-wrap items-center gap-3">

@@ -67,8 +67,8 @@ function json(body: unknown): Response {
 
 function renderCheck() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const router = createMemoryRouter([{ path: "/pulse/quiz/:checkId", element: <CheckPage /> }], {
-    initialEntries: ["/pulse/quiz/7"],
+  const router = createMemoryRouter([{ path: "/pulse/checks/:checkId", element: <CheckPage /> }], {
+    initialEntries: ["/pulse/checks/7"],
   });
   render(
     <QueryClientProvider client={client}>

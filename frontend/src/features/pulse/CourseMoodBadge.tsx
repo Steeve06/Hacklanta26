@@ -17,8 +17,8 @@ export function CourseMoodBadge({ courseId }: { courseId: number }) {
         />
         <MascotStill
           mood={entry.state as MascotMood}
-          size={22}
-          className="absolute -bottom-1 -right-2"
+          size={30}
+          className="absolute -bottom-2 -right-3"
         />
       </div>
       <span className="text-xs font-bold text-ink-soft">{stateLabel[entry.state]}</span>

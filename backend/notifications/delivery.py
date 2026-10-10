@@ -34,7 +34,7 @@ def push_payload(n: Notification) -> str:
     return json.dumps(
         {
             "id": n.id,
-            "title": f"Pulse · {TITLES.get(n.trigger, 'Reminder')}",
+            "title": f"Leon · {TITLES.get(n.trigger, 'Reminder')}",
             "body": n.text,
             "url": n.link or "/pulse/inbox",
             "actions": [
@@ -76,8 +76,8 @@ def _send_email(n: Notification) -> None:
             f"\n\nIf things are hard right now, support is available: {settings.CAMPUS_SUPPORT_URL}"
         )
     send_mail(
-        subject=f"Pulse: {TITLES.get(n.trigger, 'Reminder')}",
-        message=f"{n.text}\n\nOpen Pulse: {settings.FRONTEND_URL}{n.link or '/pulse'}{footer}",
+        subject=f"Leon: {TITLES.get(n.trigger, 'Reminder')}",
+        message=f"{n.text}\n\nOpen Leon: {settings.FRONTEND_URL}{n.link or '/pulse'}{footer}",
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[n.student.email],
         fail_silently=True,

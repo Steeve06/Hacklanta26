@@ -8,7 +8,7 @@ export function OpenCheckRow({ check }: { check: Check }) {
   const started = check.tries_left < 2;
   return (
     <Link
-      to={`/pulse/quiz/${check.id}`}
+      to={`/pulse/checks/${check.id}`}
       className="flex min-h-11 items-center justify-between gap-3 rounded-md border border-mustard bg-mustard-soft px-3 py-2 hover:border-ink-faint"
     >
       <span className="flex flex-col">

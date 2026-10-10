@@ -10,6 +10,7 @@ from lms.models import Assessment, DueDateOverride
 from ..models import AvailabilityBlock, Blackout, Schedule, Session
 from ..planning.slots import free_time
 from ..planning.types import Interval
+from .classes import in_class
 from .replan import request_replan
 from .status import invalidate as invalidate_status
 
@@ -81,13 +82,15 @@ def check_move(student, session: Session, start: datetime) -> datetime:
     ]
     blackouts = [
         Interval(b.start, b.end) for b in Blackout.objects.filter(student=student, end__gt=now)
-    ]
+    ] + in_class(student, now, end + timedelta(days=1))
     free = free_time(blocks, blackouts, tz=student.tz, start=now, end=end + timedelta(days=1),
                      earliest=profile.earliest_time, latest=profile.latest_time)  # fmt: skip
     day = start.astimezone(student.tz).date()
     utc_start, utc_end = start.astimezone(UTC), end.astimezone(UTC)
     if not any(iv.start <= utc_start and utc_end <= iv.end for iv in free.get(day, [])):
-        raise ValidationError("That time isn't inside your free study time.")
+        raise ValidationError(
+            "That time isn't inside your free study time, or you're in class then."
+        )
     gap = timedelta(minutes=10)
     clash = (
         Session.objects.filter(schedule=session.schedule, status=S.PLANNED)

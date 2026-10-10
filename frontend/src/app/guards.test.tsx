@@ -64,7 +64,7 @@ describe("route guards", () => {
     expect(await screen.findByRole("heading", { name: "Can't reach the server" })).toBeVisible();
   });
 
-  it("keeps students out of Pulse until onboarding is done", async () => {
+  it("keeps students out of Leon until onboarding is done", async () => {
     signedInAs(studentMe(false));
     app("/pulse/today");
     expect(await screen.findByText("onboarding page")).toBeInTheDocument();
@@ -82,7 +82,7 @@ describe("route guards", () => {
     expect(await screen.findByText("today page")).toBeInTheDocument();
   });
 
-  it("sends instructors who open onboarding or Pulse to Learning Hub", async () => {
+  it("sends instructors who open onboarding or Leon to Learning Hub", async () => {
     signedInAs(studentMe(false, "instructor"));
     app("/onboarding");
     expect(await screen.findByText("lms page")).toBeInTheDocument();
