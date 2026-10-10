@@ -19,6 +19,7 @@ import {
 } from "./api";
 import { AvailabilityEditor } from "./AvailabilityEditor";
 import { AvailabilityGrid } from "./AvailabilityGrid";
+import { InstallCard } from "./InstallCard";
 import { formatHours, LOW_WEEKLY_HOURS, totalHours } from "./availability";
 import { BlackoutsEditor } from "./BlackoutsEditor";
 import { NotificationStyleFields } from "./NotificationStyleFields";
@@ -41,6 +42,7 @@ export function SettingsPage() {
         {(data) =>
           data.role === "student" ? (
             <>
+              <InstallCard />
               <PreferencesSection me={data} />
               <AvailabilitySection />
               <Card aria-labelledby="blackouts-heading">

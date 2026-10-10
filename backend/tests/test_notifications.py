@@ -300,3 +300,34 @@ def test_scan_query_budget_and_catalog_cache(django_assert_max_num_queries):
     )
     made = scan_student(student)
     assert any("Brand new essay" in n.text or n.trigger == "code_red" for n in made)
+
+
+def test_push_keeps_reminders_for_sleeping_phones_and_marks_urgent_ones(settings):
+    settings.VAPID_PUBLIC_KEY, settings.VAPID_PRIVATE_KEY = "pub", "priv"
+    student = make_student()
+    PushSubscription.objects.create(
+        user=student, endpoint="https://push.example/a", keys={"p256dh": "x", "auth": "y"}
+    )
+    with mock.patch("pywebpush.webpush") as send:
+        assert delivery.send_to_devices(student, "{}", urgent=True) == 1
+    kwargs = send.call_args.kwargs
+    assert kwargs["ttl"] == delivery.PUSH_TTL_SECONDS > 0
+    assert kwargs["headers"] == {"Urgency": "high"}
+
+
+def test_test_push_needs_setup_and_a_device(settings):
+    student = make_student()
+    client = APIClient()
+    client.force_authenticate(student)
+    settings.VAPID_PUBLIC_KEY = settings.VAPID_PRIVATE_KEY = ""
+    assert client.post("/api/v1/push/test").status_code == 503
+    settings.VAPID_PUBLIC_KEY, settings.VAPID_PRIVATE_KEY = "pub", "priv"
+    assert client.post("/api/v1/push/test").status_code == 409
+    PushSubscription.objects.create(
+        user=student, endpoint="https://push.example/b", keys={"p256dh": "x", "auth": "y"}
+    )
+    with mock.patch("pywebpush.webpush") as send:
+        response = client.post("/api/v1/push/test")
+    assert response.status_code == 200 and response.data == {"sent": 1}
+    payload = json.loads(send.call_args.kwargs["data"])
+    assert payload["title"] == "Leon · Test" and payload["url"] == "/pulse/today"

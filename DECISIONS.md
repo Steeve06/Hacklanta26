@@ -92,6 +92,16 @@ Choices made where the build prompt left room, with the reason for each.
 - **Leaderboard has its own tab, in place of Overall.** It shows the student's rank, weekly XP, streak and next milestone above the board. The study checks page is back to streak, open, coming up and past. The term overview is still there, linked from Week.
 - **Fixed class times.** Each course has weekly meetings (`CourseMeeting`: weekday, start, end, room) in the campus time zone. They're expanded to real moments within the term, shown on course cards, the syllabus and the course calendar, and treated as busy by the planner and by chat moves. Demo times avoid each other and the instructors' office hours.
 
+## Phones: a Progressive Web App
+
+- **A PWA, not a native app.** One codebase installs on Android, iPhone (iOS 16.4+) and desktop, gets push, and updates on the next visit; a native wrapper (Capacitor) can come later if app-store distribution is needed.
+- **The service worker never caches the API.** Pages are fetched from the network first, with the saved app shell as the offline fallback, so Leon opens offline to a clear "can't reach the server" page instead of the browser's error, and never shows stale data. Built files (`/assets`, hashed) and icons are cached on first use. It registers at startup, not only when push is turned on.
+- **Push that survives sleep.** Reminders are sent with a 12-hour TTL (the default was 0, which push services drop if the phone is offline at that moment) and `Urgency: high` for tier 4 and up, which also stay on screen until dismissed. Lock-screen text still never includes grades.
+- **Subscriptions re-sync.** When a student who already allowed notifications opens Leon, the device's subscription is stored again, so push keeps working after a database reset or on a new browser profile. It never asks for permission on its own; that's always a button.
+- **"Send a test notification"** in Settings (`POST /api/v1/push/test`) sends a sample to the student's devices, so push can be checked without waiting for a real reminder.
+- **Trying it on a phone locally** uses a Cloudflare quick tunnel (`docker compose --profile phone up tunnel`). The Vite dev server accepts tunnel host names and passes the browser's host on as `X-Forwarded-Host`; dev settings trust it, so sign-in's same-origin check works through the tunnel.
+- **Icons** come from Leon's calm pose (192 and 512 px, a maskable 512 with the safe-zone padding, and a 180 px Apple icon). The Android status-bar badge is a simple white tail curl, since a detailed picture becomes a smudge at 24 px.
+
 ## Two calendars
 
 - **Week has two tabs.** *Study plan* is the schedule Leon builds. *Course calendar* is what the courses set: due dates (with any extension) and chapter release dates from Learning Hub. Learning Hub has no class meeting times, so there are none to show.

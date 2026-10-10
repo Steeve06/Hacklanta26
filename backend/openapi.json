@@ -2830,6 +2830,32 @@
                 }
             }
         },
+        "/api/v1/push/test": {
+            "post": {
+                "operationId": "v1_push_test_create",
+                "description": "Send a sample reminder to this user's devices, so they can see push works.",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PushTest"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/streak": {
             "get": {
                 "operationId": "v1_streak_retrieve",
@@ -5798,6 +5824,18 @@
                 "required": [
                     "endpoint",
                     "keys"
+                ]
+            },
+            "PushTest": {
+                "type": "object",
+                "properties": {
+                    "sent": {
+                        "type": "integer",
+                        "description": "devices that accepted the test push"
+                    }
+                },
+                "required": [
+                    "sent"
                 ]
             },
             "QuestionPublic": {
