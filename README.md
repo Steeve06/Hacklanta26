@@ -125,7 +125,7 @@ Without Docker (virtualenv active): `pip install -r backend/requirements-dev.txt
 ## Manual test steps
 
 1. **Sign up:** open `/signup`, create an account, and check that the password rules tick as you type and a taken email shows an error next to the field.
-2. **Onboarding:** go through all five steps. Reload on step 3 and you stay on step 3 with your earlier answers. On step 5, check that **Your choices** shows the hours you marked and your limits, and that the advice under the plan names the limit that's actually full (weekly, daily, or free time). Check the week's plan and the first quiz window, then press **Looks good** to land on Today.
+2. **Onboarding:** go through all five steps. Reload on step 3 and you stay on step 3 with your earlier answers. On step 5, check that **Your choices** shows the hours you marked and your limits, and that the advice under the plan names the limit that's actually full (weekly, daily, or free time). Check the week's plan and the daily flashcards note, then press **Looks good** to land on Today.
 3. **Resume:** sign in as `casey@pulse.test` and you land on step 3. Sign in as `riley@pulse.test` and you land on step 1. Sign in as `maya@pulse.test` and you go straight to Today.
 4. **Redirects:** while signed in, open `/login` and you're sent home. As `prof.okafor@pulse.test`, open `/onboarding` and you're sent to Learning Hub.
 5. **Password reset:** on the sign-in page, choose **Forgot password?**, then copy the link from the backend log, set a new password, and sign in with it. The same link fails a second time.

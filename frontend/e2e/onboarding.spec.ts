@@ -54,7 +54,8 @@ test("sign up, finish all five onboarding steps and land on Today with a schedul
   await expect(page.getByRole("heading", { name: "The next seven days" })).toBeVisible({
     timeout: 60_000,
   });
-  await expect(page.getByRole("heading", { name: "Your first chapter quiz" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your choices" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Daily flashcards" })).toBeVisible();
   await page.getByRole("button", { name: "Looks good" }).click();
 
   await expect(page).toHaveURL(/\/pulse\/today$/);
