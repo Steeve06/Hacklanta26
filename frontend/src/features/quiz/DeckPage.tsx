@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { errorMessage } from "@/api/client";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -9,9 +9,20 @@ import { Mascot } from "@/components/mascot/Mascot";
 import { Button, ProgressBar, QueryView, Skeleton, toast } from "@/components/ui";
 import { useNumericParam } from "@/features/lms/useIds";
 import { cx } from "@/lib/cx";
-import { useDeck, useReviewCard, useTodayDeck, type DeckCard, type DeckDetail } from "./api";
 import { useTimezone } from "@/lib/time";
-import { focusLine, formatDeckDay } from "./topics";
+import {
+  useAnswer,
+  useDeck,
+  useRefreshDeck,
+  useStartDeck,
+  useTodayDeck,
+  type DeckDetail,
+  type DeckItem,
+  type ItemResponse,
+  type Solution,
+} from "./api";
+import { Feedback, ItemView } from "./Items";
+import { focusLine, formatDeckDay, sessionLine, TYPE_LABELS, XP_PER_CORRECT } from "./topics";
 
 export function TodayDeckPage() {
   return <DeckView query={useTodayDeck()} />;
@@ -23,11 +34,11 @@ export function DeckPage() {
 
 function DeckView({ query }: { query: ReturnType<typeof useTodayDeck> }) {
   return (
-    <div className="flex max-w-xl flex-col gap-4">
+    <div className="flex max-w-2xl flex-col gap-4">
       <Breadcrumbs
         items={[
           { label: "Quiz", to: "/pulse/quiz" },
-          { label: query.data ? deckTitle(query.data) : "Flashcards" },
+          { label: query.data ? deckTitle(query.data) : "Quiz session" },
         ]}
       />
       <QueryView
@@ -39,90 +50,63 @@ function DeckView({ query }: { query: ReturnType<typeof useTodayDeck> }) {
           </div>
         }
       >
-        {(deck) => (deck.completed_at ? <Summary deck={deck} /> : <Player deck={deck} />)}
+        {(deck) => <Session key={deck.id} deck={deck} />}
       </QueryView>
     </div>
   );
 }
 
 function deckTitle(deck: DeckDetail): string {
-  return `Flashcards for ${formatDeckDay(deck.day, { weekday: "long", month: "short", day: "numeric" })}`;
+  return `Quiz for ${formatDeckDay(deck.day, { weekday: "long", month: "short", day: "numeric" })}`;
 }
 
-function Player({ deck }: { deck: DeckDetail }) {
-  const tz = useTimezone();
-  const review = useReviewCard(deck.id);
-  const card = deck.cards.find((c) => c.knew === null);
-  const done = deck.cards.filter((c) => c.knew !== null).length;
-  if (!card) return null;
+/** Intro, then one question at a time against the clock, then the results. After a graded
+ * question, its feedback stays up until the student moves on (even if that was the last one). */
+function Session({ deck }: { deck: DeckDetail }) {
+  const [reviewing, setReviewing] = useState<number | null>(null);
+  const answer = useAnswer(deck.id);
+  const shown = reviewing === null ? undefined : deck.items.find((i) => i.position === reviewing);
 
-  const rate = (knew: boolean) =>
-    review.mutate({ card_id: card.id, knew }, { onError: (e) => toast.error(errorMessage(e)) });
-
-  return (
-    <section aria-labelledby="deck-heading" className="flex flex-col gap-4">
-      <header className="flex flex-col gap-2">
-        <h1 id="deck-heading" className="text-2xl font-bold">
-          {deckTitle(deck)}
-        </h1>
-        <p className="font-bold text-pine">{focusLine(deck.focus, tz)}</p>
-        <p className="text-ink-soft">
-          {deck.state === "closed"
-            ? "This day is over, so this deck is practice and won't change your streak."
-            : "Read the question, think of your answer, then flip the card and be honest with yourself."}
-        </p>
-        <ProgressBar
-          value={(done / Math.max(1, deck.cards.length)) * 100}
-          label={`Card ${done + 1} of ${deck.cards.length}`}
-          tone="mustard"
-          showLabel
+  if (shown) {
+    return (
+      <Frame deck={deck}>
+        <ItemView item={shown} pending={false} onAnswer={() => undefined} />
+        <Feedback
+          item={shown}
+          xp={XP_PER_CORRECT}
+          last={Boolean(deck.completed_at)}
+          onNext={() => setReviewing(null)}
         />
-      </header>
-      <AnimatePresence mode="wait">
-        <CardStep key={card.id} card={card} pending={review.isPending} onRate={rate} />
-      </AnimatePresence>
-    </section>
-  );
-}
+      </Frame>
+    );
+  }
+  if (deck.completed_at) return <Summary deck={deck} />;
+  if (!deck.started_at) return <Intro deck={deck} />;
 
-function CardStep({
-  card,
-  pending,
-  onRate,
-}: {
-  card: DeckCard;
-  pending: boolean;
-  onRate: (knew: boolean) => void;
-}) {
-  const [flipped, setFlipped] = useState(false);
+  const next = deck.items.find((i) => !i.answered);
+  if (!next) return null;
+  const send = (response: ItemResponse) =>
+    answer.mutate(
+      { position: next.position, response },
+      {
+        onSuccess: () => {
+          if (next.type !== "flashcard") setReviewing(next.position);
+        },
+        onError: (e) => toast.error(errorMessage(e)),
+      },
+    );
   return (
-    <div className="flex flex-col gap-4">
-      <Flashcard card={card} flipped={flipped} onFlip={() => setFlipped(true)} />
-      {flipped ? (
-        <div className="grid grid-cols-2 gap-3">
-          <Button variant="secondary" disabled={pending} onClick={() => onRate(false)}>
-            Still learning
-          </Button>
-          <Button pending={pending} onClick={() => onRate(true)}>
-            Got it
-          </Button>
-        </div>
-      ) : (
-        <Button onClick={() => setFlipped(true)}>Show answer</Button>
-      )}
-    </div>
+    <Frame deck={deck}>
+      <AnimatePresence mode="wait">
+        <Slide key={next.position}>
+          <ItemView item={next} pending={answer.isPending} onAnswer={send} />
+        </Slide>
+      </AnimatePresence>
+    </Frame>
   );
 }
 
-function Flashcard({
-  card,
-  flipped,
-  onFlip,
-}: {
-  card: DeckCard;
-  flipped: boolean;
-  onFlip: () => void;
-}) {
+function Slide({ children }: { children: React.ReactNode }) {
   const reduced = useReducedMotion();
   return (
     <motion.div
@@ -130,65 +114,109 @@ function Flashcard({
       animate={{ opacity: 1, x: 0 }}
       exit={reduced ? { opacity: 0 } : { opacity: 0, x: -40 }}
       transition={{ duration: 0.2 }}
-      style={{ perspective: 1200 }}
     >
-      <motion.button
-        type="button"
-        onClick={onFlip}
-        aria-label={flipped ? undefined : "Flip the card to see the answer"}
-        disabled={flipped}
-        animate={{ rotateY: flipped && !reduced ? 180 : 0 }}
-        transition={{ duration: reduced ? 0 : 0.4 }}
-        className="relative grid min-h-64 w-full rounded-lg text-left disabled:cursor-default"
-        style={{ transformStyle: "preserve-3d" }}
-      >
-        <CardFace card={card} side="front" hidden={flipped} reduced={Boolean(reduced)} />
-        <CardFace card={card} side="back" hidden={!flipped} reduced={Boolean(reduced)} />
-      </motion.button>
+      {children}
     </motion.div>
   );
 }
 
-function CardFace({
-  card,
-  side,
-  hidden,
-  reduced,
-}: {
-  card: DeckCard;
-  side: "front" | "back";
-  hidden: boolean;
-  reduced: boolean;
-}) {
-  const back = side === "back";
+/** Header with the clock and progress, around the current question. */
+function Frame({ deck, children }: { deck: DeckDetail; children: React.ReactNode }) {
+  const done = deck.items.filter((i) => i.answered).length;
+  const total = deck.items.length;
   return (
-    <div
-      aria-hidden={hidden}
+    <section aria-labelledby="deck-heading" className="flex flex-col gap-4">
+      <header className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <h1 id="deck-heading" className="text-xl font-bold">
+            {deckTitle(deck)}
+          </h1>
+          {!deck.completed_at && deck.deadline && (
+            <Countdown deckId={deck.id} deadline={deck.deadline} />
+          )}
+        </div>
+        <ProgressBar
+          value={(done / Math.max(1, total)) * 100}
+          label={`Question ${Math.min(done + 1, total)} of ${total}`}
+          tone="mustard"
+          showLabel
+        />
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function secondsLeft(deadline: string): number {
+  return Math.max(0, Math.ceil((new Date(deadline).getTime() - Date.now()) / 1000));
+}
+
+function Countdown({ deckId, deadline }: { deckId: number; deadline: string }) {
+  const [left, setLeft] = useState(() => secondsLeft(deadline));
+  const refresh = useRefreshDeck(deckId);
+  const { mutate } = refresh;
+  useEffect(() => {
+    const timer = window.setInterval(() => setLeft(secondsLeft(deadline)), 250);
+    return () => window.clearInterval(timer);
+  }, [deadline]);
+  useEffect(() => {
+    if (left === 0) mutate(); // the server finishes the session once its time is up
+  }, [left, mutate]);
+  const minutes = Math.floor(left / 60);
+  const seconds = String(left % 60).padStart(2, "0");
+  return (
+    <p
       className={cx(
-        "col-start-1 row-start-1 flex flex-col gap-3 rounded-lg border p-6 shadow-sm",
-        back ? "border-pine bg-pine-soft" : "border-line bg-surface",
-        reduced && hidden && "invisible",
+        "flex min-h-9 items-center gap-1 rounded-full px-3 font-display text-lg font-extrabold tabular-nums",
+        left <= 30 ? "bg-berry-soft text-berry" : "bg-sunken text-ink",
       )}
-      style={{
-        backfaceVisibility: "hidden",
-        transform: back && !reduced ? "rotateY(180deg)" : undefined,
-      }}
+      aria-label={`${minutes} minutes ${seconds} seconds left`}
+      role="timer"
     >
-      <span className="text-xs font-bold uppercase tracking-wide text-ink-soft">
-        {card.source}
-        {back ? " · Answer" : ""}
-      </span>
-      <p className={cx("whitespace-pre-line font-display", back ? "text-lg" : "text-xl font-bold")}>
-        {back ? card.back : card.front}
-      </p>
-      {!back && <span className="mt-auto text-sm text-ink-soft">Tap the card to flip it</span>}
-    </div>
+      {minutes}:{seconds}
+    </p>
+  );
+}
+
+function Intro({ deck }: { deck: DeckDetail }) {
+  const tz = useTimezone();
+  const start = useStartDeck(deck.id);
+  const kinds = [...new Set(deck.items.map((i) => i.type))];
+  return (
+    <section aria-labelledby="deck-heading" className="flex flex-col gap-4">
+      <h1 id="deck-heading" className="text-2xl font-bold">
+        {deckTitle(deck)}
+      </h1>
+      <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-5">
+        <p className="font-bold text-pine">{focusLine(deck.focus, tz)}</p>
+        <p className="font-display text-2xl font-extrabold">{sessionLine(deck)}</p>
+        <ul className="flex flex-wrap gap-2" aria-label="Question types">
+          {kinds.map((k) => (
+            <li key={k} className="rounded-full bg-sunken px-3 py-1 text-sm font-bold">
+              {TYPE_LABELS[k]}
+            </li>
+          ))}
+        </ul>
+        <p className="text-sm text-ink-soft">
+          {deck.state === "closed"
+            ? "This day is over, so this session is practice and won't change your streak."
+            : `The clock starts when you press Start. Each right answer is worth ${XP_PER_CORRECT} XP on the leaderboard, plus a bonus for finishing. Questions left when time runs out count as missed.`}
+        </p>
+        <Button
+          className="self-start"
+          pending={start.isPending}
+          onClick={() => start.mutate(undefined, { onError: (e) => toast.error(errorMessage(e)) })}
+        >
+          Start
+        </Button>
+      </div>
+    </section>
   );
 }
 
 function Summary({ deck }: { deck: DeckDetail }) {
   const celebrate = Boolean(deck.milestone);
-  const total = deck.cards.length;
+  const total = deck.items.length;
   return (
     <section aria-labelledby="summary" className="flex flex-col gap-4">
       <div className="relative flex flex-col items-center gap-3 rounded-lg border border-line bg-surface p-5 text-center sm:flex-row sm:text-left">
@@ -202,54 +230,85 @@ function Summary({ deck }: { deck: DeckDetail }) {
         </div>
         <div className="flex flex-col gap-1">
           <h1 id="summary" className="text-2xl font-bold">
-            Deck done · {deck.knew} of {total} known
+            {deck.knew} of {total} correct · +{deck.xp} XP
           </h1>
           <p className="text-ink-soft" role="status">
             {deck.counted_for_streak
               ? `Counted for your streak: ${deck.streak} ${deck.streak === 1 ? "day" : "days"} in a row.${deck.milestone ? ` That's a ${deck.milestone}-day milestone.` : ""}`
-              : "Practice run. It doesn't change your streak."}
+              : "This one doesn't change your streak."}
           </p>
           {deck.knew < total && (
             <p className="text-sm text-ink-soft">
-              Cards you're still learning come back in the next few decks.
+              The ones you missed come back in the next few sessions.
             </p>
           )}
         </div>
       </div>
+      <div className="flex flex-wrap gap-3">
+        <Link
+          to="/pulse/quiz"
+          className="inline-flex min-h-11 items-center rounded-md bg-pine px-4 font-bold text-on-pine"
+        >
+          See the leaderboard
+        </Link>
+      </div>
+      <h2 className="text-lg font-bold">Your answers</h2>
       <ul className="flex flex-col gap-2">
-        {deck.cards.map((c) => (
-          <li key={c.id} className="flex gap-3 rounded-md border border-line bg-surface p-3">
-            <span
-              className={cx(
-                "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                c.knew ? "bg-pine-soft text-pine-strong" : "bg-mustard-soft text-mustard-ink",
-              )}
-            >
-              {c.knew ? <Icon name="check" className="h-4 w-4" /> : "↻"}
-              <span className="sr-only">{c.knew ? "Got it" : "Still learning"}</span>
-            </span>
-            <div className="flex flex-col gap-1">
-              <p className="text-xs font-bold uppercase tracking-wide text-ink-soft">{c.source}</p>
-              <p className="font-bold">{c.front}</p>
-              <p className="whitespace-pre-line text-sm text-ink-soft">{c.back}</p>
-              {c.chapter_id && c.course_id && (
-                <Link
-                  to={`/lms/courses/${c.course_id}/chapters/${c.chapter_id}`}
-                  className="self-start text-sm font-bold text-pine underline"
-                >
-                  Review this in the chapter
-                </Link>
-              )}
-            </div>
-          </li>
+        {deck.items.map((item) => (
+          <ResultRow key={item.position} item={item} />
         ))}
       </ul>
-      <Link
-        to="/pulse/quiz"
-        className="inline-flex min-h-11 items-center self-start rounded-md bg-pine px-4 font-bold text-on-pine"
-      >
-        Back to your streak
-      </Link>
     </section>
+  );
+}
+
+function ResultRow({ item }: { item: DeckItem }) {
+  const solution = (item.solution as Solution | null) ?? {};
+  return (
+    <li className="flex gap-3 rounded-md border border-line bg-surface p-3">
+      <span
+        className={cx(
+          "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
+          item.correct ? "bg-pine-soft text-pine-strong" : "bg-mustard-soft text-mustard-ink",
+        )}
+      >
+        {item.correct ? <Icon name="check" className="h-4 w-4" /> : "↻"}
+        <span className="sr-only">
+          {item.correct ? "Correct" : item.answered ? "Missed" : "Not answered"}
+        </span>
+      </span>
+      <div className="flex min-w-0 flex-col gap-1">
+        <p className="text-xs font-bold uppercase tracking-wide text-ink-soft">
+          {TYPE_LABELS[item.type]} · {item.source}
+        </p>
+        <p className="font-bold">{item.prompt}</p>
+        {item.type === "match" && solution.pairs ? (
+          <ul className="text-sm text-ink-soft">
+            {(item.terms ?? []).map((term, i) => (
+              <li key={term}>
+                <strong>{term}</strong>: {item.clues?.[solution.pairs?.[i] ?? -1]}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="whitespace-pre-line text-sm text-ink-soft">
+            {solution.answer && solution.answer !== solution.explanation && (
+              <>
+                Answer: <strong className="text-ink">{solution.answer}</strong>.{" "}
+              </>
+            )}
+            {solution.explanation ?? item.back}
+          </p>
+        )}
+        {item.chapter_id && item.course_id && (
+          <Link
+            to={`/lms/courses/${item.course_id}/chapters/${item.chapter_id}`}
+            className="self-start text-sm font-bold text-pine underline"
+          >
+            Review this in the chapter
+          </Link>
+        )}
+      </div>
+    </li>
   );
 }

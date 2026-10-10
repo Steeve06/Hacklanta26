@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -10,12 +10,14 @@ from lms.access import require_student
 
 from .models import DailyDeck, StreakEvent
 from .serializers import (
+    AnswerSerializer,
     DailyDeckDetailSerializer,
     DailyDeckSerializer,
-    ReviewSerializer,
+    LeaderboardSerializer,
     StreakSerializer,
 )
-from .services.decks import local_day, review, today_deck
+from .services import decks as deck_service
+from .services.decks import local_day, today_deck
 from .services.streaks import FREEZE_EVERY, MILESTONES, get_streak, settle
 
 HISTORY = 30
@@ -24,12 +26,24 @@ WEEK = 7
 
 def _own(request, deck_id: int) -> DailyDeck:
     require_student(request.user)
-    return get_object_or_404(DailyDeck, pk=deck_id, student=request.user)
+    return get_object_or_404(
+        DailyDeck.objects.select_related("student", "course", "assessment"),
+        pk=deck_id,
+        student=request.user,
+    )
 
 
 def _detail(request, deck: DailyDeck, milestone: int | None = None) -> Response:
+    if milestone:
+        from notifications.engine import notify_streak_milestone
+
+        notify_streak_milestone(request.user, deck, milestone)
     context = {"now": clock_now(request.user), "milestone": milestone}
     return Response(DailyDeckDetailSerializer(deck, context=context).data)
+
+
+def _settled(request, outcome: deck_service.AnswerOutcome) -> Response:
+    return _detail(request, outcome.deck, outcome.milestone)
 
 
 class DeckListView(APIView):
@@ -48,27 +62,59 @@ class TodayDeckView(APIView):
     def get(self, request):
         require_student(request.user)
         settle(request.user)
-        return _detail(request, today_deck(request.user))
+        return _settled(request, deck_service.expire_if_due(today_deck(request.user)))
 
 
 class DeckDetailView(APIView):
     @extend_schema(responses=DailyDeckDetailSerializer)
     def get(self, request, deck_id: int):
-        return _detail(request, _own(request, deck_id))
+        return _settled(request, deck_service.expire_if_due(_own(request, deck_id)))
 
 
-class DeckReviewView(APIView):
-    @extend_schema(request=ReviewSerializer, responses=DailyDeckDetailSerializer)
+class DeckStartView(APIView):
+    @extend_schema(request=None, responses=DailyDeckDetailSerializer)
+    def post(self, request, deck_id: int):
+        return _detail(request, deck_service.start(_own(request, deck_id)))
+
+
+class DeckFinishView(APIView):
+    @extend_schema(request=None, responses=DailyDeckDetailSerializer)
+    def post(self, request, deck_id: int):
+        return _settled(request, deck_service.finish(_own(request, deck_id)))
+
+
+class DeckAnswerView(APIView):
+    @extend_schema(request=AnswerSerializer, responses=DailyDeckDetailSerializer)
     def post(self, request, deck_id: int):
         deck = _own(request, deck_id)
-        serializer = ReviewSerializer(data=request.data)
+        serializer = AnswerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        outcome = review(deck, **serializer.validated_data)
-        if outcome.milestone:
-            from notifications.engine import notify_streak_milestone
+        outcome = deck_service.answer(deck, **serializer.validated_data)
+        return _settled(request, outcome)
 
-            notify_streak_milestone(request.user, outcome.deck, outcome.milestone)
-        return _detail(request, outcome.deck, outcome.milestone)
+
+class LeaderboardView(APIView):
+    @extend_schema(
+        parameters=[OpenApiParameter("course_id", int, required=False)],
+        responses=LeaderboardSerializer,
+    )
+    def get(self, request):
+        from lms.selectors import enrolled_courses
+
+        from .services.leaderboard import board
+
+        require_student(request.user)
+        course_id = request.query_params.get("course_id")
+        course_id = int(course_id) if course_id and course_id.isdigit() else None
+        courses = list(enrolled_courses(request.user).order_by("code").values("id", "code"))
+        if course_id not in {c["id"] for c in courses}:
+            course_id = None
+        start, rows = board(request.user, clock_now(request.user), course_id)
+        return Response(
+            LeaderboardSerializer(
+                {"week_start": start, "course_id": course_id, "courses": courses, "rows": rows}
+            ).data
+        )
 
 
 def week_of(student, now) -> list[dict]:

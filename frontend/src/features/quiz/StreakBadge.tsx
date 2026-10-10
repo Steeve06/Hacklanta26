@@ -51,7 +51,7 @@ const DAY_LABELS: Record<StreakDay["result"], string> = {
   frozen: "freeze used",
   missed: "missed",
   open: "today, not done yet",
-  none: "no deck",
+  none: "no quiz",
 };
 
 export function WeekStrip({ week }: { week: StreakDay[] }) {

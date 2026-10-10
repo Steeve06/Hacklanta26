@@ -29,6 +29,10 @@ class Flashcard(TimeStamped):
     topic = models.CharField(max_length=20, choices=Topic.choices)
     front = models.CharField(max_length=300)
     back = models.TextField()
+    answer = models.CharField(
+        max_length=80, blank=True, help_text="short answer (the key term); course cards only"
+    )
+    clue = models.TextField(blank=True, help_text="the sentence with the answer blanked out")
     active = models.BooleanField(default=True)
 
     class Meta:
@@ -53,15 +57,32 @@ class DailyDeck(TimeStamped):
     assessment = models.ForeignKey(
         "lms.Assessment", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
-    cards = models.JSONField(default=list, help_text="flashcard ids in the order shown")
+    cards = models.JSONField(default=list, help_text="every flashcard id the deck uses")
+    items = models.JSONField(default=list, help_text="questions in order; see services.items")
+    time_limit_seconds = models.PositiveSmallIntegerField(default=180)
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
-    knew = models.PositiveSmallIntegerField(default=0)
+    knew = models.PositiveSmallIntegerField(default=0, help_text="questions answered correctly")
+    xp = models.PositiveSmallIntegerField(default=0)
     counted_for_streak = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-day"]
+        indexes = [models.Index(fields=["day", "student"])]
         constraints = [models.UniqueConstraint(fields=["student", "day"], name="uniq_daily_deck")]
+
+
+class DeckAnswer(TimeStamped):
+    deck = models.ForeignKey(DailyDeck, on_delete=models.CASCADE, related_name="answers")
+    position = models.PositiveSmallIntegerField()
+    response = models.JSONField()
+    correct = models.BooleanField()
+
+    class Meta:
+        ordering = ["position"]
+        constraints = [
+            models.UniqueConstraint(fields=["deck", "position"], name="uniq_deck_answer")
+        ]
 
 
 class CardReview(TimeStamped):

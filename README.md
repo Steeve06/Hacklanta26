@@ -88,7 +88,7 @@ All passwords are `pulse-demo`.
 
 | Account | Who |
 | --- | --- |
-| maya@pulse.test | Student, on track, 6-day flashcard streak with today's deck still to do |
+| maya@pulse.test | Student, on track, 6-day quiz streak with today's quiz still to do, mid-table on the leaderboard |
 | sam@pulse.test | Student, slightly behind |
 | jordan@pulse.test | Student, badly behind, not enough study time |
 | alex@pulse.test | Student with an extension in CS 201, Central time |
@@ -181,7 +181,7 @@ backend/
   lms/            Learning Hub: courses, chapters, assessments, submissions
   pulse/          availability, planner and solver, sessions, status, demo controls
   notifications/  templates, triggers, delivery (in-app, push, email), guardrails
-  quizzes/        course flashcards, daily decks, streaks
+  quizzes/        course cards, timed daily quizzes, streaks, leaderboard
   ai/             provider client, prompts, schemas, cost log
   seed/           seed_demo command and course content
 frontend/

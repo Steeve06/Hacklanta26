@@ -39,13 +39,14 @@ Sign in as **sam@pulse.test**. Go to **Courses > CS 201 > Assignments > Problem 
 
 - Open **Today**: confetti and the celebrate animation play once, and the sessions planned for Problem Set 2 are gone from Today and Week.
 
-## 6. Today's flashcards keep the streak going
+## 6. The daily quiz and the leaderboard
 
-Sign in as **maya@pulse.test** (6-day streak). Open **Quiz**; the week strip shows the last six days done and today still open, and today's deck says which upcoming deadline it's prepping for.
+Sign in as **maya@pulse.test** (6-day streak). Open **Quiz**: the leaderboard is in the middle, with Maya's row highlighted among her classmates' weekly XP. Switch the chips to one course to narrow it. The week strip on the side shows the last six days done and today still open.
 
-- **Start today's flashcards**. For each of the five cards, **Show answer** (or tap the card), then **Got it** or **Still learning**.
-- The result reads "Counted for your streak: 7 days in a row. That's a 7-day milestone." with confetti. Opening the deck again doesn't count the day twice, and cards marked "Still learning" come back in the next decks.
-- To show a missed day: in Demo controls, click **+1 day** twice on Maya's row without doing the deck. The first missed day spends her saved freeze; the second resets the streak and sends a "streak reset" reminder. Click **Back to now** afterwards.
+- Click **Start today's quiz**. The card says which deadline it's prepping for and how long it is (3 minutes, or 5 before a quiz). Press **Start** and the clock runs.
+- Answer the mix: pick an option for multiple choice, type the missing term for short answer, tap a term and then its sentence for matching, and flip and rate the flashcards. Each graded answer shows right or wrong with the full sentence.
+- The result reads "Counted for your streak: 7 days in a row. That's a 7-day milestone." with confetti and the XP earned. **See the leaderboard** shows Maya moved up. Opening the quiz again doesn't count the day twice, and missed questions come back in the next sessions.
+- To show a missed day: in Demo controls, click **+1 day** twice on Maya's row without doing the quiz. The first missed day spends her saved freeze; the second resets the streak and sends a "streak reset" reminder. Click **Back to now** afterwards.
 
 ## 7. An instructor extension
 

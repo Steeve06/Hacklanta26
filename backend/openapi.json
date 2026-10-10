@@ -1377,9 +1377,9 @@
                 }
             }
         },
-        "/api/v1/decks/{deck_id}/review": {
+        "/api/v1/decks/{deck_id}/answer": {
             "post": {
-                "operationId": "v1_decks_review_create",
+                "operationId": "v1_decks_answer_create",
                 "parameters": [
                     {
                         "in": "path",
@@ -1397,22 +1397,92 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ReviewRequest"
+                                "$ref": "#/components/schemas/AnswerRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/ReviewRequest"
+                                "$ref": "#/components/schemas/AnswerRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/ReviewRequest"
+                                "$ref": "#/components/schemas/AnswerRequest"
                             }
                         }
                     },
                     "required": true
                 },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DailyDeckDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/decks/{deck_id}/finish": {
+            "post": {
+                "operationId": "v1_decks_finish_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "deck_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DailyDeckDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/decks/{deck_id}/start": {
+            "post": {
+                "operationId": "v1_decks_start_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "deck_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
                 "security": [
                     {
                         "jwtAuth": []
@@ -1601,6 +1671,40 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/DemoStudent"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/leaderboard": {
+            "get": {
+                "operationId": "v1_leaderboard_retrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "course_id",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Leaderboard"
                                 }
                             }
                         },
@@ -2757,6 +2861,22 @@
                 "type": "string",
                 "description": "* `open` - Open\n* `snooze` - Snooze\n* `tone_down` - Tone Down"
             },
+            "AnswerRequest": {
+                "type": "object",
+                "properties": {
+                    "position": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "response": {
+                        "description": "{\"knew\": bool} | {\"choice\": int} | {\"text\": str} | {\"pairs\": [int, ...]}"
+                    }
+                },
+                "required": [
+                    "position",
+                    "response"
+                ]
+            },
             "AnswersRequest": {
                 "type": "object",
                 "properties": {
@@ -3562,7 +3682,11 @@
                         "type": "string",
                         "readOnly": true
                     },
-                    "card_count": {
+                    "question_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "time_limit_seconds": {
                         "type": "integer",
                         "readOnly": true
                     },
@@ -3580,6 +3704,12 @@
                         "readOnly": true,
                         "nullable": true
                     },
+                    "deadline": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "readOnly": true
+                    },
                     "completed_at": {
                         "type": "string",
                         "format": "date-time",
@@ -3587,6 +3717,11 @@
                         "nullable": true
                     },
                     "knew": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "questions answered correctly"
+                    },
+                    "xp": {
                         "type": "integer",
                         "readOnly": true
                     },
@@ -3596,15 +3731,18 @@
                     }
                 },
                 "required": [
-                    "card_count",
                     "completed_at",
                     "counted_for_streak",
                     "day",
+                    "deadline",
                     "focus",
                     "id",
                     "knew",
+                    "question_count",
                     "started_at",
-                    "state"
+                    "state",
+                    "time_limit_seconds",
+                    "xp"
                 ]
             },
             "DailyDeckDetail": {
@@ -3623,7 +3761,11 @@
                         "type": "string",
                         "readOnly": true
                     },
-                    "card_count": {
+                    "question_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "time_limit_seconds": {
                         "type": "integer",
                         "readOnly": true
                     },
@@ -3641,6 +3783,12 @@
                         "readOnly": true,
                         "nullable": true
                     },
+                    "deadline": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "readOnly": true
+                    },
                     "completed_at": {
                         "type": "string",
                         "format": "date-time",
@@ -3649,16 +3797,21 @@
                     },
                     "knew": {
                         "type": "integer",
+                        "readOnly": true,
+                        "description": "questions answered correctly"
+                    },
+                    "xp": {
+                        "type": "integer",
                         "readOnly": true
                     },
                     "counted_for_streak": {
                         "type": "boolean",
                         "readOnly": true
                     },
-                    "cards": {
+                    "items": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/DeckCard"
+                            "$ref": "#/components/schemas/DeckItem"
                         },
                         "readOnly": true
                     },
@@ -3673,18 +3826,21 @@
                     }
                 },
                 "required": [
-                    "card_count",
-                    "cards",
                     "completed_at",
                     "counted_for_streak",
                     "day",
+                    "deadline",
                     "focus",
                     "id",
+                    "items",
                     "knew",
                     "milestone",
+                    "question_count",
                     "started_at",
                     "state",
-                    "streak"
+                    "streak",
+                    "time_limit_seconds",
+                    "xp"
                 ]
             },
             "Deadline": {
@@ -3737,50 +3893,6 @@
                     "weight_pct"
                 ]
             },
-            "DeckCard": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer"
-                    },
-                    "topic": {
-                        "$ref": "#/components/schemas/FlashcardTopicEnum"
-                    },
-                    "source": {
-                        "type": "string",
-                        "description": "where the card comes from, e.g. CS 201 · Ch 5: Hashing"
-                    },
-                    "chapter_id": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "course_id": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "front": {
-                        "type": "string"
-                    },
-                    "back": {
-                        "type": "string"
-                    },
-                    "knew": {
-                        "type": "boolean",
-                        "nullable": true,
-                        "description": "null until the card is rated"
-                    }
-                },
-                "required": [
-                    "back",
-                    "chapter_id",
-                    "course_id",
-                    "front",
-                    "id",
-                    "knew",
-                    "source",
-                    "topic"
-                ]
-            },
             "DeckFocus": {
                 "type": "object",
                 "properties": {
@@ -3826,6 +3938,99 @@
                 ],
                 "type": "string",
                 "description": "* `upcoming` - Prep for an upcoming deadline\n* `review` - Review of course chapters\n* `general` - General study cards"
+            },
+            "DeckItem": {
+                "type": "object",
+                "properties": {
+                    "position": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/DeckItemTypeEnum"
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "e.g. CS 201 · Ch 5: Hashing, or a general topic"
+                    },
+                    "chapter_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "course_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "prompt": {
+                        "type": "string",
+                        "description": "question text (the card front for flashcards)"
+                    },
+                    "back": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "flashcards only: the other side"
+                    },
+                    "options": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "terms": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "clues": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "answered": {
+                        "type": "boolean"
+                    },
+                    "correct": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "response": {
+                        "nullable": true
+                    },
+                    "solution": {
+                        "nullable": true,
+                        "description": "after answering: {answer, explanation, choice?} or {pairs}"
+                    }
+                },
+                "required": [
+                    "answered",
+                    "back",
+                    "chapter_id",
+                    "clues",
+                    "correct",
+                    "course_id",
+                    "options",
+                    "position",
+                    "prompt",
+                    "response",
+                    "solution",
+                    "source",
+                    "terms",
+                    "type"
+                ]
+            },
+            "DeckItemTypeEnum": {
+                "enum": [
+                    "flashcard",
+                    "mcq",
+                    "short",
+                    "match"
+                ],
+                "type": "string",
+                "description": "* `flashcard` - flashcard\n* `mcq` - mcq\n* `short` - short\n* `match` - match"
             },
             "DemoStudent": {
                 "type": "object",
@@ -3995,21 +4200,6 @@
                     "student"
                 ]
             },
-            "FlashcardTopicEnum": {
-                "enum": [
-                    "study_skills",
-                    "memory",
-                    "focus",
-                    "wellbeing",
-                    "money",
-                    "digital",
-                    "science",
-                    "world",
-                    "course"
-                ],
-                "type": "string",
-                "description": "* `study_skills` - Study skills\n* `memory` - Memory\n* `focus` - Focus\n* `wellbeing` - Well-being\n* `money` - Money\n* `digital` - Digital life\n* `science` - Science\n* `world` - World\n* `course` - Course"
-            },
             "GenerateRequest": {
                 "type": "object",
                 "properties": {
@@ -4060,6 +4250,83 @@
                     "support_url",
                     "supportive_mode",
                     "unread"
+                ]
+            },
+            "Leaderboard": {
+                "type": "object",
+                "properties": {
+                    "week_start": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "course_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "courses": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/LeaderboardCourse"
+                        }
+                    },
+                    "rows": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/LeaderboardRow"
+                        }
+                    }
+                },
+                "required": [
+                    "course_id",
+                    "courses",
+                    "rows",
+                    "week_start"
+                ]
+            },
+            "LeaderboardCourse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "code",
+                    "id"
+                ]
+            },
+            "LeaderboardRow": {
+                "type": "object",
+                "properties": {
+                    "rank": {
+                        "type": "integer"
+                    },
+                    "student_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "xp": {
+                        "type": "integer"
+                    },
+                    "streak": {
+                        "type": "integer"
+                    },
+                    "is_me": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "is_me",
+                    "name",
+                    "rank",
+                    "streak",
+                    "student_id",
+                    "xp"
                 ]
             },
             "Link": {
@@ -5336,21 +5603,6 @@
                 ],
                 "type": "string",
                 "description": "* `done` - done\n* `frozen` - frozen\n* `missed` - missed\n* `open` - open\n* `none` - none"
-            },
-            "ReviewRequest": {
-                "type": "object",
-                "properties": {
-                    "card_id": {
-                        "type": "integer"
-                    },
-                    "knew": {
-                        "type": "boolean"
-                    }
-                },
-                "required": [
-                    "card_id",
-                    "knew"
-                ]
             },
             "RoleEnum": {
                 "enum": [

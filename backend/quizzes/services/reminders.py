@@ -23,7 +23,7 @@ def streak_candidates(student, now: datetime) -> list[Candidate]:
             source_id=deck.id,
             course_id=None,
             variables={
-                "title": "Today's flashcards",
+                "title": "Today's quiz",
                 "course": "",
                 "streak_days": get_streak(student).current,
             },

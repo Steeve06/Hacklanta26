@@ -31,16 +31,29 @@ def client_for(user):
     return client
 
 
-def finish_today(client, *, knew=True):
+def response_for(deck_id: int, position: int, correct: bool = True) -> dict:
+    from seed.quiz_seed import _response
+
+    item = DailyDeck.objects.get(pk=deck_id).items[position]
+    ids = item["cards"] if item["type"] == "match" else [item["card"]]
+    return _response(item, correct, {c.id: c for c in Flashcard.objects.filter(id__in=ids)}, None)
+
+
+def send(client, deck_id: int, position: int, response: dict):
+    return client.post(
+        f"/api/v1/decks/{deck_id}/answer", {"position": position, "response": response},
+        format="json",
+    )  # fmt: skip
+
+
+def finish_today(client, *, correct=True, upto=None):
+    """Start today's session and answer every question (or the first `upto`)."""
     deck = client.get("/api/v1/decks/today").data
-    response = None
-    for card in deck["cards"]:
-        response = client.post(
-            f"/api/v1/decks/{deck['id']}/review",
-            {"card_id": card["id"], "knew": knew},
-            format="json",
-        )
-    return response
+    client.post(f"/api/v1/decks/{deck['id']}/start")
+    result = None
+    for position in range(len(deck["items"]) if upto is None else upto):
+        result = send(client, deck["id"], position, response_for(deck["id"], position, correct))
+    return result
 
 
 def at(day: date, hour: int, minute: int = 0) -> datetime:
@@ -101,84 +114,138 @@ class TestPicking:
         assert len(set(later)) == DECK_SIZE
 
 
-class TestTakingDecks:
+class TestSessions:
     @time_machine.travel(NOON, tick=False)
-    def test_today_is_one_deck_and_finishing_counts_once(self, student):
+    def test_one_session_a_day_and_finishing_counts_once(self, student):
         client = client_for(student)
         deck = client.get("/api/v1/decks/today").data
         assert client.get("/api/v1/decks/today").data["id"] == deck["id"]
         assert deck["state"] == "open"
-        assert all(c["knew"] is None and c["back"] for c in deck["cards"])
+        assert (deck["question_count"], deck["time_limit_seconds"]) == (5, 180)
+        assert all(i["solution"] is None for i in deck["items"])
         done = finish_today(client)
         assert done.status_code == 200
         assert done.data["state"] == "done"
         assert done.data["counted_for_streak"] is True
-        assert done.data["knew"] == DECK_SIZE
-        again = client.post(
-            f"/api/v1/decks/{deck['id']}/review",
-            {"card_id": deck["cards"][0]["id"], "knew": False},
-            format="json",
-        )
+        assert done.data["knew"] == 5
+        assert done.data["xp"] == 5 * 10 + 20
+        assert all(i["correct"] and i["solution"] for i in done.data["items"])
+        again = send(client, deck["id"], 0, {"knew": False, "choice": 0})
         assert again.data["completed_at"] == done.data["completed_at"]
         streak = Streak.objects.get(student=student)
         assert (streak.current, streak.last_day) == (1, NOON.date())
-        assert StreakEvent.objects.filter(student=student).count() == 1
 
     @time_machine.travel(NOON, tick=False)
-    def test_still_learning_cards_still_finish_the_deck(self, student):
-        response = finish_today(client_for(student), knew=False)
+    def test_general_session_mixes_multiple_choice_and_flashcards(self, student):
+        deck = client_for(student).get("/api/v1/decks/today").data
+        types = [i["type"] for i in deck["items"]]
+        assert {"mcq", "flashcard"} <= set(types)
+        mcq = next(i for i in deck["items"] if i["type"] == "mcq")
+        assert len(mcq["options"]) == 4 and mcq["back"] is None
+
+    @time_machine.travel(NOON, tick=False)
+    def test_wrong_answers_still_finish_and_count_the_day(self, student):
+        response = finish_today(client_for(student), correct=False)
         assert response.data["counted_for_streak"] is True
-        assert response.data["knew"] == 0
+        assert (response.data["knew"], response.data["xp"]) == (0, 20)
         assert response.data["streak"] == 1
 
     @time_machine.travel(NOON, tick=False)
-    def test_card_not_in_deck_is_rejected(self, student):
+    def test_answers_need_a_started_session_and_a_real_question(self, student):
         client = client_for(student)
         deck = client.get("/api/v1/decks/today").data
-        stranger = Flashcard.objects.exclude(id__in=[c["id"] for c in deck["cards"]]).first()
-        response = client.post(
-            f"/api/v1/decks/{deck['id']}/review", {"card_id": stranger.id, "knew": True},
-            format="json",
-        )  # fmt: skip
-        assert response.status_code == 400
+        assert send(client, deck["id"], 0, response_for(deck["id"], 0)).status_code == 400
+        client.post(f"/api/v1/decks/{deck['id']}/start")
+        assert send(client, deck["id"], 99, {"knew": True}).status_code == 400
+        assert send(client, deck["id"], 0, {}).status_code == 400
+
+    def test_time_up_finishes_with_what_was_answered(self, student):
+        client = client_for(student)
+        with time_machine.travel(NOON, tick=False):
+            finish_today(client, upto=2)
+            early = client.post(f"/api/v1/decks/{DailyDeck.objects.get().id}/finish")
+            assert early.status_code == 400
+        with time_machine.travel(NOON + timedelta(minutes=4), tick=False):
+            deck = client.get("/api/v1/decks/today").data
+            late = send(client, deck["id"], 3, response_for(deck["id"], 3))
+        assert deck["state"] == "done"
+        assert deck["completed_at"] == deck["deadline"]
+        assert deck["knew"] == 2 and deck["counted_for_streak"] is True
+        assert late.data["knew"] == 2
+        assert sum(1 for i in deck["items"] if i["answered"]) == 2
+        assert all(i["solution"] for i in deck["items"])
+
+    def test_time_up_with_nothing_answered_does_not_count(self, student):
+        client = client_for(student)
+        with time_machine.travel(NOON, tick=False):
+            deck = client.get("/api/v1/decks/today").data
+            client.post(f"/api/v1/decks/{deck['id']}/start")
+        with time_machine.travel(NOON + timedelta(minutes=5), tick=False):
+            done = client.post(f"/api/v1/decks/{deck['id']}/finish").data
+        assert done["state"] == "done" and done["counted_for_streak"] is False
 
     def test_started_before_midnight_and_finished_in_grace_counts(self, student):
         day = NOON.date()
         client = client_for(student)
-        with time_machine.travel(at(day, 23, 55), tick=False):
-            deck = client.get("/api/v1/decks/today").data
-            client.post(
-                f"/api/v1/decks/{deck['id']}/review",
-                {"card_id": deck["cards"][0]["id"], "knew": True}, format="json",
-            )  # fmt: skip
-        with time_machine.travel(at(day, 23, 55) + timedelta(minutes=10), tick=False):
-            for card in deck["cards"][1:]:
-                last = client.post(
-                    f"/api/v1/decks/{deck['id']}/review",
-                    {"card_id": card["id"], "knew": True}, format="json",
-                )  # fmt: skip
+        with time_machine.travel(at(day, 23, 58), tick=False):
+            finish_today(client, upto=1)
+        with time_machine.travel(at(day, 23, 58) + timedelta(minutes=2), tick=False):
+            deck = DailyDeck.objects.get()
+            for position in range(1, len(deck.items)):
+                last = send(client, deck.id, position, response_for(deck.id, position))
         assert last.data["counted_for_streak"] is True
         assert Streak.objects.get(student=student).last_day == day
 
-    def test_old_deck_finished_late_is_practice(self, student):
+    def test_old_session_finished_late_is_practice(self, student):
         day = NOON.date()
         client = client_for(student)
         with time_machine.travel(at(day, 10), tick=False):
             deck = client.get("/api/v1/decks/today").data
         with time_machine.travel(at(day, 10) + timedelta(days=1), tick=False):
-            for card in deck["cards"]:
-                last = client.post(
-                    f"/api/v1/decks/{deck['id']}/review",
-                    {"card_id": card["id"], "knew": True}, format="json",
-                )  # fmt: skip
+            client.post(f"/api/v1/decks/{deck['id']}/start")
+            for position in range(len(deck["items"])):
+                last = send(client, deck["id"], position, response_for(deck["id"], position))
         assert last.data["state"] == "done"
         assert last.data["counted_for_streak"] is False
         assert Streak.objects.get_or_create(student=student)[0].current == 0
 
-    def test_other_students_cannot_open_a_deck(self, student):
+    def test_other_students_cannot_open_a_session(self, student):
         deck = client_for(student).get("/api/v1/decks/today").data
         other = make_student()
         assert client_for(other).get(f"/api/v1/decks/{deck['id']}").status_code == 404
+
+
+class TestGrading:
+    @pytest.mark.parametrize(
+        ("given", "ok"),
+        [("hash function", True), ("Hash Functions", True), ("the hash function", True),
+         ("hash funtcion", True), ("hash", False), ("", False)],
+    )  # fmt: skip
+    def test_short_answers_forgive_small_slips(self, given, ok):
+        from quizzes.services.items import close_enough
+
+        assert close_enough(given, "Hash function") is ok
+
+    def test_matching_grades_each_pair(self):
+        from quizzes.services.items import grade
+
+        cards = {1: None, 2: None, 3: None}
+        item = {"type": "match", "cards": [1, 2, 3], "clues": [3, 1, 2]}
+        assert grade(item, {"pairs": [1, 2, 0]}, cards) == (True, {1: True, 2: True, 3: True})
+        assert grade(item, {"pairs": [2, 1, 0]}, cards)[1] == {1: False, 2: False, 3: True}
+
+    def test_solutions_explain_with_the_full_sentence(self):
+        from quizzes.services.items import solution
+
+        course = Flashcard(id=1, answer="Collision", back="Collision\n\nTwo keys share a bucket.")
+        general = Flashcard(id=2, back="Grouping items.")
+        item = {"type": "mcq", "card": 1, "options": ["Heap", "Collision"]}
+        assert solution(item, {1: course}) == {
+            "answer": "Collision", "explanation": "Two keys share a bucket.", "choice": 1,
+        }  # fmt: skip
+        assert solution({"type": "flashcard", "card": 2}, {2: general})["explanation"] == (
+            "Grouping items."
+        )
 
 
 class TestStreaks:
@@ -271,15 +338,14 @@ class TestStreaks:
 
 
 @time_machine.travel(NOON, tick=False)
-def test_deck_list_and_review_are_fast(student, django_assert_max_num_queries):
+def test_session_list_and_answers_are_fast(student, django_assert_max_num_queries):
     client = client_for(student)
     deck = client.get("/api/v1/decks/today").data
+    client.post(f"/api/v1/decks/{deck['id']}/start")
     assert [d["id"] for d in client.get("/api/v1/decks").data] == [deck["id"]]
-    with django_assert_max_num_queries(16):
-        client.post(
-            f"/api/v1/decks/{deck['id']}/review",
-            {"card_id": deck["cards"][0]["id"], "knew": True}, format="json",
-        )  # fmt: skip
+    response = response_for(deck["id"], 0)
+    with django_assert_max_num_queries(25):
+        send(client, deck["id"], 0, response)
 
 
 HASHING = """## Hashing
@@ -355,9 +421,23 @@ class TestCourseFocus:
         assert deck["focus"]["assessment_title"] == "Quiz 2: Hashing"
         assert deck["focus"]["course_code"] == "CS 201"
         assert deck["focus"]["due_at"]
-        assert len(deck["cards"]) == DECK_SIZE
-        assert all(c["chapter_id"] == hashing.id for c in deck["cards"])
-        assert deck["cards"][0]["source"] == "CS 201 · Ch 5: Hashing"
+        assert deck["question_count"] == 8 and deck["time_limit_seconds"] == 300
+        assert deck["items"][0]["chapter_id"] == hashing.id
+        assert deck["items"][0]["source"] == "CS 201 · Ch 5: Hashing"
+        hashing_items = [i for i in deck["items"] if i["chapter_id"] == hashing.id]
+        assert len(hashing_items) >= 4  # every Hashing card is used before anything else
+        assert {"mcq", "short", "match"} <= {i["type"] for i in deck["items"]}
+        assert all(i["solution"] is None for i in deck["items"])
+
+    def test_homework_due_soon_keeps_the_three_minute_session(self, enrolled):
+        from .factories import AssessmentFactory
+
+        student, course, hashing, _ = enrolled
+        homework = AssessmentFactory(course=course, due_at=timezone.now() + timedelta(days=2))
+        homework.chapters.set([hashing])
+        deck = client_for(student).get("/api/v1/decks/today").data
+        assert deck["focus"]["kind"] == "upcoming"
+        assert deck["question_count"] == 5 and deck["time_limit_seconds"] == 180
 
     def test_quiz_beats_sooner_homework_and_far_deadlines_are_ignored(self, enrolled):
         from .factories import AssessmentFactory
@@ -375,9 +455,8 @@ class TestCourseFocus:
         later.chapters.set([hashing])
         deck = client_for(student).get("/api/v1/decks/today").data
         assert deck["focus"]["assessment_id"] == quiz.id
-        heap_cards = [c for c in deck["cards"] if c["chapter_id"] == heaps.id]
-        assert len(heap_cards) == 3  # all of the quiz's cards, topped up from the course
-        assert {c["chapter_id"] for c in deck["cards"]} == {heaps.id, hashing.id}
+        assert deck["items"][0]["chapter_id"] == heaps.id
+        assert {i["chapter_id"] for i in deck["items"]} >= {heaps.id, hashing.id}
 
     def test_submitted_quiz_no_longer_drives_the_deck(self, enrolled):
         from lms.models import Submission
@@ -403,10 +482,81 @@ class TestCourseFocus:
         deck = client_for(student).get("/api/v1/decks/today").data
         assert deck["focus"]["kind"] == "review"
         assert deck["focus"]["assessment_id"] is None
-        assert {c["chapter_id"] for c in deck["cards"]} <= {hashing.id, heaps.id}
-        assert len({c["chapter_id"] for c in deck["cards"]}) == 2
+        assert deck["question_count"] == 5
+        assert {i["chapter_id"] for i in deck["items"]} == {hashing.id, heaps.id}
 
     def test_no_courses_falls_back_to_general_cards(self, student):
         deck = client_for(student).get("/api/v1/decks/today").data
         assert deck["focus"]["kind"] == "general"
-        assert all(c["chapter_id"] is None for c in deck["cards"])
+        assert all(i["chapter_id"] is None for i in deck["items"])
+        assert {i["type"] for i in deck["items"]} <= {"mcq", "flashcard"}
+
+
+class TestLeaderboard:
+    @pytest.fixture
+    def classes(self):
+        from .factories import CourseFactory, enroll
+
+        me = make_student()
+        cs, math, other = (CourseFactory(code=c) for c in ("CS 201", "MATH 210", "BIO 101"))
+        enroll(me, cs)
+        enroll(me, math)
+        ana, ben, cat, stranger = (make_student() for _ in range(4))
+        enroll(ana, cs)
+        enroll(ben, math)
+        enroll(cat, cs)
+        enroll(stranger, other)
+        return me, cs, math, (ana, ben, cat, stranger)
+
+    @staticmethod
+    def earn(student, day, xp):
+        DailyDeck.objects.create(student=student, day=day, xp=xp, items=[], cards=[])
+
+    def test_ranks_classmates_by_this_weeks_xp(self, classes):
+        me, cs, math, (ana, ben, cat, stranger) = classes
+        monday = date(2026, 10, 12)
+        self.earn(ana, monday, 90)
+        self.earn(ana, monday - timedelta(days=1), 500)  # last week doesn't count
+        self.earn(ben, monday + timedelta(days=1), 40)
+        self.earn(stranger, monday, 999)
+        Streak.objects.create(student=cat, current=6)
+        with time_machine.travel(NOON, tick=False):
+            client = client_for(me)
+            finish_today(client)
+            data = client.get("/api/v1/leaderboard").data
+        assert data["week_start"] == "2026-10-12"
+        assert [c["code"] for c in data["courses"]] == ["CS 201", "MATH 210"]
+        rows = data["rows"]
+        ids = [r["student_id"] for r in rows]
+        assert stranger.id not in ids
+        assert ids[0] == ana.id and rows[0]["xp"] == 90 and rows[0]["rank"] == 1
+        mine = next(r for r in rows if r["is_me"])
+        assert mine["xp"] >= 20 and mine["streak"] == 1
+        assert ids == [ana.id, me.id, ben.id, cat.id]
+
+    def test_names_show_first_name_and_initial_only(self):
+        from accounts.models import User
+        from quizzes.services.leaderboard import display_name
+
+        assert display_name(User(first_name="Priya", last_name="Raman")) == "Priya R."
+        assert display_name(User(first_name="Kwame")) == "Kwame"
+        assert display_name(User()) == "Student"
+
+    def test_course_filter_and_unknown_courses(self, classes):
+        me, cs, math, (ana, ben, cat, stranger) = classes
+        client = client_for(me)
+        only_cs = client.get(f"/api/v1/leaderboard?course_id={cs.id}").data
+        assert only_cs["course_id"] == cs.id
+        assert {r["student_id"] for r in only_cs["rows"]} == {me.id, ana.id, cat.id}
+        other = client.get("/api/v1/leaderboard?course_id=999999").data
+        assert other["course_id"] is None
+        assert len(other["rows"]) == 4
+
+    def test_viewer_always_appears_beyond_the_limit(self, classes, monkeypatch):
+        from quizzes.services import leaderboard
+
+        me, *_ = classes
+        monkeypatch.setattr(leaderboard, "LIMIT", 1)
+        rows = client_for(me).get("/api/v1/leaderboard").data["rows"]
+        assert any(r["is_me"] for r in rows)
+        assert len(rows) <= 2
