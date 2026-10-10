@@ -532,6 +532,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pulse/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_pulse_status_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/submissions/{submission_id}/file": {
         parameters: {
             query?: never;
@@ -777,6 +793,8 @@ export interface components {
             type: string;
             /** Format: date-time */
             due_at: string;
+            /** Format: date-time */
+            closes_at: string;
             status: string;
             /** Format: double */
             weight_pct: number;
@@ -842,6 +860,18 @@ export interface components {
             readonly timezone: string;
             readonly profile: components["schemas"]["Profile"];
         };
+        Moment: {
+            kind: components["schemas"]["MomentKindEnum"];
+            key: string;
+            text: string;
+        };
+        /**
+         * @description * `celebrate` - celebrate
+         *     * `gasp` - gasp
+         *     * `fresh_start` - fresh_start
+         * @enum {string}
+         */
+        MomentKindEnum: "celebrate" | "gasp" | "fresh_start";
         NextDue: {
             id: number;
             title: string;
@@ -944,7 +974,7 @@ export interface components {
         PlanJob: {
             readonly id: number;
             readonly kind: components["schemas"]["PlanJobKindEnum"];
-            readonly state: components["schemas"]["StateEnum"];
+            readonly state: components["schemas"]["PlanJobStateEnum"];
             readonly progress: number;
             readonly stage: string;
             readonly stage_label: string;
@@ -958,6 +988,15 @@ export interface components {
          * @enum {string}
          */
         PlanJobKindEnum: "generate" | "replan";
+        /**
+         * @description * `queued` - Queued
+         *     * `running` - Running
+         *     * `done` - Done
+         *     * `failed` - Failed
+         *     * `cancelled` - Cancelled
+         * @enum {string}
+         */
+        PlanJobStateEnum: "queued" | "running" | "done" | "failed" | "cancelled";
         Policies: {
             late_work: string;
             academic_integrity: string;
@@ -1153,15 +1192,32 @@ export interface components {
          * @enum {string}
          */
         SessionUpdateStatusEnum: "done" | "partial" | "skipped" | "planned";
+        Status: {
+            /** Format: date-time */
+            computed_at: string;
+            overall: components["schemas"]["StatusEntry"];
+            courses: components["schemas"]["StatusEntry"][];
+            fresh_start: boolean;
+            all_done: boolean;
+            moment: components["schemas"]["Moment"] | null;
+        };
+        StatusEntry: {
+            course_id: number | null;
+            code: string;
+            score: number;
+            state: components["schemas"]["StatusEntryStateEnum"];
+            reasons: string[];
+            components: {
+                [key: string]: number;
+            };
+        };
         /**
-         * @description * `queued` - Queued
-         *     * `running` - Running
-         *     * `done` - Done
-         *     * `failed` - Failed
-         *     * `cancelled` - Cancelled
+         * @description * `good` - good
+         *     * `medium` - medium
+         *     * `bad` - bad
          * @enum {string}
          */
-        StateEnum: "queued" | "running" | "done" | "failed" | "cancelled";
+        StatusEntryStateEnum: "good" | "medium" | "bad";
         Submission: {
             readonly id: number;
             readonly status: components["schemas"]["SubmissionStatusEnum"];
@@ -2274,6 +2330,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Session"];
+                };
+            };
+        };
+    };
+    v1_pulse_status_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Status"];
                 };
             };
         };

@@ -113,6 +113,7 @@ class DeadlineSerializer(serializers.Serializer):
     title = serializers.CharField()
     type = serializers.CharField()
     due_at = serializers.DateTimeField()
+    closes_at = serializers.DateTimeField()
     status = serializers.CharField()
     weight_pct = serializers.FloatField()
     extended = serializers.BooleanField()
@@ -162,3 +163,27 @@ class PlanJobSerializer(serializers.ModelSerializer):
 
     def get_stage_label(self, obj) -> str:
         return STAGE_LABELS.get(obj.stage, obj.stage)
+
+
+class StatusEntrySerializer(serializers.Serializer):
+    course_id = serializers.IntegerField(allow_null=True)
+    code = serializers.CharField()
+    score = serializers.IntegerField()
+    state = serializers.ChoiceField(choices=["good", "medium", "bad"])
+    reasons = serializers.ListField(child=serializers.CharField())
+    components = serializers.DictField(child=serializers.FloatField())
+
+
+class MomentSerializer(serializers.Serializer):
+    kind = serializers.ChoiceField(choices=["celebrate", "gasp", "fresh_start"])
+    key = serializers.CharField()
+    text = serializers.CharField()
+
+
+class StatusSerializer(serializers.Serializer):
+    computed_at = serializers.DateTimeField()
+    overall = StatusEntrySerializer()
+    courses = StatusEntrySerializer(many=True)
+    fresh_start = serializers.BooleanField()
+    all_done = serializers.BooleanField()
+    moment = MomentSerializer(allow_null=True)

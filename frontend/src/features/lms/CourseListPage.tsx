@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ProgressBar, QueryView, Skeleton } from "@/components/ui";
 import { DueTime } from "@/components/Time";
 import { useMe } from "@/features/auth/hooks";
+import { CourseMoodBadge } from "@/features/pulse/CourseMoodBadge";
 import { useCourses, type Course } from "./api";
 import { typeLabels } from "./labels";
 
@@ -30,7 +31,7 @@ export function CourseListPage() {
           <ul className="grid gap-4 md:grid-cols-2">
             {data.map((course) => (
               <li key={course.id}>
-                <CourseRow course={course} />
+                <CourseRow course={course} showMood={isStudent} />
               </li>
             ))}
           </ul>
@@ -40,7 +41,7 @@ export function CourseListPage() {
   );
 }
 
-function CourseRow({ course }: { course: Course }) {
+function CourseRow({ course, showMood }: { course: Course; showMood: boolean }) {
   const pct = course.chapters_total ? (course.chapters_completed / course.chapters_total) * 100 : 0;
   return (
     <Link
@@ -54,6 +55,7 @@ function CourseRow({ course }: { course: Course }) {
           <h2 className="text-lg font-bold group-hover:underline">{course.title}</h2>
           <p className="text-sm text-ink-soft">{course.instructor_name}</p>
         </div>
+        {showMood && <CourseMoodBadge courseId={course.id} />}
       </div>
       <div className="mt-auto flex flex-col gap-2">
         <p className="text-sm">

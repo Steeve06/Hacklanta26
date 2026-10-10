@@ -6,6 +6,7 @@ from accounts.clock import now as clock_now
 
 from ..models import Schedule, Session
 from .replan import request_replan
+from .status import invalidate as invalidate_status
 
 S = Session.Status
 
@@ -40,6 +41,7 @@ def update_status(student, session: Session, status: str, completed_minutes: int
     session.status = status
     session.completed_minutes = minutes or 0
     session.save(update_fields=["status", "completed_minutes", "updated_at"])
+    invalidate_status(student.id)
     request_replan(student, f"session_{status}")
     return session
 

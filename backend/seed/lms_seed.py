@@ -278,6 +278,8 @@ def outcome(profile: str, assessment: Assessment, index: int, now: datetime) -> 
         return "on_time"
     if profile == "slightly_behind":
         recent = now - assessment.due_at < timedelta(days=21)
+        if recent and assessment.type == "quiz" and assessment.course.code == "CS 201":
+            return None
         return "late" if recent and assessment.type == "homework" else "on_time"
     if assessment.type == "quiz":
         return "on_time"

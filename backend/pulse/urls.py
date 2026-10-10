@@ -11,6 +11,7 @@ urlpatterns = [
     path("jobs/<int:job_id>", views.JobView.as_view()),
     path("jobs/<int:job_id>/cancel", views.JobCancelView.as_view()),
     path("schedule", views.ScheduleView.as_view()),
+    path("status", views.StatusView.as_view()),
     path("sessions/<int:session_id>", views.SessionView.as_view()),
     path("sessions/<int:session_id>/reschedule", views.SessionRescheduleView.as_view()),
 ]

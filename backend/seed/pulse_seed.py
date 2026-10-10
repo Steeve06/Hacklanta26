@@ -35,7 +35,7 @@ AVAILABILITY = {
     },
 }  # fmt: skip
 
-DONE_SHARE = {"on_track": 1.0, "extension": 0.9, "slightly_behind": 0.6, "badly_behind": 0.15}
+DONE_SHARE = {"on_track": 1.0, "extension": 0.9, "slightly_behind": 0.35, "badly_behind": 0.15}
 
 
 def seed_plans(students: dict) -> None:

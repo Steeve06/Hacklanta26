@@ -22,8 +22,10 @@ from .serializers import (
     ScheduleSerializer,
     SessionSerializer,
     SessionUpdateSerializer,
+    StatusSerializer,
 )
 from .services import sessions as session_service
+from .services import status as status_service
 from .services.replan import request_replan, start_generate_job
 
 UPCOMING_COUNT = 6
@@ -157,6 +159,7 @@ def _deadline(a, snapshot) -> dict:
         "title": a.title,
         "type": a.type,
         "due_at": a.due_at,
+        "closes_at": a.closes_at,
         "status": a.status,
         "weight_pct": float(a.weight_pct),
         "extended": a.extended,
@@ -205,6 +208,12 @@ class ScheduleView(StudentView):
             "term_end": snapshot.term_end,
         }
         return Response(ScheduleSerializer(data).data)
+
+
+class StatusView(StudentView):
+    @extend_schema(responses=StatusSerializer)
+    def get(self, request):
+        return Response(StatusSerializer(status_service.current(request.user)).data)
 
 
 class SessionView(StudentView):

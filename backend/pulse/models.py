@@ -139,3 +139,22 @@ class PlanJob(TimeStamped):
                 name="one_open_plan_job",
             )
         ]
+
+
+class StatusSnapshot(TimeStamped):
+    class State(models.TextChoices):
+        GOOD = "good"
+        MEDIUM = "medium"
+        BAD = "bad"
+
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="status_snapshots")
+    course_id = models.IntegerField(null=True, blank=True, help_text="null = overall")
+    score = models.PositiveSmallIntegerField()
+    state = models.CharField(max_length=10, choices=State.choices)
+    reasons = models.JSONField(default=list)
+    components = models.JSONField(default=dict)
+    computed_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-computed_at", "-id"]
+        indexes = [models.Index(fields=["student", "course_id", "computed_at"])]

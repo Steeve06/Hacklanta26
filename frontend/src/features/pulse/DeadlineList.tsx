@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { DueTime } from "@/components/Time";
 import { typeLabels } from "@/features/lms/labels";
+import { useNow } from "@/lib/useNow";
 import type { Deadline } from "./api";
 
 export function DeadlineList({
@@ -10,6 +11,7 @@ export function DeadlineList({
   deadlines: Deadline[];
   empty?: string;
 }) {
+  const now = useNow();
   if (deadlines.length === 0) return <p className="text-sm text-ink-soft">{empty}</p>;
   return (
     <ul className="flex flex-col divide-y divide-line">
@@ -25,7 +27,14 @@ export function DeadlineList({
             </span>
             <span className="font-bold">{d.title}</span>
             <span className="text-sm">
-              <DueTime iso={d.due_at} />
+              {new Date(d.due_at).getTime() < now ? (
+                <>
+                  <span className="font-bold text-berry">Overdue</span> ·{" "}
+                  <DueTime iso={d.closes_at} prefix="Late window closes" />
+                </>
+              ) : (
+                <DueTime iso={d.due_at} />
+              )}
             </span>
           </Link>
         </li>

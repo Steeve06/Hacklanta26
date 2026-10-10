@@ -43,3 +43,11 @@ Choices made where the build prompt left room, with the reason for each.
 - **Estimates are scaled, not rejected.** If an item's task minutes add up to more than 1.5× or less than 0.5× the baseline, they are scaled proportionally into that range.
 - **Circuit breaker in the cache.** Five consecutive failures switch AI off for ten minutes for every worker sharing the cache.
 - **Prices are approximate.** `ai/client.py` holds a small per-model price table for the daily cost total in Django admin; unknown models log a cost of 0.
+
+## Status and animation
+
+- **Overall score is a weighted average of course scores**, weighted by each course's remaining assignment weight (+1 so finished courses still count a little). Overall state then gets its own forced rules: any unresolved overload forces bad; a missed item worth 10% or more forces at least medium.
+- **"Unresolved overload" means any item in the overload report.** If adding hours or getting an extension would fix it, the student still needs to act, so the mascot stays in the bad state until the plan fits.
+- **No sessions yet = full adherence.** A student with no past sessions isn't penalised for adherence, and a student with no history at all is shown as good with the fresh-start moment.
+- **One-shot moments come from the server** (`celebrate` after an on-time submission in the last 15 minutes, `gasp` when something is due within 3 hours, `fresh_start` for new students) with a stable key, and the browser remembers which keys it has already played in session storage.
+- **Mascot animations are generated, not hand-exported.** `frontend/scripts/make_mascot.py` writes small Lottie files (4–19 KB). They play through lottie-react's light build, loaded lazily, and fall back to a static SVG while loading or when reduced motion is on.

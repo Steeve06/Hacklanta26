@@ -1,15 +1,11 @@
 import type { MascotMood } from "./types";
 
-const body: Record<MascotMood, string> = {
-  good: "rgb(var(--pine))",
-  medium: "rgb(var(--mustard))",
-  bad: "rgb(var(--berry))",
-};
+const body: Record<MascotMood, string> = { good: "#2f9e7d", medium: "#f2c14e", bad: "#c2415b" };
 
 const mouth: Record<MascotMood, string> = {
-  good: "M44 70 Q60 84 76 70",
-  medium: "M46 74 L74 72",
-  bad: "M44 78 Q60 66 76 78",
+  good: "M44 72 Q60 86 76 72",
+  medium: "M46 76 L74 72",
+  bad: "M46 80 Q60 68 74 80",
 };
 
 export function MascotStill({
@@ -21,30 +17,23 @@ export function MascotStill({
   size?: number;
   className?: string;
 }) {
+  const squint = mood === "medium";
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true" className={className}>
-      <path
-        d={
-          mood === "bad"
-            ? "M60 18c24 0 40 20 40 44 0 28-12 46-40 46S20 92 20 62c0-24 16-44 40-44z"
-            : "M60 12c25 0 42 19 42 46 0 29-17 50-42 50S18 87 18 58c0-27 17-46 42-46z"
-        }
+      <ellipse cx="60" cy="108" rx="34" ry="5" fill="#000" opacity="0.12" />
+      <ellipse
+        cx="60"
+        cy={mood === "bad" ? 64 : 60}
+        rx={mood === "bad" ? 47 : 44}
+        ry={mood === "bad" ? 38 : 41}
         fill={body[mood]}
       />
-      <ellipse cx="45" cy="54" rx="8" ry={mood === "medium" ? 5 : 9} fill="#fff" />
-      <ellipse cx="75" cy="54" rx="8" ry={mood === "medium" ? 5 : 9} fill="#fff" />
-      <circle cx={mood === "medium" ? 49 : 46} cy="56" r="4" fill="#1c2230" />
-      <circle cx={mood === "medium" ? 79 : 76} cy="56" r="4" fill="#1c2230" />
-      {mood === "bad" && (
-        <path
-          d="M39 64 q-2 8 0 12"
-          stroke="#bfe3ff"
-          strokeWidth="4"
-          strokeLinecap="round"
-          fill="none"
-        />
-      )}
-      <path d={mouth[mood]} stroke="#1c2230" strokeWidth="4.5" fill="none" strokeLinecap="round" />
+      <ellipse cx="51" cy="57" rx="5.5" ry={squint ? 3.5 : 6.5} fill="#fff" />
+      <ellipse cx="69" cy="57" rx="5.5" ry={squint ? 3.5 : 6.5} fill="#fff" />
+      <circle cx={squint ? 53 : 51.5} cy={mood === "bad" ? 59.5 : 58} r="2.6" fill="#1c2230" />
+      <circle cx={squint ? 71 : 69.5} cy={mood === "bad" ? 59.5 : 58} r="2.6" fill="#1c2230" />
+      {mood === "bad" && <ellipse cx="46" cy="70" rx="2.2" ry="3.4" fill="#99d1ff" />}
+      <path d={mouth[mood]} stroke="#1c2230" strokeWidth="3" fill="none" strokeLinecap="round" />
     </svg>
   );
 }

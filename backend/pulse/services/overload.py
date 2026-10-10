@@ -58,7 +58,8 @@ def build_overload_report(
                 {
                     "type": "request_extension",
                     "assessment_id": entry["source_id"],
-                    "text": f"Ask for an extension on {entry['course_code']} {entry['title']}.",
+                    "text": f"Ask your {entry['course_code']} instructor for an extension on "
+                    f"\u201c{entry['title']}\u201d",
                 }
             )
     return {

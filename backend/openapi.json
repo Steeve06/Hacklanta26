@@ -1774,6 +1774,31 @@
                 }
             }
         },
+        "/api/v1/pulse/status": {
+            "get": {
+                "operationId": "v1_pulse_status_retrieve",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Status"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/submissions/{submission_id}/file": {
             "get": {
                 "operationId": "v1_submissions_file_retrieve",
@@ -2683,6 +2708,10 @@
                         "type": "string",
                         "format": "date-time"
                     },
+                    "closes_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
                     "status": {
                         "type": "string"
                     },
@@ -2695,6 +2724,7 @@
                     }
                 },
                 "required": [
+                    "closes_at",
                     "course",
                     "course_code",
                     "due_at",
@@ -2948,6 +2978,34 @@
                     "role",
                     "timezone"
                 ]
+            },
+            "Moment": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "$ref": "#/components/schemas/MomentKindEnum"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "key",
+                    "kind",
+                    "text"
+                ]
+            },
+            "MomentKindEnum": {
+                "enum": [
+                    "celebrate",
+                    "gasp",
+                    "fresh_start"
+                ],
+                "type": "string",
+                "description": "* `celebrate` - celebrate\n* `gasp` - gasp\n* `fresh_start` - fresh_start"
             },
             "NextDue": {
                 "type": "object",
@@ -3305,7 +3363,7 @@
                     "state": {
                         "allOf": [
                             {
-                                "$ref": "#/components/schemas/StateEnum"
+                                "$ref": "#/components/schemas/PlanJobStateEnum"
                             }
                         ],
                         "readOnly": true
@@ -3350,6 +3408,17 @@
                 ],
                 "type": "string",
                 "description": "* `generate` - Generate\n* `replan` - Replan"
+            },
+            "PlanJobStateEnum": {
+                "enum": [
+                    "queued",
+                    "running",
+                    "done",
+                    "failed",
+                    "cancelled"
+                ],
+                "type": "string",
+                "description": "* `queued` - Queued\n* `running` - Running\n* `done` - Done\n* `failed` - Failed\n* `cancelled` - Cancelled"
             },
             "Policies": {
                 "type": "object",
@@ -4000,16 +4069,93 @@
                 "type": "string",
                 "description": "* `done` - done\n* `partial` - partial\n* `skipped` - skipped\n* `planned` - planned"
             },
-            "StateEnum": {
+            "Status": {
+                "type": "object",
+                "properties": {
+                    "computed_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "overall": {
+                        "$ref": "#/components/schemas/StatusEntry"
+                    },
+                    "courses": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StatusEntry"
+                        }
+                    },
+                    "fresh_start": {
+                        "type": "boolean"
+                    },
+                    "all_done": {
+                        "type": "boolean"
+                    },
+                    "moment": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Moment"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "all_done",
+                    "computed_at",
+                    "courses",
+                    "fresh_start",
+                    "moment",
+                    "overall"
+                ]
+            },
+            "StatusEntry": {
+                "type": "object",
+                "properties": {
+                    "course_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "score": {
+                        "type": "integer"
+                    },
+                    "state": {
+                        "$ref": "#/components/schemas/StatusEntryStateEnum"
+                    },
+                    "reasons": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "components": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "number",
+                            "format": "double"
+                        }
+                    }
+                },
+                "required": [
+                    "code",
+                    "components",
+                    "course_id",
+                    "reasons",
+                    "score",
+                    "state"
+                ]
+            },
+            "StatusEntryStateEnum": {
                 "enum": [
-                    "queued",
-                    "running",
-                    "done",
-                    "failed",
-                    "cancelled"
+                    "good",
+                    "medium",
+                    "bad"
                 ],
                 "type": "string",
-                "description": "* `queued` - Queued\n* `running` - Running\n* `done` - Done\n* `failed` - Failed\n* `cancelled` - Cancelled"
+                "description": "* `good` - good\n* `medium` - medium\n* `bad` - bad"
             },
             "Submission": {
                 "type": "object",
