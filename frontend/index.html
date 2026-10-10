@@ -23,6 +23,35 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // If Leon fails to start, say so on the page instead of leaving it blank.
+      (function () {
+        var errors = [];
+        function show() {
+          var root = document.getElementById("root");
+          if (!root || root.childElementCount > 0) return;
+          root.innerHTML =
+            '<div style="font-family: system-ui, sans-serif; padding: 24px; max-width: 32rem">' +
+            '<h1 style="font-size: 20px">Leon couldn\'t start</h1>' +
+            "<p>Try reloading. If this keeps happening, send this message to the team:</p>" +
+            '<pre style="white-space: pre-wrap; font-size: 12px; background: #eee; padding: 8px"></pre>' +
+            "</div>";
+          root.querySelector("pre").textContent =
+            (errors.join("\n") || "Nothing loaded after 10 seconds.") + "\n" + navigator.userAgent;
+        }
+        window.addEventListener("error", function (e) {
+          errors.push(e.message + (e.filename ? " (" + e.filename + ":" + e.lineno + ")" : ""));
+          setTimeout(show, 300);
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+          errors.push(
+            "Unhandled: " + ((e.reason && (e.reason.stack || e.reason.message)) || e.reason),
+          );
+          setTimeout(show, 300);
+        });
+        setTimeout(show, 10000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

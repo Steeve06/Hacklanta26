@@ -62,13 +62,30 @@ services:
       - ./frontend/public:/app/public
     depends_on: [web]
 
-  # Optional: an HTTPS address for trying Leon on a phone (install, push). Start it with
-  #   docker compose --profile phone up tunnel
-  # and open the https://...trycloudflare.com address it prints. No account needed.
+  # Optional, for phones: the built app (a few files, like a real deployment, so it loads quickly
+  # over a tunnel) on http://localhost:4173, proxying the API to Django. Start it with
+  #   docker compose --profile phone up -d phone
+  # then give it an HTTPS address with `cloudflared tunnel --url http://localhost:4173`, or the
+  # tunnel service below. Rebuilt from your current code each time it starts.
+  phone:
+    build: ./frontend
+    command: sh -c "npx vite build && npx vite preview --host 0.0.0.0 --port 4173 --strictPort"
+    environment:
+      VITE_PROXY_TARGET: http://web:8000
+      VITE_DEMO_MODE: "true"
+    ports: ["4173:4173"]
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on: [web]
+    profiles: [phone]
+
+  # The HTTPS tunnel in a container. On networks that inspect HTTPS (many school and office
+  # networks) it can't connect; run cloudflared on the host instead, or use a phone hotspot.
   tunnel:
     image: cloudflare/cloudflared:2024.12.2
-    command: tunnel --no-autoupdate --url http://frontend:5173
-    depends_on: [frontend]
+    command: tunnel --no-autoupdate --url http://phone:4173
+    depends_on: [phone]
     profiles: [phone]
 
 volumes:
