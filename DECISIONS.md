@@ -65,18 +65,23 @@ Choices made where the build prompt left room, with the reason for each.
 - **AI rewording of reminders is off by default** (`NOTIFICATION_AI_VARIATION=true` to enable). When on, a rewrite that fails the guardrails is dropped and the template text is sent.
 - **Unsubscribe uses `DELETE /push/subscribe?endpoint=…`** because OpenAPI tooling drops bodies on DELETE.
 
-## Daily flashcards and streaks
+## Study checks and streaks
 
-- **Quizzes are a daily habit built from coursework.** The quiz tab is a Duolingo-style deck of five flashcards a day. Chapter quiz windows, their question banks and the planner's `chapter_quiz` sessions were removed; old `chapter_quiz` session rows are still skipped where they appear.
-- **The deck follows what's coming up.** If a quiz or assignment with linked chapters is due in the next 7 days and isn't submitted, the deck preps for it (quizzes win over sooner homework, then the soonest due), topped up from the same course's released chapters. With nothing due, it's a review mix of released chapters, opened ones first. Students with no course chapters get the general library.
-- **Course cards come from the chapter text.** Each bold key term becomes a fill-in-the-blank card on the sentence that introduces it (up to 12 per chapter). Bold lead-ins ending in punctuation and short lowercase emphasis are skipped. Cards are built on first use and rebuilt when the chapter's content hash changes; old ones are retired, not deleted, so past decks still read. No model call, so it works without an API key.
-- **The general library lives in code.** `quizzes/cards.py` holds general study cards with stable slugs; a migration and `seed_demo` upsert them.
-- **One deck per student per local day.** It's created on first visit and its cards are fixed for the day. Self-rating is honest-by-design: finishing every card counts the day, whether the student knew the answers or not.
-- **Light spaced repetition.** Up to two cards rated "Still learning" come back first, then unseen cards, then the ones seen longest ago. Topics are spread so a deck rarely repeats one.
-- **Streaks count days, not decks.** Finishing a deck on its day adds one; a second visit the same day doesn't. A deck started before midnight and finished within 15 minutes after still counts. A deck from a past day can be finished as practice.
-- **Missed days are settled lazily and by the sweep.** Opening the quiz tab and the 10-minute sweep both walk the days since the streak last counted: each missed day spends a freeze, the first one with no freeze left resets the streak.
-- **Freezes: 1 per 5 days, 2 max.** **Milestones are 3, 7, 14, 30, 50 and 100.**
-- **"Streak at risk" fires in the last 4 hours of the day** when there's a streak and today's deck isn't done.
+- **The streak measures studying, so it follows the schedule.** When the schedule gives a student a chapter, a study check opens at the start of that day (the day of its last session if it's spread over several) and closes at the end of the next day. Completing a chapter early opens its check right away. Chapters planned for the same day share one check. This replaced the collaborator's daily general flashcards; there are no optional flashcards on the side.
+- **Four cards, shown as flashcards.** Each card is a multiple-choice or true/false question; tapping an answer flips the card to show right or wrong, the explanation, and the chapter line it comes from. Three right out of four passes (`STUDY_CHECK_PASS_MARK`). A failed first try leaves one more try with new cards; after that the check is settled.
+- **Questions are written by the model and grounded.** Each question must quote the chapter (checked as a substring after whitespace normalisation); questions with duplicate options or more than one right answer are dropped. Without AI, or if too few survive, cards come from the chapter's bold key terms. Banks are rebuilt when a chapter's text changes; no model call happens when a student opens a check.
+- **Anti-gaming:** answers are graded on the server one card at a time, the right answer is only sent after the student answers, and a pass needs at least 4 seconds per card in total.
+- **Streak rules:** consecutive checks passed inside their windows (15 minutes of grace after the close). A missed check spends a freeze (1 earned per 5 passes, 2 max) or resets the streak. Days without a check don't count either way. Milestones at 3, 7, 14, 30, 50 and 100.
+
+## Ask Pulse (the chat)
+
+- **Suggest, then confirm.** The chat never changes anything on its own. A reply can carry a list of changes; the student presses **Confirm** or **Not now**. A newer suggestion replaces an older one that wasn't answered.
+- **A fixed set of changes.** Skip, mark done, reschedule, move to a specific time, keep a one-off time free, replace one weekday's free time, change limits (weekly, daily, session length, study window), and rebuild the plan around a note. Each goes through the same services as the app's buttons, so the planner's hard constraints still hold.
+- **Checked twice.** Every change is validated against the student's own data when the reply is made (invalid ones are dropped and the reply says why) and again on Confirm, inside one transaction: if any change no longer applies, none are applied and the card says why.
+- **Moved sessions stay put.** A session the student moves to a specific time is marked `locked`, and re-planning keeps it there unless the plan can't fit everything with it in place.
+- **The model sees only what it needs:** times in the student's zone, limits, free time, the next 10 days of sessions, deadlines in the next 3 weeks, open checks, the streak and the last 10 messages. No names, emails or grades. Messages are data, not instructions.
+- **Replies run in the background** (one at a time per student, polled every 1.5 s) and are limited to 30 messages an hour (`THROTTLE_ASSISTANT`). It uses the planner model because a wrong suggestion costs more than the tokens.
+- **Without AI, keywords.** "Skip", "move", "busy/working + a day", "done", "what's next" and day-or-time preferences are recognised by rules, so the chat still works with no key.
 
 ## Demo-ready (M8)
 

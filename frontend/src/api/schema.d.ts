@@ -132,6 +132,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/assistant/conversation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_assistant_conversation_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description Start over: the current conversation is closed and kept for the record. */
+        delete: operations["v1_assistant_conversation_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assistant/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_assistant_messages_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assistant/messages/{message_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_assistant_messages_confirm_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assistant/messages/{message_id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_assistant_messages_decline_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/attempts/{attempt_id}": {
         parameters: {
             query?: never;
@@ -1119,6 +1184,30 @@ export interface components {
             /** Format: date-time */
             available_from: string;
         };
+        ChatMessage: {
+            readonly id: number;
+            readonly role: components["schemas"]["ChatMessageRoleEnum"];
+            readonly text: string;
+            readonly state: components["schemas"]["ChatMessageStateEnum"];
+            readonly changes: components["schemas"]["ProposedChange"][];
+            readonly proposal: components["schemas"]["ProposalEnum"];
+            readonly proposal_note: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description * `student` - Student
+         *     * `assistant` - Assistant
+         * @enum {string}
+         */
+        ChatMessageRoleEnum: "student" | "assistant";
+        /**
+         * @description * `pending` - Pending
+         *     * `done` - Done
+         *     * `failed` - Failed
+         * @enum {string}
+         */
+        ChatMessageStateEnum: "pending" | "done" | "failed";
         CheckCard: {
             position: number;
             type: components["schemas"]["QuestionTypeEnum"];
@@ -1137,6 +1226,13 @@ export interface components {
             course_code: string;
             order: number;
             title: string;
+        };
+        /** @description Also used for "no conversation yet", with a null id and no messages. */
+        Conversation: {
+            readonly id: number | null;
+            /** Format: date-time */
+            readonly created_at: string | null;
+            messages: components["schemas"]["ChatMessage"][];
         };
         Course: {
             readonly id: number;
@@ -1250,12 +1346,19 @@ export interface components {
             readonly email: string;
             readonly first_name: string;
             readonly last_name: string;
-            readonly role: components["schemas"]["RoleEnum"];
+            readonly role: components["schemas"]["MeRoleEnum"];
             readonly timezone: string;
             readonly profile: components["schemas"]["Profile"];
             readonly server_now: string;
             readonly demo_mode: boolean;
         };
+        /**
+         * @description * `student` - Student
+         *     * `instructor` - Instructor
+         *     * `admin` - Admin
+         * @enum {string}
+         */
+        MeRoleEnum: "student" | "instructor" | "admin";
         Moment: {
             kind: components["schemas"]["MomentKindEnum"];
             key: string;
@@ -1268,6 +1371,9 @@ export interface components {
          * @enum {string}
          */
         MomentKindEnum: "celebrate" | "gasp" | "fresh_start";
+        NewMessageRequest: {
+            text: string;
+        };
         NextDue: {
             id: number;
             title: string;
@@ -1502,6 +1608,19 @@ export interface components {
             push_prompt_seen?: boolean;
             plan_feedback?: string;
         };
+        /**
+         * @description * `none` - None
+         *     * `pending` - Pending
+         *     * `applied` - Applied
+         *     * `declined` - Declined
+         *     * `failed` - Failed
+         * @enum {string}
+         */
+        ProposalEnum: "none" | "pending" | "applied" | "declined" | "failed";
+        ProposedChange: {
+            type: string;
+            summary: string;
+        };
         PushConfig: {
             public_key: string;
             enabled: boolean;
@@ -1576,13 +1695,6 @@ export interface components {
          * @enum {string}
          */
         ResultEnum: "done" | "frozen" | "missed" | "open" | "none";
-        /**
-         * @description * `student` - Student
-         *     * `instructor` - Instructor
-         *     * `admin` - Admin
-         * @enum {string}
-         */
-        RoleEnum: "student" | "instructor" | "admin";
         RosterRow: {
             student_id: number;
             name: string;
@@ -2125,6 +2237,110 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Submission"];
+                };
+            };
+        };
+    };
+    v1_assistant_conversation_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Conversation"];
+                };
+            };
+        };
+    };
+    v1_assistant_conversation_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_assistant_messages_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewMessageRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["NewMessageRequest"];
+                "multipart/form-data": components["schemas"]["NewMessageRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Conversation"];
+                };
+            };
+        };
+    };
+    v1_assistant_messages_confirm_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatMessage"];
+                };
+            };
+        };
+    };
+    v1_assistant_messages_decline_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatMessage"];
                 };
             };
         };

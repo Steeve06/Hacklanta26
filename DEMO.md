@@ -39,13 +39,21 @@ Sign in as **sam@pulse.test**. Go to **Courses > CS 201 > Assignments > Problem 
 
 - Open **Today**: confetti and the celebrate animation play once, and the sessions planned for Problem Set 2 are gone from Today and Week.
 
-## 6. Today's flashcards keep the streak going
+## 6. A study check keeps the streak going
 
-Sign in as **maya@pulse.test** (6-day streak). Open **Quiz**; the week strip shows the last six days done and today still open, and today's deck says which upcoming deadline it's prepping for.
+Sign in as **maya@pulse.test** (6-check streak). Open **Quiz**: she has a study check open for the chapter she studied today, with the time left until it closes at the end of tomorrow.
 
-- **Start today's flashcards**. For each of the five cards, **Show answer** (or tap the card), then **Got it** or **Still learning**.
-- The result reads "Counted for your streak: 7 days in a row. That's a 7-day milestone." with confetti. Opening the deck again doesn't count the day twice, and cards marked "Still learning" come back in the next decks.
-- To show a missed day: in Demo controls, click **+1 day** twice on Maya's row without doing the deck. The first missed day spends her saved freeze; the second resets the streak and sends a "streak reset" reminder. Click **Back to now** afterwards.
+- Open it and press **Start**. Each of the four cards is a question about the chapter; tap an answer and the card flips to show whether it was right, why, and the line of the chapter it comes from.
+- Three right out of four passes: the streak goes to 7 with the milestone celebration. A failed first try offers **Try again with new cards**. Answering again after it's settled doesn't count twice.
+- To show a missed check: in Demo controls, click **+1 day** twice on Maya's row without passing it. The window closes, her saved freeze is spent, and the next miss resets the streak. Click **Back to now** afterwards.
+
+## 6b. Ask Pulse to change the plan
+
+Still as Maya, click **Ask Pulse** in the sidebar.
+
+- Send "I'm busy tomorrow evening". The reply shows the change it would make ("Keep ... free (Busy)"). Nothing has moved yet: check **Week**.
+- Press **Confirm**. Within a few seconds the evening is empty in **Week** and its sessions have moved to other free time.
+- Send "Keep Sundays free", then **Not now**: nothing changes. **Start over** clears the chat.
 
 ## 7. An instructor extension
 

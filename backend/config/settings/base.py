@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "pulse",
     "notifications",
     "quizzes",
+    "assistant",
     "ai",
     "seed",
 ]
@@ -121,6 +122,7 @@ REST_FRAMEWORK = {
         "auth": env("THROTTLE_AUTH", "5/min"),
         "auth_email": env("THROTTLE_AUTH", "5/min"),
         "regenerate": env("THROTTLE_REGENERATE", "5/hour"),
+        "assistant": env("THROTTLE_ASSISTANT", "30/hour"),
     },
 }
 

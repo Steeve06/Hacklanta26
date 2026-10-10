@@ -54,3 +54,34 @@ class QuestionOut(BaseModel):
 
 class QuestionSet(BaseModel):
     questions: list[QuestionOut] = Field(max_length=20)
+
+
+class TimeRange(BaseModel):
+    start: str = Field(pattern=r"^\d{2}:\d{2}$")
+    end: str = Field(pattern=r"^\d{2}:\d{2}$")
+
+
+class AssistantAction(BaseModel):
+    """One proposed change. Only the fields for its `type` are used; the server checks them."""
+
+    type: Literal[
+        "skip_session", "mark_done", "reschedule_session", "move_session", "block_time",
+        "set_day_availability", "set_limits", "schedule_note",
+    ]  # fmt: skip
+    session_id: int | None = None
+    start: str | None = Field(default=None, max_length=25, description="local, YYYY-MM-DDTHH:MM")
+    end: str | None = Field(default=None, max_length=25, description="local, YYYY-MM-DDTHH:MM")
+    label: str | None = Field(default=None, max_length=60)
+    weekday: int | None = Field(default=None, ge=0, le=6)
+    blocks: list[TimeRange] | None = Field(default=None, max_length=6)
+    max_hours_per_week: float | None = None
+    max_hours_per_day: float | None = None
+    session_minutes: int | None = None
+    earliest_time: str | None = Field(default=None, pattern=r"^\d{2}:\d{2}$")
+    latest_time: str | None = Field(default=None, pattern=r"^\d{2}:\d{2}$")
+    note: str | None = Field(default=None, max_length=300)
+
+
+class AssistantTurn(BaseModel):
+    reply: str = Field(min_length=1, max_length=900)
+    actions: list[AssistantAction] = Field(default_factory=list, max_length=6)

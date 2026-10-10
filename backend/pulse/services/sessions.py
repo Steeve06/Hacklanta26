@@ -1,10 +1,15 @@
 """Student actions on scheduled sessions."""
 
+from datetime import UTC, datetime, timedelta
+
 from rest_framework.exceptions import ValidationError
 
 from accounts.clock import now as clock_now
+from lms.models import Assessment, DueDateOverride
 
-from ..models import Schedule, Session
+from ..models import AvailabilityBlock, Blackout, Schedule, Session
+from ..planning.slots import free_time
+from ..planning.types import Interval
 from .replan import request_replan
 from .status import invalidate as invalidate_status
 
@@ -59,3 +64,55 @@ def reschedule(student, session: Session) -> Session:
 
 def active_schedule(student) -> Schedule | None:
     return Schedule.objects.filter(student=student, is_active=True).first()
+
+
+def check_move(student, session: Session, start: datetime) -> datetime:
+    """Raise ValidationError unless the session can go at `start`. Returns the new end."""
+    now = clock_now(student)
+    if session.status != S.PLANNED or session.kind == Session.Kind.CHAPTER_QUIZ:
+        raise ValidationError("Only upcoming study sessions can be moved.")
+    end = start + (session.end - session.start)
+    if start <= now:
+        raise ValidationError("Pick a time that hasn't passed yet.")
+    profile = student.profile
+    blocks = [
+        (b.weekday, b.start_time, b.end_time)
+        for b in AvailabilityBlock.objects.filter(student=student)
+    ]
+    blackouts = [
+        Interval(b.start, b.end) for b in Blackout.objects.filter(student=student, end__gt=now)
+    ]
+    free = free_time(blocks, blackouts, tz=student.tz, start=now, end=end + timedelta(days=1),
+                     earliest=profile.earliest_time, latest=profile.latest_time)  # fmt: skip
+    day = start.astimezone(student.tz).date()
+    utc_start, utc_end = start.astimezone(UTC), end.astimezone(UTC)
+    if not any(iv.start <= utc_start and utc_end <= iv.end for iv in free.get(day, [])):
+        raise ValidationError("That time isn't inside your free study time.")
+    gap = timedelta(minutes=10)
+    clash = (
+        Session.objects.filter(schedule=session.schedule, status=S.PLANNED)
+        .exclude(pk=session.pk)
+        .filter(start__lt=end + gap, end__gt=start - gap)
+        .exists()
+    )
+    if clash:
+        raise ValidationError("Another session is already planned then.")
+    if session.task.source_type == "assessment":
+        override = DueDateOverride.objects.filter(
+            assessment_id=session.task.source_id, student=student
+        ).first()
+        assessment = Assessment.objects.filter(pk=session.task.source_id).first()
+        due = override.due_at if override else (assessment.due_at if assessment else None)
+        if due and end > due:
+            raise ValidationError("That's after the due date.")
+    return end
+
+
+def move(student, session: Session, start: datetime) -> Session:
+    """Put a session at a time the student chose and lock it there. The rest of the plan is
+    rebuilt around it."""
+    end = check_move(student, session, start)
+    session.start, session.end, session.locked = start, end, True
+    session.save(update_fields=["start", "end", "locked", "updated_at"])
+    request_replan(student, "session_moved")
+    return session

@@ -119,6 +119,9 @@ class Session(TimeStamped):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PLANNED)
     completed_minutes = models.PositiveIntegerField(default=0)
     at_risk = models.BooleanField(default=False)
+    locked = models.BooleanField(
+        default=False, help_text="placed by the student; re-planning keeps it where it is"
+    )
 
     class Meta:
         ordering = ["start"]

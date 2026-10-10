@@ -8,6 +8,7 @@ from datetime import UTC, datetime, timedelta
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.dispatch import Signal
 
 from accounts.clock import now as clock_now
@@ -272,8 +273,9 @@ def _pins(
         return []
     by_key = {s.key: s for s in specs}
     pins = []
+    soon = Q(start__lt=now + PIN_WINDOW) | Q(locked=True)
     for s in previous.sessions.filter(
-        status=Session.Status.PLANNED, start__gte=now, start__lt=now + PIN_WINDOW
+        soon, status=Session.Status.PLANNED, start__gte=now
     ).select_related("task"):
         key = _task_ref(s.task)
         spec = by_key.get(key)
@@ -334,6 +336,11 @@ def _persist(ctx, previous, history, specs, result, titles, summary, overload, m
         for s in history
     ]
     spec_by_key = {s.key: s for s in specs}
+    locked = set(
+        Session.objects.filter(
+            id__in=[p.session_id for p in result.placements if p.session_id], locked=True
+        ).values_list("id", flat=True)
+    )
     for i, p in enumerate(result.placements):
         task = tasks.get(p.task_key)
         if task is None:
@@ -350,6 +357,7 @@ def _persist(ctx, previous, history, specs, result, titles, summary, overload, m
                 kind=p.kind,
                 title=title,
                 at_risk=p.at_risk,
+                locked=p.session_id in locked,
             )  # fmt: skip
         )
     Session.objects.bulk_create(rows)

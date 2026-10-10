@@ -23,6 +23,12 @@ class RegenerateThrottle(UserRateThrottle):
         return super().allow_request(request, view)
 
 
+class AssistantThrottle(UserRateThrottle):
+    """Messages to the chat assistant, each of which can mean a model call."""
+
+    scope = "assistant"
+
+
 class AuthIPThrottle(AnonRateThrottle):
     """Sign-in, sign-up and password reset share one budget per IP address."""
 

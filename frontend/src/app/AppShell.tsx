@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { Icon, type IconName } from "@/components/Icon";
 import { TopProgress } from "@/components/ui";
+import { AssistantPanel } from "@/features/assistant/AssistantPanel";
 import { useLogout, useMe } from "@/features/auth/hooks";
 import { useInbox } from "@/features/notifications/api";
 import { cx } from "@/lib/cx";
@@ -47,6 +49,8 @@ export function AppShell() {
   const logout = useLogout();
   const items = navFor(me.data?.role, Boolean(me.data?.demo_mode));
   const isStudent = me.data?.role === "student";
+  const canAsk = isStudent && Boolean(me.data?.profile.onboarding_done);
+  const [asking, setAsking] = useState(false);
 
   return (
     <div className="min-h-dvh md:pl-60">
@@ -80,6 +84,17 @@ export function AppShell() {
               </li>
             ))}
           </ul>
+          {canAsk && (
+            <button
+              type="button"
+              onClick={() => setAsking(true)}
+              aria-haspopup="dialog"
+              className="mt-4 flex min-h-11 w-full items-center gap-3 rounded-md border border-line px-3 font-bold text-ink hover:bg-sunken"
+            >
+              <Icon name="chat" />
+              Ask Pulse
+            </button>
+          )}
         </nav>
         <div className="border-t border-line p-3">
           <p className="truncate px-3 pb-2 text-sm text-ink-soft">{me.data?.email}</p>
@@ -96,7 +111,19 @@ export function AppShell() {
 
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-surface/95 px-4 py-2 backdrop-blur md:hidden">
         <span className="font-display text-xl font-extrabold text-pine">Pulse</span>
-        {isStudent && <InboxLink />}
+        <div className="flex items-center">
+          {canAsk && (
+            <button
+              type="button"
+              onClick={() => setAsking(true)}
+              aria-haspopup="dialog"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md hover:bg-sunken"
+            >
+              <Icon name="chat" label="Ask Pulse" />
+            </button>
+          )}
+          {isStudent && <InboxLink />}
+        </div>
       </header>
 
       <main id="main" className="mx-auto w-full max-w-5xl px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8">
@@ -126,6 +153,7 @@ export function AppShell() {
         </ul>
       </nav>
       {isStudent && <ShellExtras />}
+      {canAsk && <AssistantPanel open={asking} onClose={() => setAsking(false)} />}
     </div>
   );
 }

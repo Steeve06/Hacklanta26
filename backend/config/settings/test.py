@@ -14,6 +14,7 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {
     "auth": "5/min",
     "auth_email": "5/min",
     "regenerate": "5/hour",
+    "assistant": "1000/hour",
 }
 AI_PARALLEL = False
 MIDDLEWARE = [m for m in MIDDLEWARE if "whitenoise" not in m]  # noqa: F405

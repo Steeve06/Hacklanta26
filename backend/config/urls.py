@@ -12,6 +12,7 @@ api_v1 = [
     path("", include("notifications.urls")),
     path("", include("quizzes.urls")),
     path("", include("pulse.onboarding_views")),
+    path("assistant/", include("assistant.urls")),
     path("demo/", include("pulse.demo_urls")),
 ]
 
