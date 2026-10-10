@@ -1,25 +1,19 @@
 from django.contrib import admin
 
-from .models import BankQuestion, ChapterQuiz, Streak, StreakEvent
+from .models import DailyDeck, Flashcard, Streak, StreakEvent
 
 
-@admin.register(BankQuestion)
-class BankQuestionAdmin(admin.ModelAdmin):
-    list_display = ["chapter", "type", "prompt", "origin", "retired"]
-    list_filter = ["origin", "retired", "chapter__course"]
+@admin.register(Flashcard)
+class FlashcardAdmin(admin.ModelAdmin):
+    list_display = ["front", "topic", "active"]
+    list_filter = ["topic", "active"]
+    search_fields = ["front", "back"]
 
 
-@admin.register(ChapterQuiz)
-class ChapterQuizAdmin(admin.ModelAdmin):
-    list_display = [
-        "student",
-        "scheduled_date",
-        "opens_at",
-        "closes_at",
-        "submitted_at",
-        "counted_for_streak",
-    ]
+@admin.register(DailyDeck)
+class DailyDeckAdmin(admin.ModelAdmin):
+    list_display = ["student", "day", "completed_at", "knew", "counted_for_streak"]
 
 
-admin.site.register(Streak, list_display=["student", "current", "longest", "freezes"])
-admin.site.register(StreakEvent, list_display=["student", "result", "streak_after", "created_at"])
+admin.site.register(Streak, list_display=["student", "current", "longest", "freezes", "last_day"])
+admin.site.register(StreakEvent, list_display=["student", "day", "result", "streak_after"])

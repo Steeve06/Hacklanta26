@@ -13,7 +13,7 @@ EXPORTED = [
     ("pulse", "Schedule", "student"),
     ("pulse", "StatusSnapshot", "student"),
     ("notifications", "Notification", "student"),
-    ("quizzes", "ChapterQuiz", "student"),
+    ("quizzes", "DailyDeck", "student"),
     ("quizzes", "StreakEvent", "student"),
 ]
 

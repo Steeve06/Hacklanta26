@@ -1,32 +1,23 @@
-import { Link } from "react-router-dom";
 import { Card, Skeleton } from "@/components/ui";
-import { useQuizzes, useStreak } from "./api";
-import { OpenQuizRow, StreakBadge } from "./QuizCards";
+import { useStreak, useTodayDeck } from "./api";
+import { StreakBadge } from "./StreakBadge";
+import { TodayCard } from "./TodayCard";
 
 export function QuizAside() {
   const streak = useStreak();
-  const open = useQuizzes("open");
+  const today = useTodayDeck();
   return (
     <Card aria-labelledby="quiz-aside">
       <h2 id="quiz-aside" className="sr-only">
-        Streak and open quizzes
+        Streak and today&apos;s flashcards
       </h2>
       {streak.data ? (
         <StreakBadge streak={streak.data} compact />
       ) : (
         <Skeleton className="h-11 w-40" />
       )}
-      <div className="mt-3 flex flex-col gap-2">
-        {open.data?.length ? (
-          open.data.map((q) => <OpenQuizRow key={q.id} quiz={q} />)
-        ) : (
-          <p className="text-sm text-ink-soft">
-            No quiz open right now.{" "}
-            <Link to="/pulse/quiz" className="font-bold text-pine underline">
-              See upcoming
-            </Link>
-          </p>
-        )}
+      <div className="mt-3">
+        {today.data ? <TodayCard deck={today.data} /> : <Skeleton className="h-14 w-full" />}
       </div>
     </Card>
   );
