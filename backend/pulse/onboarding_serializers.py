@@ -58,6 +58,9 @@ class PreferencesStep(StepSerializer):
     max_hours_per_day = serializers.DecimalField(
         max_digits=4, decimal_places=1, min_value=1, max_value=12
     )
+    max_hours_per_week = serializers.DecimalField(
+        max_digits=4, decimal_places=1, min_value=2, max_value=40
+    )
     session_minutes = serializers.ChoiceField(choices=[25, 50, 90])
     earliest_time = serializers.TimeField()
     latest_time = serializers.TimeField()
@@ -74,7 +77,10 @@ class PreferencesStep(StepSerializer):
         data = self.validated_data
         profile = self.student.profile
         user = self.student
-        fields = ["max_hours_per_day", "session_minutes", "earliest_time", "latest_time"]
+        fields = [
+            "max_hours_per_day", "max_hours_per_week", "session_minutes", "earliest_time",
+            "latest_time",
+        ]  # fmt: skip
         changed = user.timezone != data["timezone"] or any(
             getattr(profile, f) != data[f] for f in fields
         )
@@ -120,6 +126,7 @@ class OnboardingPatchSerializer(serializers.Serializer):
 
 class PreferencesAnswer(serializers.Serializer):
     max_hours_per_day = serializers.DecimalField(max_digits=4, decimal_places=1)
+    max_hours_per_week = serializers.DecimalField(max_digits=4, decimal_places=1)
     session_minutes = serializers.IntegerField()
     earliest_time = serializers.TimeField()
     latest_time = serializers.TimeField()

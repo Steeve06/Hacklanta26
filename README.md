@@ -107,6 +107,7 @@ The seeded term is 15 weeks and starts 4 weeks before today (set `TERM_START_DAT
 - **Passwords** need 10+ characters, can't be common, only numbers, or close to your name or email. They're hashed with Argon2.
 - **Forgot password** emails a link that works once for an hour. Locally, emails print to the backend log: `docker compose logs web` (or the `runserver` terminal). Copy the `/reset-password?...` link into the browser.
 - **Remember me** keeps you signed in for 30 days instead of 7. Signing out, or changing or resetting a password, ends the session in every tab (and, for password changes, on other devices).
+- **Weekly study hours** are the student's choice (2 to 40, default 10). Pulse never plans more than that in a week; if the work doesn't fit, the overload report shows what's left and suggests raising the limit.
 - **Onboarding** is five steps (courses, study time, preferences, reminders, your schedule), saved each time you press Next. Close the tab or sign out and you pick up at the same step. Pulse pages stay locked until you press **Looks good** on step 5. Everything can be changed later in Settings.
 - Ten wrong passwords for one email lock it for 15 minutes; sign-in, sign-up and reset are limited to 5 a minute per IP and per email.
 

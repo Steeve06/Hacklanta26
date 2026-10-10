@@ -87,6 +87,8 @@ def plan(
         horizon_end=ctx.horizon_end,
         max_minutes_per_day=int(float(profile.max_hours_per_day) * 60),
         session_minutes=profile.session_minutes,
+        max_minutes_per_week=int(float(profile.max_hours_per_week) * 60),
+        week_used=_week_used(history, now, tz),
     )
     result = _solve(specs, free, constraints, preferences, previous, now)
 
@@ -161,6 +163,20 @@ def _history(previous: Schedule | None, now: datetime) -> list[Session]:
             status=Session.Status.PLANNED, start__gte=now
         )
     )
+
+
+def _week_used(history: list[Session], now: datetime, tz) -> dict:
+    """Minutes already spent on this week's sessions, so the weekly limit covers the whole
+    week and not just what is left of it."""
+    today = now.astimezone(tz).date()
+    monday = today - timedelta(days=today.weekday())
+    used = 0
+    for s in history:
+        if s.status in (Session.Status.SKIPPED, Session.Status.RESCHEDULED):
+            continue
+        if s.start.astimezone(tz).date() >= monday and s.start < now:
+            used += s.minutes
+    return {monday: used} if used else {}
 
 
 def _done_minutes(history: list[Session]) -> dict[str, int]:

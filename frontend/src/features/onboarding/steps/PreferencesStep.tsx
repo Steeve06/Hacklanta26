@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { totalHours } from "@/features/pulse/availability";
 import { PreferencesFields } from "@/features/pulse/PreferencesFields";
 import { detectTimezone, preferenceErrors, type Preferences } from "@/features/pulse/preferences";
 import type { StepProps } from "../stepTypes";
@@ -10,6 +11,7 @@ export function PreferencesStep({ state, saving, submit, goTo, error }: StepProp
   const detected = detectTimezone();
   const [prefs, setPrefs] = useState<Preferences>({
     max_hours_per_day: String(saved.max_hours_per_day),
+    max_hours_per_week: String(saved.max_hours_per_week),
     session_minutes: saved.session_minutes,
     earliest_time: saved.earliest_time.slice(0, 5),
     latest_time: saved.latest_time.slice(0, 5),
@@ -22,7 +24,13 @@ export function PreferencesStep({ state, saving, submit, goTo, error }: StepProp
       : undefined;
   return (
     <section aria-label="Study preferences" className="flex flex-col gap-4">
-      <PreferencesFields value={prefs} onChange={setPrefs} timezoneHint={hint} disabled={saving} />
+      <PreferencesFields
+        value={prefs}
+        onChange={setPrefs}
+        timezoneHint={hint}
+        freeHours={totalHours(state.availability.blocks)}
+        disabled={saving}
+      />
       <StepFooter
         onBack={() => goTo(2)}
         onNext={() => submit({ ...prefs })}

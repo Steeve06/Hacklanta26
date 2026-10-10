@@ -179,17 +179,60 @@ block_strategy = st.tuples(
     tasks=st.lists(task_strategy, min_size=1, max_size=12, unique_by=lambda t: t.key),
     blocks=st.lists(block_strategy, min_size=0, max_size=10),
     max_hours=st.integers(1, 6),
+    week_hours=st.integers(2, 40),
     session=st.sampled_from([25, 50, 90]),
     dep_pairs=st.lists(st.tuples(st.integers(0, 11), st.integers(0, 11)), max_size=6),
 )
-def test_property_no_hard_constraint_is_ever_violated(tasks, blocks, max_hours, session, dep_pairs):
+def test_property_no_hard_constraint_is_ever_violated(
+    tasks, blocks, max_hours, week_hours, session, dep_pairs
+):
     for a, b in dep_pairs:
         if a < b < len(tasks):
             tasks[b].depends_on.append(tasks[a].key)
-    c = constraints(max_minutes_per_day=max_hours * 60, session_minutes=session)
+    c = constraints(
+        max_minutes_per_day=max_hours * 60,
+        session_minutes=session,
+        max_minutes_per_week=week_hours * 60,
+    )
     blocks = [(d, s, e) for d, s, e in blocks if e > s]
     result, problems, _ = solve(tasks, blocks, c)
     assert problems == []
     shortfall = {s.task_key: s.minutes for s in result.shortfalls}
     for t in tasks:
         assert placed_minutes(result, t.key) + shortfall.get(t.key, 0) == t.minutes
+
+
+def week_totals(result, c):
+    totals = {}
+    for p in result.placements:
+        week = c.week_of(p.day)
+        totals[week] = totals.get(week, 0) + p.minutes
+    return totals
+
+
+def test_weekly_limit_is_never_exceeded_and_overflow_is_reported():
+    c = constraints(max_minutes_per_week=4 * 60, max_minutes_per_day=180)
+    tasks = [task(f"t{i}", 120, 12, course=i % 3) for i in range(6)]
+    result, problems, _ = solve(tasks, evenings(14), c)
+    assert problems == []
+    assert all(minutes <= 4 * 60 for minutes in week_totals(result, c).values())
+    assert result.shortfalls, "12 hours of work can't fit in two 4-hour weeks"
+
+
+def test_time_already_spent_this_week_counts_toward_the_limit():
+    monday = constraints().week_of(NOW.astimezone(NY).date())
+    c = constraints(max_minutes_per_week=3 * 60, week_used={monday: 150})
+    result, problems, _ = solve([task("a", 120, 4)], evenings(7), c)
+    assert problems == []
+    this_week = [p for p in result.placements if c.week_of(p.day) == monday]
+    assert sum(p.minutes for p in this_week) <= 30
+
+
+def test_overload_suggests_raising_the_weekly_limit():
+    from pulse.services.overload import _weekly_limit_suggestion
+
+    c = constraints(max_minutes_per_week=2 * 60)
+    tasks = [task(f"t{i}", 120, 6) for i in range(3)]
+    result, _, _ = solve(tasks, evenings(7), c)
+    suggestions = _weekly_limit_suggestion(result, c, NOW + timedelta(days=6))
+    assert suggestions and "weekly study limit (now 2 hours)" in suggestions[0]["text"]

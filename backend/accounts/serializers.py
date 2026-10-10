@@ -99,6 +99,7 @@ class AccessTokenSerializer(serializers.Serializer):
 PROFILE_FIELDS = [
     "sass_level",
     "max_hours_per_day",
+    "max_hours_per_week",
     "session_minutes",
     "earliest_time",
     "latest_time",
@@ -127,6 +128,11 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     def validate_sass_level(self, value):
         if not 1 <= value <= 4:
             raise serializers.ValidationError("Sass level must be between 1 and 4.")
+        return value
+
+    def validate_max_hours_per_week(self, value):
+        if not 2 <= float(value) <= 40:
+            raise serializers.ValidationError("Choose between 2 and 40 hours.")
         return value
 
     def validate_max_hours_per_day(self, value):

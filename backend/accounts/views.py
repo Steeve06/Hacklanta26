@@ -267,7 +267,13 @@ class MeView(APIView):
                 profile_changed = list(profile_serializer.validated_data)
         if user.is_student and (
             "timezone" in data
-            or {"max_hours_per_day", "session_minutes", "earliest_time", "latest_time"}
+            or {
+                "max_hours_per_day",
+                "max_hours_per_week",
+                "session_minutes",
+                "earliest_time",
+                "latest_time",
+            }  # fmt: skip
             & set(profile_changed)
         ):
             from pulse.services.replan import request_replan

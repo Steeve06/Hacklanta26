@@ -71,6 +71,7 @@ function PreferencesSection({ me }: { me: Me }) {
   const update = useUpdateMe();
   const initial: Preferences = {
     max_hours_per_day: String(me.profile?.max_hours_per_day ?? "3"),
+    max_hours_per_week: String(me.profile?.max_hours_per_week ?? "10"),
     session_minutes: me.profile?.session_minutes ?? 50,
     earliest_time: me.profile?.earliest_time ?? "08:00",
     latest_time: me.profile?.latest_time ?? "22:00",
@@ -93,6 +94,7 @@ function PreferencesSection({ me }: { me: Me }) {
               timezone: prefs.timezone,
               profile: {
                 max_hours_per_day: prefs.max_hours_per_day,
+                max_hours_per_week: prefs.max_hours_per_week,
                 session_minutes: prefs.session_minutes as 25 | 50 | 90,
                 earliest_time: prefs.earliest_time,
                 latest_time: prefs.latest_time,

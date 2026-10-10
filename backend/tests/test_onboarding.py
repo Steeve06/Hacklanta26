@@ -27,6 +27,7 @@ BLOCKS = [
 ]
 PREFS = {
     "max_hours_per_day": "3.0",
+    "max_hours_per_week": "12.0",
     "session_minutes": 50,
     "earliest_time": "08:00",
     "latest_time": "22:00",
@@ -103,6 +104,7 @@ def test_each_step_saves_to_its_real_table_and_advances(newcomer):
     newcomer.refresh_from_db()
     assert newcomer.timezone == "America/Chicago"
     assert newcomer.profile.max_hours_per_day == Decimal("3.0")
+    assert newcomer.profile.max_hours_per_week == Decimal("12.0")
 
     styled = patch(client, 4, STYLE)
     assert styled.data["step"] == 5
@@ -117,6 +119,8 @@ def test_each_step_saves_to_its_real_table_and_advances(newcomer):
         (3, {**PREFS, "max_hours_per_day": "0.5"}, "max_hours_per_day"),
         (3, {**PREFS, "max_hours_per_day": "13"}, "max_hours_per_day"),
         (3, {**PREFS, "session_minutes": 30}, "session_minutes"),
+        (3, {**PREFS, "max_hours_per_week": "1.5"}, "max_hours_per_week"),
+        (3, {**PREFS, "max_hours_per_week": "41"}, "max_hours_per_week"),
         (3, {**PREFS, "latest_time": "07:00"}, "latest_time"),
         (3, {**PREFS, "timezone": "Mars/Olympus"}, "timezone"),
         (4, {**STYLE, "sass_level": 5}, "sass_level"),
@@ -232,6 +236,8 @@ class TestConstraints:
             {"sass_level": 5},
             {"max_hours_per_day": Decimal("0.5")},
             {"max_hours_per_day": 13},
+            {"max_hours_per_week": 1},
+            {"max_hours_per_week": 41},
             {"session_minutes": 30},
             {"earliest_time": time(23), "latest_time": time(7)},
         ],

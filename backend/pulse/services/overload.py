@@ -51,7 +51,8 @@ def build_overload_report(
         return None if blocks_exist else _no_availability()
     minutes = sum(e["minutes_short"] for e in short.values())
     earliest_due = min(by_key[g.task_key].deadline for g in result.shortfalls)
-    suggestions = _availability_suggestions(free, constraints, earliest_due)
+    suggestions = _weekly_limit_suggestion(result, constraints, earliest_due)
+    suggestions += _availability_suggestions(free, constraints, earliest_due)
     for entry in sorted(short.values(), key=lambda e: e["due_at"]):
         if entry["source_type"] == "assessment":
             suggestions.append(
@@ -90,6 +91,33 @@ def _no_availability() -> dict:
 
 def _longest_block(free: dict) -> int:
     return max((iv.minutes for ivs in free.values() for iv in ivs), default=0)
+
+
+def _weekly_limit_suggestion(result, constraints: Constraints, before) -> list[dict]:
+    """If the student's own weekly limit is what's full, raising it helps more than adding
+    free time."""
+    cap = constraints.max_minutes_per_week
+    if cap is None:
+        return []
+    per_week: dict = defaultdict(int, constraints.week_used)
+    for p in result.placements:
+        per_week[constraints.week_of(p.day)] += p.minutes
+    last = constraints.week_of(before.astimezone(constraints.tz).date())
+    first = constraints.week_of(constraints.now.astimezone(constraints.tz).date())
+    full = any(
+        minutes >= cap - constraints.session_minutes
+        for week, minutes in per_week.items()
+        if first <= week <= last
+    )
+    if not full:
+        return []
+    hours = f"{cap / 60:g}"
+    return [
+        {
+            "type": "raise_weekly_limit",
+            "text": f"Raise your weekly study limit (now {hours} hours) in Settings.",
+        }
+    ]
 
 
 def _availability_suggestions(free: dict, constraints: Constraints, before) -> list[dict]:

@@ -1,5 +1,6 @@
 export type Preferences = {
   max_hours_per_day: string;
+  max_hours_per_week: string;
   session_minutes: number;
   earliest_time: string;
   latest_time: string;
@@ -33,6 +34,8 @@ export function preferenceErrors(p: Preferences): Partial<Record<keyof Preferenc
   const errors: Partial<Record<keyof Preferences, string>> = {};
   const hours = Number(p.max_hours_per_day);
   if (!(hours >= 1 && hours <= 12)) errors.max_hours_per_day = "Choose between 1 and 12 hours.";
+  const week = Number(p.max_hours_per_week);
+  if (!(week >= 2 && week <= 40)) errors.max_hours_per_week = "Choose between 2 and 40 hours.";
   if (p.earliest_time.slice(0, 5) >= p.latest_time.slice(0, 5))
     errors.latest_time = "Latest must be after earliest.";
   return errors;

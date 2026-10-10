@@ -1463,6 +1463,8 @@ export interface components {
         PreferencesAnswer: {
             /** Format: decimal */
             max_hours_per_day: string;
+            /** Format: decimal */
+            max_hours_per_week: string;
             session_minutes: number;
             /** Format: time */
             earliest_time: string;
@@ -1474,6 +1476,8 @@ export interface components {
             readonly sass_level: number;
             /** Format: decimal */
             readonly max_hours_per_day: string;
+            /** Format: decimal */
+            readonly max_hours_per_week: string;
             readonly session_minutes: components["schemas"]["SessionMinutesEnum"];
             /** Format: time */
             readonly earliest_time: string;
@@ -1493,6 +1497,8 @@ export interface components {
             sass_level?: number;
             /** Format: decimal */
             max_hours_per_day?: string;
+            /** Format: decimal */
+            max_hours_per_week?: string;
             session_minutes?: components["schemas"]["SessionMinutesEnum"];
             /** Format: time */
             earliest_time?: string;

@@ -68,6 +68,7 @@ def snapshot(student, state: Onboarding, note: str = "", stale: bool = False) ->
         "availability": {"blocks": blocks},
         "preferences": {
             "max_hours_per_day": profile.max_hours_per_day,
+            "max_hours_per_week": profile.max_hours_per_week,
             "session_minutes": profile.session_minutes,
             "earliest_time": profile.earliest_time,
             "latest_time": profile.latest_time,

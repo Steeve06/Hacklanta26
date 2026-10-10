@@ -110,3 +110,4 @@ Choices made where the build prompt left room, with the reason for each.
 - **SQLite stays for the no-Docker quick start only.** Docker, CI and production run on Postgres.
 - **New addresses.** Onboarding is `/onboarding` (outside the app shell), Today is `/pulse/today` (`/pulse` redirects), and Settings is `/settings` for every role. Old `/pulse/onboarding` and `/pulse/settings` links redirect.
 - **Instructors and admins go to Learning Hub**; admins also get Django admin in the navigation.
+- **Students choose their weekly study hours (2–40, default 10), and it's a hard cap.** The solver never places more than that in a calendar week (Monday to Sunday, the student's time zone), counting sessions already done or scheduled earlier in the week. If work doesn't fit, the overload report says so and, when the weekly limit is what's full, suggests raising it. Seeded students have limits close to their free time so the demo looks the same.

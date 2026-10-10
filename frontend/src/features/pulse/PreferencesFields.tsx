@@ -14,19 +14,38 @@ export function PreferencesFields({
   value,
   onChange,
   timezoneHint = "Detected from your device. Change it if you're travelling.",
+  freeHours,
   disabled = false,
 }: {
   value: Preferences;
   onChange: (p: Preferences) => void;
   timezoneHint?: string;
+  /** Weekly free time the student marked, shown next to the weekly limit. */
+  freeHours?: number;
   disabled?: boolean;
 }) {
+  const weekHint =
+    freeHours === undefined
+      ? "Pulse never plans more than this in a week."
+      : `Pulse never plans more than this in a week. You marked ${freeHours.toFixed(1).replace(".0", "")} free hours.`;
   const errors = preferenceErrors(value);
   const set = <K extends keyof Preferences>(key: K, v: Preferences[K]) =>
     onChange({ ...value, [key]: v });
   return (
     <div className="flex flex-col gap-5">
       <div className="grid gap-4 sm:grid-cols-2">
+        <Input
+          label="Study hours per week"
+          type="number"
+          min={2}
+          max={40}
+          step={0.5}
+          disabled={disabled}
+          value={value.max_hours_per_week}
+          onChange={(e) => set("max_hours_per_week", e.target.value)}
+          hint={weekHint}
+          error={errors.max_hours_per_week}
+        />
         <Input
           label="Most study hours in one day"
           type="number"

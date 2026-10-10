@@ -86,6 +86,7 @@ class StudentProfile(TimeStamped):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     sass_level = models.PositiveSmallIntegerField(default=2)
     max_hours_per_day = models.DecimalField(max_digits=4, decimal_places=1, default=3)
+    max_hours_per_week = models.DecimalField(max_digits=4, decimal_places=1, default=10)
     session_minutes = models.PositiveSmallIntegerField(
         choices=SessionLength.choices, default=SessionLength.MEDIUM
     )
@@ -110,6 +111,10 @@ class StudentProfile(TimeStamped):
             models.CheckConstraint(
                 condition=Q(max_hours_per_day__gte=1, max_hours_per_day__lte=12),
                 name="profile_hours_1_to_12",
+            ),
+            models.CheckConstraint(
+                condition=Q(max_hours_per_week__gte=2, max_hours_per_week__lte=40),
+                name="profile_week_2_to_40",
             ),
             models.CheckConstraint(
                 condition=Q(session_minutes__in=[25, 50, 90]), name="profile_session_length"

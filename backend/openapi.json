@@ -4864,6 +4864,11 @@
                         "format": "decimal",
                         "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$"
                     },
+                    "max_hours_per_week": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$"
+                    },
                     "session_minutes": {
                         "type": "integer"
                     },
@@ -4883,6 +4888,7 @@
                     "earliest_time",
                     "latest_time",
                     "max_hours_per_day",
+                    "max_hours_per_week",
                     "session_minutes",
                     "timezone"
                 ]
@@ -4895,6 +4901,12 @@
                         "readOnly": true
                     },
                     "max_hours_per_day": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$",
+                        "readOnly": true
+                    },
+                    "max_hours_per_week": {
                         "type": "string",
                         "format": "decimal",
                         "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$",
@@ -4953,6 +4965,7 @@
                     "earliest_time",
                     "latest_time",
                     "max_hours_per_day",
+                    "max_hours_per_week",
                     "onboarding_done",
                     "plan_feedback",
                     "push_prompt_seen",
@@ -4973,6 +4986,11 @@
                         "minimum": 0
                     },
                     "max_hours_per_day": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$"
+                    },
+                    "max_hours_per_week": {
                         "type": "string",
                         "format": "decimal",
                         "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$"
