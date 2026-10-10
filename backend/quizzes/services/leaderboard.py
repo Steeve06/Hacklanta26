@@ -1,7 +1,8 @@
-"""Weekly XP leaderboard among classmates (students who share a course with you)."""
+"""Weekly XP leaderboard among classmates (students who share a course with you). XP comes from
+study-check tries: 10 per right answer, 20 for answering every card in time."""
 
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.db.models import Sum
 
@@ -9,7 +10,7 @@ from accounts.models import User
 from lms.models import Enrollment
 from lms.selectors import enrolled_courses
 
-from ..models import DailyDeck, Streak
+from ..models import CheckAttempt, Streak
 
 LIMIT = 50
 
@@ -53,11 +54,12 @@ def board(student, now: datetime, course_id: int | None = None) -> tuple[date, l
     outside the top rows."""
     start = week_start(student, now)
     people = list(classmates(student, course_id))
+    since = datetime.combine(start, time(0), tzinfo=student.tz)
     xp = dict(
-        DailyDeck.objects.filter(student__in=people, day__gte=start)
-        .values_list("student_id")
+        CheckAttempt.objects.filter(study_check__student__in=people, finished_at__gte=since)
+        .values_list("study_check__student_id")
         .annotate(total=Sum("xp"))
-        .values_list("student_id", "total")
+        .values_list("study_check__student_id", "total")
     )
     streaks = dict(Streak.objects.filter(student__in=people).values_list("student_id", "current"))
     ordered = sorted(

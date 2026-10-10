@@ -21,7 +21,8 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: `${python} manage.py migrate --noinput && ${python} manage.py seed_demo && ${python} manage.py runserver 127.0.0.1:8001 --noreload`,
+      // A fresh database every run, so old migrations or leftover data never get in the way.
+      command: `${python} -c "import pathlib; pathlib.Path('e2e.sqlite3').unlink(missing_ok=True)" && ${python} manage.py migrate --noinput && ${python} manage.py seed_demo && ${python} manage.py runserver 127.0.0.1:8001 --noreload`,
       cwd: "../backend",
       url: "http://127.0.0.1:8001/api/health",
       timeout: 180_000,
@@ -35,6 +36,7 @@ export default defineConfig({
         DEMO_MODE: "true",
         CORS_ALLOWED_ORIGINS: "http://localhost:5174",
         THROTTLE_AUTH: "1000/min",
+        STUDY_CHECK_SECONDS_PER_CARD: "0",
       },
     },
     {

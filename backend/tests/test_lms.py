@@ -350,7 +350,7 @@ def test_seed_demo_is_idempotent():
 
 
 @pytest.mark.parametrize("hour", [1, 9, 15, 23])
-def test_seed_gives_on_track_student_a_live_streak_and_todays_deck_at_any_time_of_day(
+def test_seed_gives_on_track_student_a_streak_and_an_open_check_at_any_time_of_day(
     hour, django_capture_on_commit_callbacks
 ):
     from datetime import datetime
@@ -358,16 +358,12 @@ def test_seed_gives_on_track_student_a_live_streak_and_todays_deck_at_any_time_o
 
     from django.core.management import call_command
 
-    from accounts.models import User
-    from quizzes.models import DailyDeck, Streak
-    from quizzes.services.streaks import settle
+    from quizzes.models import Streak, StudyCheck
 
     moment = datetime(2026, 10, 10, hour, 0, tzinfo=ZoneInfo("America/New_York"))
     with time_machine.travel(moment, tick=False):
         with django_capture_on_commit_callbacks(execute=True):
             call_command("seed_demo", stdout=io.StringIO())
-        maya = User.objects.get(email="maya@pulse.test")
-        assert settle(maya) == []
-        assert Streak.objects.get(student=maya).current == 6
-        assert DailyDeck.objects.filter(student=maya, counted_for_streak=True).count() == 6
-        assert not DailyDeck.objects.filter(student=maya, day=moment.date()).exists()
+        maya = StudyCheck.objects.filter(student__email="maya@pulse.test")
+        assert maya.filter(opens_at__lte=moment, closes_at__gt=moment).count() == 1
+        assert Streak.objects.get(student__email="maya@pulse.test").current == 6

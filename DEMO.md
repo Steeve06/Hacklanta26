@@ -39,14 +39,22 @@ Sign in as **sam@pulse.test**. Go to **Courses > CS 201 > Assignments > Problem 
 
 - Open **Today**: confetti and the celebrate animation play once, and the sessions planned for Problem Set 2 are gone from Today and Week.
 
-## 6. The daily quiz and the leaderboard
+## 6. A study check keeps the streak going
 
-Sign in as **maya@pulse.test** (6-day streak). Open **Quiz**: the leaderboard is in the middle, with Maya's row highlighted among her classmates' weekly XP. Switch the chips to one course to narrow it. The week strip on the side shows the last six days done and today still open.
+Sign in as **maya@pulse.test** (6-check streak). Open **Quiz**: under her streak is this week's leaderboard, with Maya highlighted among her classmates; the chips narrow it to one course. Below it, a study check is open for the chapters she studied today.
 
-- Click **Start today's quiz**. The card says which deadline it's prepping for and how long it is (3 minutes, or 5 before a quiz). Press **Start** and the clock runs.
-- Answer the mix: pick an option for multiple choice, type the missing term for short answer, tap a term and then its sentence for matching, and flip and rate the flashcards. Each graded answer shows right or wrong with the full sentence.
-- The result reads "Counted for your streak: 7 days in a row. That's a 7-day milestone." with confetti and the XP earned. **See the leaderboard** shows Maya moved up. Opening the quiz again doesn't count the day twice, and missed questions come back in the next sessions.
-- To show a missed day: in Demo controls, click **+1 day** twice on Maya's row without doing the quiz. The first missed day spends her saved freeze; the second resets the streak and sends a "streak reset" reminder. Click **Back to now** afterwards.
+- Open it and press **Start**. The 3-minute clock runs at the top right. The four cards mix kinds: pick an option, type the missing term, and, third, match three key terms to their sentences (tap a term, then its sentence). Each card shows right or wrong, why, and the line of the chapter it comes from.
+- Three right out of four passes: the streak goes to 7 with the milestone celebration and the XP earned. A failed first try offers **Try again with new cards**. Answering again after it's settled doesn't count twice.
+- To show the clock: start a try and wait three minutes. Unanswered cards count as wrong and the try ends.
+- To show a missed check: in Demo controls, click **+1 day** twice on Maya's row without passing it. The window closes, her saved freeze is spent, and the next miss resets the streak. Click **Back to now** afterwards.
+
+## 6b. Ask Pulse to change the plan
+
+Still as Maya, click **Ask Pulse** in the sidebar.
+
+- Send "I'm busy tomorrow evening". The reply shows the change it would make ("Keep ... free (Busy)"). Nothing has moved yet: check **Week**.
+- Press **Confirm**. The chat closes and opens **Week** at that day; within a few seconds the evening is empty and its sessions have moved to other free time.
+- Send "Keep Sundays free", then **Not now**: nothing changes. **Start over** clears the chat.
 
 ## 7. An instructor extension
 

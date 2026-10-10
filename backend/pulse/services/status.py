@@ -10,6 +10,7 @@ from lms.selectors import StudentSnapshot, student_snapshot
 
 from ..models import Schedule, Session, StatusSnapshot
 
+OVERLOAD_SOON = timedelta(days=3)
 WEIGHTS = {"adherence": 0.40, "deadlines": 0.30, "chapters": 0.20, "streak": 0.10}
 DEADLINE_PENALTY_SCALE = 15.0
 CACHE_SECONDS = 120
@@ -158,10 +159,17 @@ def _course_status(student, snapshot, sessions, course_id, code, now, overload, 
     }
     score = round(sum(WEIGHTS[k] * v for k, v in components.items()) * 100)
     state = band(score, previous)
-    overload_items = (overload or {}).get("items", [])
-    if any(course_id is None or i["course_code"] == code for i in overload_items):
-        r2.append(Reason(25, _overload_reason(overload, code if course_id else None)))
+    if overload and overload.get("unresolvable"):
         forced.append("bad")
+    soon = now + OVERLOAD_SOON
+    tight = [
+        i
+        for i in (overload or {}).get("items", [])
+        if (course_id is None or i["course_code"] == code)
+        and datetime.fromisoformat(i["due_at"]) <= soon
+    ]
+    if tight:
+        r2.append(Reason(15, _overload_reason(tight)))
     state = _apply_forced(state, forced)
     reasons = sorted([*r1, *r2, *r3, *r4], key=lambda r: -r.impact)
     remaining = sum(
@@ -182,10 +190,11 @@ def _apply_forced(state: str, forced: list[str]) -> str:
     return state
 
 
-def _overload_reason(overload: dict, code: str | None) -> str:
-    if code:
-        return f"{code} has more work than your study time before its deadlines"
-    return f"Your plan needs about {overload['extra_hours_needed']:g} more hours than you have"
+def _overload_reason(items: list[dict]) -> str:
+    """Plain, not a verdict: the plan is a help, and tight weeks happen."""
+    first = min(items, key=lambda i: i["due_at"])
+    title = f"{first['course_code']} {first['title']}"
+    return f"{title} won't fully fit in your study time before it's due"
 
 
 def compute(student, *, save: bool = True) -> dict:

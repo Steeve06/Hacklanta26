@@ -251,3 +251,67 @@ def test_overload_suggests_more_free_time_only_when_it_is_used_up():
     c = constraints(max_minutes_per_day=600)
     kinds = suggestions_for([task(f"t{i}", 180, 3) for i in range(4)], c, days=3)
     assert kinds and set(kinds) == {"add_availability"}
+
+
+def test_work_done_out_of_order_is_not_a_violation_but_new_placements_are():
+    from pulse.planning.types import Placement, SolveResult
+
+    c = constraints()
+    read, draft = task("read", 50, 5), task("draft", 50, 5, deps=["read"])
+    tasks = [read, draft]
+    free = free_time(evenings(7), (), tz=c.tz, start=c.now - timedelta(days=2),
+                     end=c.horizon_end, earliest=time(6), latest=time(23, 59))  # fmt: skip
+
+    def at(day, hour, key, pinned):
+        start = datetime.combine(NOW.date() + timedelta(days=day), time(hour), tzinfo=NY)
+        return Placement(key, start, start + timedelta(minutes=50), start.date(), 1,
+                         "assignment", pinned=pinned)  # fmt: skip
+
+    def problems(draft_pinned):
+        placements = [at(1, 18, "draft", draft_pinned), at(2, 18, "read", False)]
+        return [
+            p
+            for p in check_hard_constraints(
+                SolveResult(placements, [], set(), 0, 0, 0), tasks, free, c
+            )  # fmt: skip
+            if "finishes" in p
+        ]
+
+    assert problems(draft_pinned=True) == []
+    assert problems(draft_pinned=False) == ["draft starts before read finishes"]
+
+
+def test_free_time_advice_only_names_days_before_the_deadline():
+    from pulse.services.overload import _availability_suggestions
+
+    c = constraints()
+    _, _, free = solve([], evenings(7), c)
+    texts = [s["text"] for s in _availability_suggestions(free, c, NOW + timedelta(hours=8))]
+    assert texts == ["Add study time today."]
+    two_days = _availability_suggestions(free, c, NOW + timedelta(days=2))
+    assert all("on Mon" not in s["text"] and "Mondays" not in s["text"] for s in two_days)
+
+
+def test_work_due_within_a_day_gets_its_own_advice():
+    from pulse.services.overload import _urgent_suggestion
+
+    c = constraints()
+    entry = {"title": "Linked lists", "minutes_short": 23,
+             "due_at": (NOW + timedelta(hours=8)).isoformat()}  # fmt: skip
+    [advice] = _urgent_suggestion(entry, c)
+    assert advice["text"].startswith("Find 25 more minutes for “Linked lists” before")
+    later = {**entry, "due_at": (NOW + timedelta(days=3)).isoformat()}
+    assert _urgent_suggestion(later, c) == []
+
+
+def test_a_task_needed_for_something_due_tonight_goes_first():
+    c = constraints(max_minutes_per_day=60, session_minutes=25)
+    read = task("read", 15, 7)
+    post = task("post", 30, 0.6, deps=["read"], weight=2.0)
+    post.late_window = True
+    other = task("other", 60, 2, weight=10.0)
+    result, _, _ = solve([read, post, other], evenings(3), c)
+    first_day = min(p.day for p in result.placements)
+    today = {p.task_key for p in result.placements if p.day == first_day}
+    assert {"read", "post"} <= today
+    assert not [s for s in result.shortfalls if s.task_key in {"read", "post"}]

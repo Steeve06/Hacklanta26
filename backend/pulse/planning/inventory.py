@@ -72,7 +72,7 @@ def build_inventory(snapshot: StudentSnapshot, horizon_end: datetime) -> Invento
     chapter_deadline: dict[int, datetime] = {}
     chapter_weight: dict[int, float] = {}
     for a in snapshot.assessments:
-        if a.done or a.status == "missed":
+        if a.done or a.status == "missed" or a.due_at <= now:
             continue
         for cid in a.chapter_ids:
             if cid in open_chapters:
@@ -82,11 +82,13 @@ def build_inventory(snapshot: StudentSnapshot, horizon_end: datetime) -> Invento
     for a in snapshot.assessments:
         if a.status == "excused" or a.done:
             continue
-        if a.status == "missed":
-            excluded.append(Excluded(a.id, a.course_code, a.title, "late window closed"))
+        if a.status == "missed" or now > a.due_at:
+            # Past due: the plan is for keeping up, so it moves on. The miss is acknowledged
+            # next to the streak, and late work can still be submitted from Learning Hub.
+            excluded.append(Excluded(a.id, a.course_code, a.title, "past due"))
             continue
-        late = now > a.due_at
-        deadline = a.closes_at if late else a.due_at
+        late = False
+        deadline = a.due_at
         if a.open_at > horizon_end:
             continue
         items.append(

@@ -8,6 +8,7 @@ from datetime import UTC, datetime, timedelta
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.dispatch import Signal
 
 from accounts.clock import now as clock_now
@@ -16,12 +17,12 @@ from lms.selectors import student_snapshot
 
 from ..models import AvailabilityBlock, Blackout, Schedule, Session, StudyTask
 from ..planning.decompose import TaskDraft
-from ..planning.feedback import parse_feedback
 from ..planning.inventory import Inventory, WorkItem, build_inventory
 from ..planning.slots import free_time
 from ..planning.solver import Solver, check_hard_constraints
 from ..planning.types import Constraints, Interval, Placement, Preferences, SolveResult, TaskSpec
 from .decomposition import decompose
+from .feedback import preferences_from_feedback
 from .overload import build_overload_report
 from .pace import measured_pace, productive_hours
 from .polish import polish
@@ -38,6 +39,7 @@ KIND_BY_ITEM = {
 }
 MIN_REMAINING_MINUTES = 5
 PIN_WINDOW = timedelta(hours=24)
+LAG_NEEDS = timedelta(hours=12)
 VERSIONS_KEPT = 20
 
 ProgressCallback = Callable[[str, int], None]
@@ -208,6 +210,10 @@ def _task_specs(
         remaining = round(draft.est_minutes * pace) - done.get(draft.key, 0)
         if remaining < MIN_REMAINING_MINUTES:
             continue
+        lag = timedelta(hours=draft.lag_hours)
+        if item.late_window or item.deadline - now < lag + LAG_NEEDS:
+            # Overdue or nearly due: classmates have had their chance to post, so don't wait.
+            lag = timedelta(0)
         specs[draft.key] = TaskSpec(
             key=draft.key,
             source_type=item.source_type,
@@ -224,7 +230,7 @@ def _task_specs(
             deadline=item.deadline,
             weight=item.weight,
             depends_on=list(draft.depends_on),
-            lag_after_deps=timedelta(hours=draft.lag_hours),
+            lag_after_deps=lag,
             chapter_id=item.source_id if item.source_type == "chapter" else None,
             late_window=item.late_window,
         )
@@ -259,7 +265,7 @@ def _free_time(ctx: PlanContext, history: list[Session]) -> dict:
 
 
 def _preferences(student, profile: StudentProfile) -> Preferences:
-    day_factor, hours = parse_feedback(profile.plan_feedback)
+    day_factor, hours = preferences_from_feedback(profile.plan_feedback)
     return Preferences(
         day_factor=day_factor, preferred_hours=hours, productive_hours=productive_hours(student)
     )
@@ -272,8 +278,9 @@ def _pins(
         return []
     by_key = {s.key: s for s in specs}
     pins = []
+    soon = Q(start__lt=now + PIN_WINDOW) | Q(locked=True)
     for s in previous.sessions.filter(
-        status=Session.Status.PLANNED, start__gte=now, start__lt=now + PIN_WINDOW
+        soon, status=Session.Status.PLANNED, start__gte=now
     ).select_related("task"):
         key = _task_ref(s.task)
         spec = by_key.get(key)
@@ -298,9 +305,17 @@ def _solve(specs, free, constraints, preferences, previous, now) -> SolveResult:
     result = Solver(specs, free, constraints, preferences, pins).solve()
     if pins and result.shortfalls:
         unpinned = Solver(specs, free, constraints, preferences).solve()
-        if sum(s.minutes for s in unpinned.shortfalls) < sum(s.minutes for s in result.shortfalls):
+        if _shortfall_cost(unpinned, specs, now) < _shortfall_cost(result, specs, now):
             return unpinned
     return result
+
+
+def _shortfall_cost(result: SolveResult, specs: list[TaskSpec], now: datetime) -> tuple[int, int]:
+    """Minutes missing from work due within a day count first, then minutes missing overall.
+    Keeping tonight's sessions where they were is not worth missing something due tonight."""
+    soon = {s.key for s in specs if s.deadline - now <= PIN_WINDOW}
+    urgent = sum(s.minutes for s in result.shortfalls if s.task_key in soon)
+    return urgent, sum(s.minutes for s in result.shortfalls)
 
 
 @transaction.atomic
@@ -334,6 +349,11 @@ def _persist(ctx, previous, history, specs, result, titles, summary, overload, m
         for s in history
     ]
     spec_by_key = {s.key: s for s in specs}
+    locked = set(
+        Session.objects.filter(
+            id__in=[p.session_id for p in result.placements if p.session_id], locked=True
+        ).values_list("id", flat=True)
+    )
     for i, p in enumerate(result.placements):
         task = tasks.get(p.task_key)
         if task is None:
@@ -350,6 +370,7 @@ def _persist(ctx, previous, history, specs, result, titles, summary, overload, m
                 kind=p.kind,
                 title=title,
                 at_risk=p.at_risk,
+                locked=p.session_id in locked,
             )  # fmt: skip
         )
     Session.objects.bulk_create(rows)
@@ -365,4 +386,4 @@ def _quiz_title(p: Placement, specs: dict[str, TaskSpec]) -> str:
         for k in p.quiz_keys
         if k in specs
     ]
-    return "Chapter quiz: " + ", ".join(names) if names else "Chapter quiz"
+    return "Study check: " + ", ".join(names) if names else "Study check"

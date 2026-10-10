@@ -149,6 +149,27 @@ class CourseRefSerializer(serializers.Serializer):
     color = serializers.CharField()
 
 
+class ChapterReleaseSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    course = serializers.IntegerField()
+    course_code = serializers.CharField()
+    order = serializers.IntegerField()
+    title = serializers.CharField()
+    available_from = serializers.DateTimeField()
+    completed = serializers.BooleanField()
+
+
+class CourseCalendarSerializer(serializers.Serializer):
+    """The course schedule from Learning Hub for one week: due dates (with extensions applied)
+    and chapter releases. Separate from the study plan Pulse builds."""
+
+    start = serializers.DateTimeField()
+    end = serializers.DateTimeField()
+    deadlines = DeadlineSerializer(many=True)
+    chapters = ChapterReleaseSerializer(many=True)
+    courses = CourseRefSerializer(many=True)
+
+
 class ScheduleSerializer(serializers.ModelSerializer):
     overload_report = OverloadReportSerializer(allow_null=True)
     sessions = SessionSerializer(many=True)

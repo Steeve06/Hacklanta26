@@ -2,11 +2,13 @@
 
 import math
 from collections import defaultdict
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from ..planning.inventory import Inventory
 from ..planning.types import Constraints, SolveResult, TaskSpec
 
+URGENT = timedelta(hours=24)
+UNUSED_MINUTES = 15
 WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
@@ -50,8 +52,13 @@ def build_overload_report(
     if not short:
         return None if blocks_exist else _no_availability()
     minutes = sum(e["minutes_short"] for e in short.values())
-    earliest_due = min(by_key[g.task_key].deadline for g in result.shortfalls)
-    suggestions = _capacity_suggestions(result, free, constraints, earliest_due)
+    latest_due = max(by_key[g.task_key].deadline for g in result.shortfalls)
+    first = min(short.values(), key=lambda e: e["due_at"])
+    if not blocks_exist:
+        suggestions = list(_no_availability()["suggestions"])
+    else:
+        suggestions = _urgent_suggestion(first, constraints)
+        suggestions += _capacity_suggestions(result, free, constraints, latest_due)
     for entry in sorted(short.values(), key=lambda e: e["due_at"]):
         if entry["source_type"] == "assessment":
             suggestions.append(
@@ -92,6 +99,28 @@ def _longest_block(free: dict) -> int:
     return max((iv.minutes for ivs in free.values() for iv in ivs), default=0)
 
 
+def _when(moment, constraints: Constraints) -> str:
+    local = moment.astimezone(constraints.tz)
+    clock = local.strftime("%I:%M %p").lstrip("0")
+    if local.date() == constraints.now.astimezone(constraints.tz).date():
+        return f"{clock} today"
+    return f"{local:%a %b} {local.day}, {clock}"
+
+
+def _urgent_suggestion(entry: dict, constraints: Constraints) -> list[dict]:
+    """Work due within a day can only be helped by time before that deadline, so say so."""
+    due = datetime.fromisoformat(entry["due_at"])
+    if due - constraints.now > URGENT:
+        return []
+    return [
+        {
+            "type": "add_time_before",
+            "text": f"Find {math.ceil(entry['minutes_short'] / 5) * 5} more minutes for "
+            f"\u201c{entry['title']}\u201d before {_when(due, constraints)}.",
+        }
+    ]
+
+
 def _capacity_suggestions(result, free: dict, constraints: Constraints, before) -> list[dict]:
     """Name the limit that is actually full before the first missed deadline. Adding free time
     only helps when no limit is full; otherwise it's the student's own daily or
@@ -107,7 +136,7 @@ def _capacity_suggestions(result, free: dict, constraints: Constraints, before) 
     last = before.astimezone(tz).date()
     while day <= last:
         spare = sum(iv.minutes for iv in free.get(day, [])) - placed_day[day]
-        if spare >= constraints.session_minutes:
+        if spare >= UNUSED_MINUTES:
             if placed_day[day] >= constraints.max_minutes_per_day - 15:
                 day_full = True
             week_cap = constraints.max_minutes_per_week
@@ -137,18 +166,38 @@ def _capacity_suggestions(result, free: dict, constraints: Constraints, before) 
 
 
 def _availability_suggestions(free: dict, constraints: Constraints, before) -> list[dict]:
-    per_weekday: dict[int, int] = defaultdict(int)
-    day = constraints.now.astimezone(constraints.tz).date()
-    last = before.astimezone(constraints.tz).date()
+    """The two days before `before` with the least free time. Only days that come before the
+    deadline are named; within a week those are dates, over longer spans weekdays."""
+    tz = constraints.tz
+    day = constraints.now.astimezone(tz).date()
+    last = before.astimezone(tz).date()
+    days = []
     while day <= last:
-        per_weekday[day.weekday()] += sum(iv.minutes for iv in free.get(day, []))
+        days.append(day)
         day += timedelta(days=1)
-    lightest = sorted(range(7), key=lambda wd: per_weekday[wd])[:2]
+    if len(days) < 7:
+        minutes = {d: sum(iv.minutes for iv in free.get(d, [])) for d in days}
+        lightest = sorted(days, key=lambda d: (minutes[d], d))[:2]
+        today = constraints.now.astimezone(tz).date()
+        return [
+            {
+                "type": "add_availability",
+                "weekday": d.weekday(),
+                "text": "Add study time today."
+                if d == today
+                else f"Add study time on {d:%a %b} {d.day}.",
+            }
+            for d in sorted(lightest)
+        ]
+    per_weekday: dict[int, int] = defaultdict(int)
+    for d in days:
+        per_weekday[d.weekday()] += sum(iv.minutes for iv in free.get(d, []))
+    lightest_weekdays = sorted(range(7), key=lambda wd: (per_weekday[wd], wd))[:2]
     return [
         {
             "type": "add_availability",
             "weekday": wd,
             "text": f"Add a study block on {WEEKDAYS[wd]}s.",
         }
-        for wd in lightest
+        for wd in lightest_weekdays
     ]

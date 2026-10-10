@@ -8,6 +8,7 @@ import { useLogout, useMe, useUpdateMe, type Me } from "@/features/auth/hooks";
 import { ChangePasswordCard } from "@/features/auth/ChangePasswordCard";
 import { useAuth } from "@/features/auth/store";
 import { downloadFile } from "@/lib/download";
+import { useScrollToHash } from "@/lib/useScrollToHash";
 import {
   useAvailability,
   useCancelJob,
@@ -32,6 +33,7 @@ import {
 
 export function SettingsPage() {
   const me = useMe();
+  useScrollToHash(me.isSuccess);
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       <h1 className="text-2xl font-bold">Settings</h1>
@@ -81,7 +83,7 @@ function PreferencesSection({ me }: { me: Me }) {
   const invalid = Object.keys(preferenceErrors(prefs)).length > 0;
   const dirty = JSON.stringify(prefs) !== JSON.stringify(initial);
   return (
-    <Card aria-labelledby="prefs-heading">
+    <Card aria-labelledby="prefs-heading" id="preferences" className="scroll-mt-20">
       <h2 id="prefs-heading" className="mb-4 text-lg font-bold">
         Study preferences
       </h2>
@@ -125,7 +127,7 @@ function PreferencesSection({ me }: { me: Me }) {
 function AvailabilitySection() {
   const availability = useAvailability();
   return (
-    <Card aria-labelledby="availability" id="availability">
+    <Card aria-labelledby="availability-heading" id="availability" className="scroll-mt-20">
       <h2 id="availability-heading" className="mb-1 text-lg font-bold">
         Weekly study time
       </h2>

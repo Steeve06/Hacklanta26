@@ -474,6 +474,163 @@
                 }
             }
         },
+        "/api/v1/assistant/conversation": {
+            "get": {
+                "operationId": "v1_assistant_conversation_retrieve",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Conversation"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_assistant_conversation_destroy",
+                "description": "Start over: the current conversation is closed and kept for the record.",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/assistant/messages": {
+            "post": {
+                "operationId": "v1_assistant_messages_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewMessageRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewMessageRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewMessageRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Conversation"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/assistant/messages/{message_id}/confirm": {
+            "post": {
+                "operationId": "v1_assistant_messages_confirm_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "message_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChatMessage"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/assistant/messages/{message_id}/decline": {
+            "post": {
+                "operationId": "v1_assistant_messages_decline_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "message_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChatMessage"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/attempts/{attempt_id}": {
             "get": {
                 "operationId": "v1_attempts_retrieve",
@@ -1020,6 +1177,173 @@
                 }
             }
         },
+        "/api/v1/checks": {
+            "get": {
+                "operationId": "v1_checks_list",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "state",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "open",
+                                "past",
+                                "upcoming"
+                            ]
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/StudyCheck"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/checks/{check_id}": {
+            "get": {
+                "operationId": "v1_checks_retrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "check_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StudyCheckDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/checks/{check_id}/answer": {
+            "post": {
+                "operationId": "v1_checks_answer_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "check_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnswerRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnswerRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnswerRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StudyCheckDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/checks/{check_id}/start": {
+            "post": {
+                "operationId": "v1_checks_start_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "check_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StudyCheckDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/courses": {
             "get": {
                 "operationId": "v1_courses_list",
@@ -1306,219 +1630,6 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Syllabus"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/api/v1/decks": {
-            "get": {
-                "operationId": "v1_decks_list",
-                "tags": [
-                    "v1"
-                ],
-                "security": [
-                    {
-                        "jwtAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/DailyDeck"
-                                    }
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/api/v1/decks/{deck_id}": {
-            "get": {
-                "operationId": "v1_decks_retrieve",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "deck_id",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "v1"
-                ],
-                "security": [
-                    {
-                        "jwtAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/DailyDeckDetail"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/api/v1/decks/{deck_id}/answer": {
-            "post": {
-                "operationId": "v1_decks_answer_create",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "deck_id",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "v1"
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/AnswerRequest"
-                            }
-                        },
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "$ref": "#/components/schemas/AnswerRequest"
-                            }
-                        },
-                        "multipart/form-data": {
-                            "schema": {
-                                "$ref": "#/components/schemas/AnswerRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "security": [
-                    {
-                        "jwtAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/DailyDeckDetail"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/api/v1/decks/{deck_id}/finish": {
-            "post": {
-                "operationId": "v1_decks_finish_create",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "deck_id",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "v1"
-                ],
-                "security": [
-                    {
-                        "jwtAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/DailyDeckDetail"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/api/v1/decks/{deck_id}/start": {
-            "post": {
-                "operationId": "v1_decks_start_create",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "deck_id",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "required": true
-                    }
-                ],
-                "tags": [
-                    "v1"
-                ],
-                "security": [
-                    {
-                        "jwtAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/DailyDeckDetail"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            }
-        },
-        "/api/v1/decks/today": {
-            "get": {
-                "operationId": "v1_decks_today_retrieve",
-                "tags": [
-                    "v1"
-                ],
-                "security": [
-                    {
-                        "jwtAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/DailyDeckDetail"
                                 }
                             }
                         },
@@ -2297,6 +2408,41 @@
                 }
             }
         },
+        "/api/v1/pulse/course-calendar": {
+            "get": {
+                "operationId": "v1_pulse_course_calendar_retrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "from",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Local date YYYY-MM-DD"
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CourseCalendar"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/pulse/jobs/{job_id}": {
             "get": {
                 "operationId": "v1_pulse_jobs_retrieve",
@@ -2863,18 +3009,35 @@
             },
             "AnswerRequest": {
                 "type": "object",
+                "description": "Send the field for the card's kind: choice, text or pairs.",
                 "properties": {
                     "position": {
                         "type": "integer",
+                        "maximum": 9,
                         "minimum": 0
                     },
-                    "response": {
-                        "description": "{\"knew\": bool} | {\"choice\": int} | {\"text\": str} | {\"pairs\": [int, ...]}"
+                    "choice": {
+                        "type": "integer",
+                        "maximum": 3,
+                        "minimum": 0
+                    },
+                    "text": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "pairs": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "maximum": 5,
+                            "minimum": 0
+                        },
+                        "maxItems": 6
                     }
                 },
                 "required": [
-                    "position",
-                    "response"
+                    "position"
                 ]
             },
             "AnswersRequest": {
@@ -3203,9 +3366,8 @@
                     },
                     "points": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "weight_pct": {
                         "type": "string",
@@ -3214,28 +3376,24 @@
                     },
                     "est_minutes": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
+                        "maximum": 32767,
                         "minimum": 0,
-                        "format": "int64",
                         "nullable": true
                     },
                     "discussion_replies_required": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "time_limit_minutes": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "max_attempts": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "published": {
                         "type": "boolean"
@@ -3253,6 +3411,46 @@
                     "open_at",
                     "title",
                     "type"
+                ]
+            },
+            "Attempt": {
+                "type": "object",
+                "properties": {
+                    "number": {
+                        "type": "integer"
+                    },
+                    "correct": {
+                        "type": "integer"
+                    },
+                    "finished": {
+                        "type": "boolean"
+                    },
+                    "timed_out": {
+                        "type": "boolean"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "xp": {
+                        "type": "integer"
+                    },
+                    "cards": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CheckCard"
+                        }
+                    }
+                },
+                "required": [
+                    "cards",
+                    "correct",
+                    "expires_at",
+                    "finished",
+                    "number",
+                    "timed_out",
+                    "xp"
                 ]
             },
             "Availability": {
@@ -3280,9 +3478,8 @@
                 "properties": {
                     "weekday": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
+                        "maximum": 32767,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "0 = Monday"
                     },
                     "start_time": {
@@ -3305,9 +3502,8 @@
                 "properties": {
                     "weekday": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
+                        "maximum": 32767,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "0 = Monday"
                     },
                     "start_time": {
@@ -3384,6 +3580,82 @@
                 "required": [
                     "end",
                     "start"
+                ]
+            },
+            "CardResult": {
+                "type": "object",
+                "properties": {
+                    "correct": {
+                        "type": "boolean"
+                    },
+                    "explanation": {
+                        "type": "string"
+                    },
+                    "source_excerpt": {
+                        "type": "string"
+                    },
+                    "chosen": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "choice: option tapped, as shown"
+                    },
+                    "answer": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "choice: right option, as shown"
+                    },
+                    "given_text": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "short: what was typed"
+                    },
+                    "expected_text": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "short: the key term"
+                    },
+                    "pairs": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "nullable": true,
+                        "description": "match: sentence picked per term"
+                    },
+                    "right_pairs": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "nullable": true,
+                        "description": "match: right sentence per term"
+                    }
+                },
+                "required": [
+                    "answer",
+                    "chosen",
+                    "correct",
+                    "expected_text",
+                    "explanation",
+                    "given_text",
+                    "pairs",
+                    "right_pairs",
+                    "source_excerpt"
+                ]
+            },
+            "ChangeLink": {
+                "type": "object",
+                "properties": {
+                    "to": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "label",
+                    "to"
                 ]
             },
             "ChapterDetail": {
@@ -3539,14 +3811,49 @@
                     "title"
                 ]
             },
+            "ChapterRelease": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "course": {
+                        "type": "integer"
+                    },
+                    "course_code": {
+                        "type": "string"
+                    },
+                    "order": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "completed": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "available_from",
+                    "completed",
+                    "course",
+                    "course_code",
+                    "id",
+                    "order",
+                    "title"
+                ]
+            },
             "ChapterWriteRequest": {
                 "type": "object",
                 "properties": {
                     "order": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "title": {
                         "type": "string",
@@ -3565,9 +3872,8 @@
                     },
                     "reading_minutes": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "objectives": {
                         "type": "array",
@@ -3589,6 +3895,230 @@
                     "objectives",
                     "order",
                     "title"
+                ]
+            },
+            "ChatMessage": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "role": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ChatMessageRoleEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "text": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "state": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ChatMessageStateEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "changes": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ProposedChange"
+                        },
+                        "readOnly": true
+                    },
+                    "proposal": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ProposalEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "proposal_note": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "link": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ChangeLink"
+                            }
+                        ],
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "changes",
+                    "created_at",
+                    "id",
+                    "link",
+                    "proposal",
+                    "proposal_note",
+                    "role",
+                    "state",
+                    "text"
+                ]
+            },
+            "ChatMessageRoleEnum": {
+                "enum": [
+                    "student",
+                    "assistant"
+                ],
+                "type": "string",
+                "description": "* `student` - Student\n* `assistant` - Assistant"
+            },
+            "ChatMessageStateEnum": {
+                "enum": [
+                    "pending",
+                    "done",
+                    "failed"
+                ],
+                "type": "string",
+                "description": "* `pending` - Pending\n* `done` - Done\n* `failed` - Failed"
+            },
+            "CheckCard": {
+                "type": "object",
+                "properties": {
+                    "position": {
+                        "type": "integer"
+                    },
+                    "kind": {
+                        "$ref": "#/components/schemas/CheckCardKindEnum"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "multiple_choice, true_false, short_answer or matching"
+                    },
+                    "front": {
+                        "type": "string"
+                    },
+                    "options": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "terms": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "match: the key terms"
+                    },
+                    "clues": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "match: the sentences"
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "e.g. CS 201 · Ch 4: Stacks and Queues"
+                    },
+                    "chapter_id": {
+                        "type": "integer"
+                    },
+                    "course_id": {
+                        "type": "integer"
+                    },
+                    "result": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/CardResult"
+                            }
+                        ],
+                        "nullable": true,
+                        "description": "null until the card is answered"
+                    }
+                },
+                "required": [
+                    "chapter_id",
+                    "clues",
+                    "course_id",
+                    "front",
+                    "kind",
+                    "options",
+                    "position",
+                    "result",
+                    "source",
+                    "terms",
+                    "type"
+                ]
+            },
+            "CheckCardKindEnum": {
+                "enum": [
+                    "choice",
+                    "short",
+                    "match"
+                ],
+                "type": "string",
+                "description": "* `choice` - choice\n* `short` - short\n* `match` - match"
+            },
+            "CheckChapter": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "course_id": {
+                        "type": "integer"
+                    },
+                    "course_code": {
+                        "type": "string"
+                    },
+                    "order": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "course_code",
+                    "course_id",
+                    "id",
+                    "order",
+                    "title"
+                ]
+            },
+            "Conversation": {
+                "type": "object",
+                "description": "Also used for \"no conversation yet\", with a null id and no messages.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "messages": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ChatMessage"
+                        }
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "id",
+                    "messages"
                 ]
             },
             "Course": {
@@ -3643,6 +4173,45 @@
                     "title"
                 ]
             },
+            "CourseCalendar": {
+                "type": "object",
+                "description": "The course schedule from Learning Hub for one week: due dates (with extensions applied)\nand chapter releases. Separate from the study plan Pulse builds.",
+                "properties": {
+                    "start": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "end": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deadlines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Deadline"
+                        }
+                    },
+                    "chapters": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ChapterRelease"
+                        }
+                    },
+                    "courses": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CourseRef"
+                        }
+                    }
+                },
+                "required": [
+                    "chapters",
+                    "courses",
+                    "deadlines",
+                    "end",
+                    "start"
+                ]
+            },
             "CourseRef": {
                 "type": "object",
                 "properties": {
@@ -3664,183 +4233,6 @@
                     "color",
                     "id",
                     "title"
-                ]
-            },
-            "DailyDeck": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "day": {
-                        "type": "string",
-                        "format": "date",
-                        "readOnly": true
-                    },
-                    "state": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "question_count": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "time_limit_seconds": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "focus": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/DeckFocus"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "started_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true,
-                        "nullable": true
-                    },
-                    "deadline": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true,
-                        "readOnly": true
-                    },
-                    "completed_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true,
-                        "nullable": true
-                    },
-                    "knew": {
-                        "type": "integer",
-                        "readOnly": true,
-                        "description": "questions answered correctly"
-                    },
-                    "xp": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "counted_for_streak": {
-                        "type": "boolean",
-                        "readOnly": true
-                    }
-                },
-                "required": [
-                    "completed_at",
-                    "counted_for_streak",
-                    "day",
-                    "deadline",
-                    "focus",
-                    "id",
-                    "knew",
-                    "question_count",
-                    "started_at",
-                    "state",
-                    "time_limit_seconds",
-                    "xp"
-                ]
-            },
-            "DailyDeckDetail": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "day": {
-                        "type": "string",
-                        "format": "date",
-                        "readOnly": true
-                    },
-                    "state": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "question_count": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "time_limit_seconds": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "focus": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/DeckFocus"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "started_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true,
-                        "nullable": true
-                    },
-                    "deadline": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true,
-                        "readOnly": true
-                    },
-                    "completed_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true,
-                        "nullable": true
-                    },
-                    "knew": {
-                        "type": "integer",
-                        "readOnly": true,
-                        "description": "questions answered correctly"
-                    },
-                    "xp": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "counted_for_streak": {
-                        "type": "boolean",
-                        "readOnly": true
-                    },
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/DeckItem"
-                        },
-                        "readOnly": true
-                    },
-                    "milestone": {
-                        "type": "integer",
-                        "nullable": true,
-                        "readOnly": true
-                    },
-                    "streak": {
-                        "type": "integer",
-                        "readOnly": true
-                    }
-                },
-                "required": [
-                    "completed_at",
-                    "counted_for_streak",
-                    "day",
-                    "deadline",
-                    "focus",
-                    "id",
-                    "items",
-                    "knew",
-                    "milestone",
-                    "question_count",
-                    "started_at",
-                    "state",
-                    "streak",
-                    "time_limit_seconds",
-                    "xp"
                 ]
             },
             "Deadline": {
@@ -3892,145 +4284,6 @@
                     "type",
                     "weight_pct"
                 ]
-            },
-            "DeckFocus": {
-                "type": "object",
-                "properties": {
-                    "kind": {
-                        "$ref": "#/components/schemas/DeckFocusKindEnum"
-                    },
-                    "course_id": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "course_code": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "assessment_id": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "assessment_title": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "due_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    }
-                },
-                "required": [
-                    "assessment_id",
-                    "assessment_title",
-                    "course_code",
-                    "course_id",
-                    "due_at",
-                    "kind"
-                ]
-            },
-            "DeckFocusKindEnum": {
-                "enum": [
-                    "upcoming",
-                    "review",
-                    "general"
-                ],
-                "type": "string",
-                "description": "* `upcoming` - Prep for an upcoming deadline\n* `review` - Review of course chapters\n* `general` - General study cards"
-            },
-            "DeckItem": {
-                "type": "object",
-                "properties": {
-                    "position": {
-                        "type": "integer"
-                    },
-                    "type": {
-                        "$ref": "#/components/schemas/DeckItemTypeEnum"
-                    },
-                    "source": {
-                        "type": "string",
-                        "description": "e.g. CS 201 · Ch 5: Hashing, or a general topic"
-                    },
-                    "chapter_id": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "course_id": {
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "prompt": {
-                        "type": "string",
-                        "description": "question text (the card front for flashcards)"
-                    },
-                    "back": {
-                        "type": "string",
-                        "nullable": true,
-                        "description": "flashcards only: the other side"
-                    },
-                    "options": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "nullable": true
-                    },
-                    "terms": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "nullable": true
-                    },
-                    "clues": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "nullable": true
-                    },
-                    "answered": {
-                        "type": "boolean"
-                    },
-                    "correct": {
-                        "type": "boolean",
-                        "nullable": true
-                    },
-                    "response": {
-                        "nullable": true
-                    },
-                    "solution": {
-                        "nullable": true,
-                        "description": "after answering: {answer, explanation, choice?} or {pairs}"
-                    }
-                },
-                "required": [
-                    "answered",
-                    "back",
-                    "chapter_id",
-                    "clues",
-                    "correct",
-                    "course_id",
-                    "options",
-                    "position",
-                    "prompt",
-                    "response",
-                    "solution",
-                    "source",
-                    "terms",
-                    "type"
-                ]
-            },
-            "DeckItemTypeEnum": {
-                "enum": [
-                    "flashcard",
-                    "mcq",
-                    "short",
-                    "match"
-                ],
-                "type": "string",
-                "description": "* `flashcard` - flashcard\n* `mcq` - mcq\n* `short` - short\n* `match` - match"
             },
             "DemoStudent": {
                 "type": "object",
@@ -4411,7 +4664,7 @@
                     "role": {
                         "allOf": [
                             {
-                                "$ref": "#/components/schemas/RoleEnum"
+                                "$ref": "#/components/schemas/MeRoleEnum"
                             }
                         ],
                         "readOnly": true
@@ -4449,6 +4702,62 @@
                     "timezone"
                 ]
             },
+            "MeRoleEnum": {
+                "enum": [
+                    "student",
+                    "instructor",
+                    "admin"
+                ],
+                "type": "string",
+                "description": "* `student` - Student\n* `instructor` - Instructor\n* `admin` - Admin"
+            },
+            "MissedDeadline": {
+                "type": "object",
+                "properties": {
+                    "assessment_id": {
+                        "type": "integer"
+                    },
+                    "course_id": {
+                        "type": "integer"
+                    },
+                    "course_code": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "late_until": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "streak_result": {
+                        "nullable": true,
+                        "description": "what it did to the streak\n\n* `frozen` - frozen\n* `missed` - missed",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/StreakResultEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/NullEnum"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "assessment_id",
+                    "course_code",
+                    "course_id",
+                    "due_at",
+                    "late_until",
+                    "streak_result",
+                    "title"
+                ]
+            },
             "Moment": {
                 "type": "object",
                 "properties": {
@@ -4476,6 +4785,19 @@
                 ],
                 "type": "string",
                 "description": "* `celebrate` - celebrate\n* `gasp` - gasp\n* `fresh_start` - fresh_start"
+            },
+            "NewMessageRequest": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "text"
+                ]
             },
             "NextDue": {
                 "type": "object",
@@ -4584,6 +4906,11 @@
                     "quiet_end",
                     "quiet_start",
                     "sass_level"
+                ]
+            },
+            "NullEnum": {
+                "enum": [
+                    null
                 ]
             },
             "OnboardingState": {
@@ -4886,9 +5213,8 @@
                     },
                     "points": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "weight_pct": {
                         "type": "string",
@@ -4897,28 +5223,24 @@
                     },
                     "est_minutes": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
+                        "maximum": 32767,
                         "minimum": 0,
-                        "format": "int64",
                         "nullable": true
                     },
                     "discussion_replies_required": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "time_limit_minutes": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "max_attempts": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "published": {
                         "type": "boolean"
@@ -4936,9 +5258,8 @@
                 "properties": {
                     "order": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "title": {
                         "type": "string",
@@ -4957,9 +5278,8 @@
                     },
                     "reading_minutes": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "objectives": {
                         "type": "array",
@@ -5268,9 +5588,8 @@
                 "properties": {
                     "sass_level": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "max_hours_per_day": {
                         "type": "string",
@@ -5289,7 +5608,7 @@
                             }
                         ],
                         "minimum": 0,
-                        "maximum": 9223372036854775807
+                        "maximum": 32767
                     },
                     "earliest_time": {
                         "type": "string",
@@ -5324,6 +5643,32 @@
                         "maxLength": 300
                     }
                 }
+            },
+            "ProposalEnum": {
+                "enum": [
+                    "none",
+                    "pending",
+                    "applied",
+                    "declined",
+                    "failed"
+                ],
+                "type": "string",
+                "description": "* `none` - None\n* `pending` - Pending\n* `applied` - Applied\n* `declined` - Declined\n* `failed` - Failed"
+            },
+            "ProposedChange": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "summary": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "summary",
+                    "type"
+                ]
             },
             "PushConfig": {
                 "type": "object",
@@ -5447,9 +5792,8 @@
                     },
                     "order": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "type": {
                         "$ref": "#/components/schemas/QuestionTypeEnum"
@@ -5460,15 +5804,13 @@
                     "options": {},
                     "correct_index": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "points": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     }
                 },
                 "required": [
@@ -5485,9 +5827,8 @@
                 "properties": {
                     "order": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "type": {
                         "$ref": "#/components/schemas/QuestionTypeEnum"
@@ -5499,15 +5840,13 @@
                     "options": {},
                     "correct_index": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     },
                     "points": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "maximum": 32767,
+                        "minimum": 0
                     }
                 },
                 "required": [
@@ -5603,15 +5942,6 @@
                 ],
                 "type": "string",
                 "description": "* `done` - done\n* `frozen` - frozen\n* `missed` - missed\n* `open` - open\n* `none` - none"
-            },
-            "RoleEnum": {
-                "enum": [
-                    "student",
-                    "instructor",
-                    "admin"
-                ],
-                "type": "string",
-                "description": "* `student` - Student\n* `instructor` - Instructor\n* `admin` - Admin"
             },
             "RosterRow": {
                 "type": "object",
@@ -6046,9 +6376,6 @@
                         "type": "integer",
                         "nullable": true
                     },
-                    "done_today": {
-                        "type": "boolean"
-                    },
                     "week": {
                         "type": "array",
                         "items": {
@@ -6060,13 +6387,20 @@
                         "items": {
                             "$ref": "#/components/schemas/StreakEvent"
                         }
+                    },
+                    "missed_deadlines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MissedDeadline"
+                        },
+                        "description": "past-due work from the last 7 days; each one counts against the streak"
                     }
                 },
                 "required": [
                     "current",
-                    "done_today",
                     "freezes",
                     "longest",
+                    "missed_deadlines",
                     "next_milestone",
                     "recent",
                     "toward_next_freeze",
@@ -6114,6 +6448,238 @@
                     "result",
                     "streak_after"
                 ]
+            },
+            "StreakResultEnum": {
+                "enum": [
+                    "frozen",
+                    "missed"
+                ],
+                "type": "string",
+                "description": "* `frozen` - frozen\n* `missed` - missed"
+            },
+            "StudyCheck": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "chapters": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CheckChapter"
+                        },
+                        "readOnly": true
+                    },
+                    "kind": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StudyCheckKindEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "scheduled_date": {
+                        "type": "string",
+                        "format": "date",
+                        "readOnly": true
+                    },
+                    "opens_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "closes_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "state": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StudyCheckStateEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "passed": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "counted_for_streak": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "tries_left": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "best_correct": {
+                        "type": "integer",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "card_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "pass_mark": {
+                        "type": "integer",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "best_correct",
+                    "card_count",
+                    "chapters",
+                    "closes_at",
+                    "counted_for_streak",
+                    "id",
+                    "kind",
+                    "opens_at",
+                    "pass_mark",
+                    "passed",
+                    "scheduled_date",
+                    "state",
+                    "title",
+                    "tries_left"
+                ]
+            },
+            "StudyCheckDetail": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "chapters": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CheckChapter"
+                        },
+                        "readOnly": true
+                    },
+                    "kind": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StudyCheckKindEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "scheduled_date": {
+                        "type": "string",
+                        "format": "date",
+                        "readOnly": true
+                    },
+                    "opens_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "closes_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "state": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StudyCheckStateEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "passed": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "counted_for_streak": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "tries_left": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "best_correct": {
+                        "type": "integer",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "card_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "pass_mark": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "attempt": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Attempt"
+                            }
+                        ],
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "milestone": {
+                        "type": "integer",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "streak": {
+                        "type": "integer",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "attempt",
+                    "best_correct",
+                    "card_count",
+                    "chapters",
+                    "closes_at",
+                    "counted_for_streak",
+                    "id",
+                    "kind",
+                    "milestone",
+                    "opens_at",
+                    "pass_mark",
+                    "passed",
+                    "scheduled_date",
+                    "state",
+                    "streak",
+                    "title",
+                    "tries_left"
+                ]
+            },
+            "StudyCheckKindEnum": {
+                "enum": [
+                    "scheduled",
+                    "early"
+                ],
+                "type": "string",
+                "description": "* `scheduled` - Scheduled\n* `early` - Early"
+            },
+            "StudyCheckStateEnum": {
+                "enum": [
+                    "upcoming",
+                    "open",
+                    "passed",
+                    "not_passed",
+                    "missed"
+                ],
+                "type": "string",
+                "description": "* `upcoming` - upcoming\n* `open` - open\n* `passed` - passed\n* `not_passed` - not_passed\n* `missed` - missed"
             },
             "Submission": {
                 "type": "object",

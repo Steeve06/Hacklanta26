@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { ChipGroup, QueryView, Skeleton } from "@/components/ui";
 import { cx } from "@/lib/cx";
+import { keyLabel } from "@/lib/time";
 import { useLeaderboard, type LeaderboardRow } from "./api";
-import { formatDeckDay } from "./topics";
 
 const RANK_STYLES = ["bg-mustard text-ink", "bg-sunken text-ink", "bg-berry-soft text-berry"];
 
-/** This week's XP among the student's classmates, filterable by course. */
+/** This week's XP from study checks among the student's classmates, filterable by course. */
 export function Leaderboard() {
   const [course, setCourse] = useState("all");
   const query = useLeaderboard(course === "all" ? null : Number(course));
@@ -22,7 +22,7 @@ export function Leaderboard() {
         </h2>
         <p className="text-sm text-ink-soft">
           {query.data
-            ? `This week's XP, since ${formatDeckDay(query.data.week_start, { weekday: "short", month: "short", day: "numeric" })}. Resets every Monday.`
+            ? `XP from study checks since ${keyLabel(query.data.week_start, { weekday: "short", month: "short", day: "numeric" })}. Resets every Monday.`
             : "This week's XP. Resets every Monday."}
         </p>
       </header>
@@ -47,7 +47,7 @@ export function Leaderboard() {
             </ol>
             {data.rows.every((r) => r.xp === 0) && (
               <p className="text-sm text-ink-soft">
-                Nobody has scored this week yet. Finish today&apos;s quiz to take the top spot.
+                Nobody has scored this week yet. Finish a study check to take the top spot.
               </p>
             )}
           </>
@@ -80,11 +80,11 @@ function Row({ row }: { row: LeaderboardRow }) {
       </span>
       <span
         className="flex items-center gap-1 text-sm text-ink-soft"
-        title={`${row.streak}-day streak`}
+        title={`${row.streak} checks in a row`}
       >
         <Icon name="flame" className={cx("h-4 w-4", row.streak ? "text-mustard-ink" : "")} />
         {row.streak}
-        <span className="sr-only">-day streak</span>
+        <span className="sr-only"> checks in a row</span>
       </span>
       <span className="w-20 text-right font-display text-lg font-extrabold tabular-nums">
         {row.xp}

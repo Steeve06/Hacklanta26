@@ -132,6 +132,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/assistant/conversation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_assistant_conversation_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description Start over: the current conversation is closed and kept for the record. */
+        delete: operations["v1_assistant_conversation_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assistant/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_assistant_messages_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assistant/messages/{message_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_assistant_messages_confirm_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assistant/messages/{message_id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_assistant_messages_decline_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/attempts/{attempt_id}": {
         parameters: {
             query?: never;
@@ -308,6 +373,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_checks_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/checks/{check_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_checks_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/checks/{check_id}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_checks_answer_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/checks/{check_id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_checks_start_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/courses": {
         parameters: {
             query?: never;
@@ -380,102 +509,6 @@ export interface paths {
             cookie?: never;
         };
         get: operations["v1_courses_syllabus_retrieve"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/decks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["v1_decks_list"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/decks/{deck_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["v1_decks_retrieve"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/decks/{deck_id}/answer": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["v1_decks_answer_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/decks/{deck_id}/finish": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["v1_decks_finish_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/decks/{deck_id}/start": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["v1_decks_start_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/decks/today": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["v1_decks_today_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -756,6 +789,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pulse/course-calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_pulse_course_calendar_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pulse/jobs/{job_id}": {
         parameters: {
             query?: never;
@@ -977,10 +1026,12 @@ export interface components {
          * @enum {string}
          */
         ActionTakenEnum: "open" | "snooze" | "tone_down";
+        /** @description Send the field for the card's kind: choice, text or pairs. */
         AnswerRequest: {
             position: number;
-            /** @description {"knew": bool} | {"choice": int} | {"text": str} | {"pairs": [int, ...]} */
-            response: unknown;
+            choice?: number;
+            text?: string;
+            pairs?: number[];
         };
         AnswersRequest: {
             answers: {
@@ -1061,20 +1112,25 @@ export interface components {
             due_at: string;
             /** Format: date-time */
             cutoff_at?: string | null;
-            /** Format: int64 */
             points?: number;
             /** Format: decimal */
             weight_pct?: string;
-            /** Format: int64 */
             est_minutes?: number | null;
-            /** Format: int64 */
             discussion_replies_required?: number;
-            /** Format: int64 */
             time_limit_minutes?: number;
-            /** Format: int64 */
             max_attempts?: number;
             published?: boolean;
             questions?: components["schemas"]["QuestionWriteRequest"][];
+        };
+        Attempt: {
+            number: number;
+            correct: number;
+            finished: boolean;
+            timed_out: boolean;
+            /** Format: date-time */
+            expires_at: string | null;
+            xp: number;
+            cards: components["schemas"]["CheckCard"][];
         };
         Availability: {
             blocks: components["schemas"]["AvailabilityBlock"][];
@@ -1082,10 +1138,7 @@ export interface components {
             readonly merged: number;
         };
         AvailabilityBlock: {
-            /**
-             * Format: int64
-             * @description 0 = Monday
-             */
+            /** @description 0 = Monday */
             weekday: number;
             /** Format: time */
             start_time: string;
@@ -1093,10 +1146,7 @@ export interface components {
             end_time: string;
         };
         AvailabilityBlockRequest: {
-            /**
-             * Format: int64
-             * @description 0 = Monday
-             */
+            /** @description 0 = Monday */
             weekday: number;
             /** Format: time */
             start_time: string;
@@ -1120,6 +1170,27 @@ export interface components {
             /** Format: date-time */
             end: string;
             label?: string;
+        };
+        CardResult: {
+            correct: boolean;
+            explanation: string;
+            source_excerpt: string;
+            /** @description choice: option tapped, as shown */
+            chosen: number | null;
+            /** @description choice: right option, as shown */
+            answer: number | null;
+            /** @description short: what was typed */
+            given_text: string | null;
+            /** @description short: the key term */
+            expected_text: string | null;
+            /** @description match: sentence picked per term */
+            pairs: number[] | null;
+            /** @description match: right sentence per term */
+            right_pairs: number[] | null;
+        };
+        ChangeLink: {
+            to: string;
+            label: string;
         };
         ChapterDetail: {
             readonly id: number;
@@ -1154,17 +1225,89 @@ export interface components {
             order: number;
             title: string;
         };
+        ChapterRelease: {
+            id: number;
+            course: number;
+            course_code: string;
+            order: number;
+            title: string;
+            /** Format: date-time */
+            available_from: string;
+            completed: boolean;
+        };
         ChapterWriteRequest: {
-            /** Format: int64 */
             order: number;
             title: string;
             body_md: string;
             links?: components["schemas"]["LinkRequest"][];
-            /** Format: int64 */
             reading_minutes?: number;
             objectives: string[];
             /** Format: date-time */
             available_from: string;
+        };
+        ChatMessage: {
+            readonly id: number;
+            readonly role: components["schemas"]["ChatMessageRoleEnum"];
+            readonly text: string;
+            readonly state: components["schemas"]["ChatMessageStateEnum"];
+            readonly changes: components["schemas"]["ProposedChange"][];
+            readonly proposal: components["schemas"]["ProposalEnum"];
+            readonly proposal_note: string;
+            readonly link: components["schemas"]["ChangeLink"] | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description * `student` - Student
+         *     * `assistant` - Assistant
+         * @enum {string}
+         */
+        ChatMessageRoleEnum: "student" | "assistant";
+        /**
+         * @description * `pending` - Pending
+         *     * `done` - Done
+         *     * `failed` - Failed
+         * @enum {string}
+         */
+        ChatMessageStateEnum: "pending" | "done" | "failed";
+        CheckCard: {
+            position: number;
+            kind: components["schemas"]["CheckCardKindEnum"];
+            /** @description multiple_choice, true_false, short_answer or matching */
+            type: string;
+            front: string;
+            options: string[];
+            /** @description match: the key terms */
+            terms: string[];
+            /** @description match: the sentences */
+            clues: string[];
+            /** @description e.g. CS 201 · Ch 4: Stacks and Queues */
+            source: string;
+            chapter_id: number;
+            course_id: number;
+            /** @description null until the card is answered */
+            result: components["schemas"]["CardResult"] | null;
+        };
+        /**
+         * @description * `choice` - choice
+         *     * `short` - short
+         *     * `match` - match
+         * @enum {string}
+         */
+        CheckCardKindEnum: "choice" | "short" | "match";
+        CheckChapter: {
+            id: number;
+            course_id: number;
+            course_code: string;
+            order: number;
+            title: string;
+        };
+        /** @description Also used for "no conversation yet", with a null id and no messages. */
+        Conversation: {
+            readonly id: number | null;
+            /** Format: date-time */
+            readonly created_at: string | null;
+            messages: components["schemas"]["ChatMessage"][];
         };
         Course: {
             readonly id: number;
@@ -1176,52 +1319,24 @@ export interface components {
             readonly chapters_completed: number;
             readonly next_due: components["schemas"]["NextDue"] | null;
         };
+        /**
+         * @description The course schedule from Learning Hub for one week: due dates (with extensions applied)
+         *     and chapter releases. Separate from the study plan Pulse builds.
+         */
+        CourseCalendar: {
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            deadlines: components["schemas"]["Deadline"][];
+            chapters: components["schemas"]["ChapterRelease"][];
+            courses: components["schemas"]["CourseRef"][];
+        };
         CourseRef: {
             id: number;
             code: string;
             title: string;
             color: string;
-        };
-        DailyDeck: {
-            readonly id: number;
-            /** Format: date */
-            readonly day: string;
-            readonly state: string;
-            readonly question_count: number;
-            readonly time_limit_seconds: number;
-            readonly focus: components["schemas"]["DeckFocus"];
-            /** Format: date-time */
-            readonly started_at: string | null;
-            /** Format: date-time */
-            readonly deadline: string | null;
-            /** Format: date-time */
-            readonly completed_at: string | null;
-            /** @description questions answered correctly */
-            readonly knew: number;
-            readonly xp: number;
-            readonly counted_for_streak: boolean;
-        };
-        DailyDeckDetail: {
-            readonly id: number;
-            /** Format: date */
-            readonly day: string;
-            readonly state: string;
-            readonly question_count: number;
-            readonly time_limit_seconds: number;
-            readonly focus: components["schemas"]["DeckFocus"];
-            /** Format: date-time */
-            readonly started_at: string | null;
-            /** Format: date-time */
-            readonly deadline: string | null;
-            /** Format: date-time */
-            readonly completed_at: string | null;
-            /** @description questions answered correctly */
-            readonly knew: number;
-            readonly xp: number;
-            readonly counted_for_streak: boolean;
-            readonly items: components["schemas"]["DeckItem"][];
-            readonly milestone: number | null;
-            readonly streak: number;
         };
         Deadline: {
             id: number;
@@ -1238,50 +1353,6 @@ export interface components {
             weight_pct: number;
             extended: boolean;
         };
-        DeckFocus: {
-            kind: components["schemas"]["DeckFocusKindEnum"];
-            course_id: number | null;
-            course_code: string | null;
-            assessment_id: number | null;
-            assessment_title: string | null;
-            /** Format: date-time */
-            due_at: string | null;
-        };
-        /**
-         * @description * `upcoming` - Prep for an upcoming deadline
-         *     * `review` - Review of course chapters
-         *     * `general` - General study cards
-         * @enum {string}
-         */
-        DeckFocusKindEnum: "upcoming" | "review" | "general";
-        DeckItem: {
-            position: number;
-            type: components["schemas"]["DeckItemTypeEnum"];
-            /** @description e.g. CS 201 · Ch 5: Hashing, or a general topic */
-            source: string;
-            chapter_id: number | null;
-            course_id: number | null;
-            /** @description question text (the card front for flashcards) */
-            prompt: string;
-            /** @description flashcards only: the other side */
-            back: string | null;
-            options: string[] | null;
-            terms: string[] | null;
-            clues: string[] | null;
-            answered: boolean;
-            correct: boolean | null;
-            response: unknown;
-            /** @description after answering: {answer, explanation, choice?} or {pairs} */
-            solution: unknown;
-        };
-        /**
-         * @description * `flashcard` - flashcard
-         *     * `mcq` - mcq
-         *     * `short` - short
-         *     * `match` - match
-         * @enum {string}
-         */
-        DeckItemTypeEnum: "flashcard" | "mcq" | "short" | "match";
         DemoStudent: {
             id: number;
             /** Format: email */
@@ -1382,11 +1453,35 @@ export interface components {
             readonly email: string;
             readonly first_name: string;
             readonly last_name: string;
-            readonly role: components["schemas"]["RoleEnum"];
+            readonly role: components["schemas"]["MeRoleEnum"];
             readonly timezone: string;
             readonly profile: components["schemas"]["Profile"];
             readonly server_now: string;
             readonly demo_mode: boolean;
+        };
+        /**
+         * @description * `student` - Student
+         *     * `instructor` - Instructor
+         *     * `admin` - Admin
+         * @enum {string}
+         */
+        MeRoleEnum: "student" | "instructor" | "admin";
+        MissedDeadline: {
+            assessment_id: number;
+            course_id: number;
+            course_code: string;
+            title: string;
+            /** Format: date-time */
+            due_at: string;
+            /** Format: date-time */
+            late_until: string | null;
+            /**
+             * @description what it did to the streak
+             *
+             *     * `frozen` - frozen
+             *     * `missed` - missed
+             */
+            streak_result: (components["schemas"]["StreakResultEnum"] | components["schemas"]["NullEnum"]) | null;
         };
         Moment: {
             kind: components["schemas"]["MomentKindEnum"];
@@ -1400,6 +1495,9 @@ export interface components {
          * @enum {string}
          */
         MomentKindEnum: "celebrate" | "gasp" | "fresh_start";
+        NewMessageRequest: {
+            text: string;
+        };
         NextDue: {
             id: number;
             title: string;
@@ -1427,6 +1525,8 @@ export interface components {
             /** Format: time */
             quiet_end: string;
         };
+        /** @enum {unknown} */
+        NullEnum: null;
         OnboardingState: {
             step: number;
             completed_steps: number[];
@@ -1506,28 +1606,21 @@ export interface components {
             due_at?: string;
             /** Format: date-time */
             cutoff_at?: string | null;
-            /** Format: int64 */
             points?: number;
             /** Format: decimal */
             weight_pct?: string;
-            /** Format: int64 */
             est_minutes?: number | null;
-            /** Format: int64 */
             discussion_replies_required?: number;
-            /** Format: int64 */
             time_limit_minutes?: number;
-            /** Format: int64 */
             max_attempts?: number;
             published?: boolean;
             questions?: components["schemas"]["QuestionWriteRequest"][];
         };
         PatchedChapterWriteRequest: {
-            /** Format: int64 */
             order?: number;
             title?: string;
             body_md?: string;
             links?: components["schemas"]["LinkRequest"][];
-            /** Format: int64 */
             reading_minutes?: number;
             objectives?: string[];
             /** Format: date-time */
@@ -1621,7 +1714,6 @@ export interface components {
             readonly plan_feedback: string;
         };
         ProfileUpdateRequest: {
-            /** Format: int64 */
             sass_level?: number;
             /** Format: decimal */
             max_hours_per_day?: string;
@@ -1641,6 +1733,19 @@ export interface components {
             onboarding_done?: boolean;
             push_prompt_seen?: boolean;
             plan_feedback?: string;
+        };
+        /**
+         * @description * `none` - None
+         *     * `pending` - Pending
+         *     * `applied` - Applied
+         *     * `declined` - Declined
+         *     * `failed` - Failed
+         * @enum {string}
+         */
+        ProposalEnum: "none" | "pending" | "applied" | "declined" | "failed";
+        ProposedChange: {
+            type: string;
+            summary: string;
         };
         PushConfig: {
             public_key: string;
@@ -1675,25 +1780,19 @@ export interface components {
         QuestionTypeEnum: "multiple_choice" | "true_false";
         QuestionWrite: {
             readonly id: number;
-            /** Format: int64 */
             order: number;
             type: components["schemas"]["QuestionTypeEnum"];
             prompt: string;
             options: unknown;
-            /** Format: int64 */
             correct_index: number;
-            /** Format: int64 */
             points?: number;
         };
         QuestionWriteRequest: {
-            /** Format: int64 */
             order: number;
             type: components["schemas"]["QuestionTypeEnum"];
             prompt: string;
             options: unknown;
-            /** Format: int64 */
             correct_index: number;
-            /** Format: int64 */
             points?: number;
         };
         QuizAttempt: {
@@ -1722,13 +1821,6 @@ export interface components {
          * @enum {string}
          */
         ResultEnum: "done" | "frozen" | "missed" | "open" | "none";
-        /**
-         * @description * `student` - Student
-         *     * `instructor` - Instructor
-         *     * `admin` - Admin
-         * @enum {string}
-         */
-        RoleEnum: "student" | "instructor" | "admin";
         RosterRow: {
             student_id: number;
             name: string;
@@ -1862,9 +1954,10 @@ export interface components {
             freezes: number;
             toward_next_freeze: number;
             next_milestone: number | null;
-            done_today: boolean;
             week: components["schemas"]["StreakDay"][];
             recent: components["schemas"]["StreakEvent"][];
+            /** @description past-due work from the last 7 days; each one counts against the streak */
+            missed_deadlines: components["schemas"]["MissedDeadline"][];
         };
         StreakDay: {
             /** Format: date */
@@ -1879,6 +1972,68 @@ export interface components {
             /** Format: date-time */
             created_at: string;
         };
+        /**
+         * @description * `frozen` - frozen
+         *     * `missed` - missed
+         * @enum {string}
+         */
+        StreakResultEnum: "frozen" | "missed";
+        StudyCheck: {
+            readonly id: number;
+            readonly title: string;
+            readonly chapters: components["schemas"]["CheckChapter"][];
+            readonly kind: components["schemas"]["StudyCheckKindEnum"];
+            /** Format: date */
+            readonly scheduled_date: string;
+            /** Format: date-time */
+            readonly opens_at: string;
+            /** Format: date-time */
+            readonly closes_at: string;
+            readonly state: components["schemas"]["StudyCheckStateEnum"];
+            readonly passed: boolean;
+            readonly counted_for_streak: boolean;
+            readonly tries_left: number;
+            readonly best_correct: number | null;
+            readonly card_count: number;
+            readonly pass_mark: number;
+        };
+        StudyCheckDetail: {
+            readonly id: number;
+            readonly title: string;
+            readonly chapters: components["schemas"]["CheckChapter"][];
+            readonly kind: components["schemas"]["StudyCheckKindEnum"];
+            /** Format: date */
+            readonly scheduled_date: string;
+            /** Format: date-time */
+            readonly opens_at: string;
+            /** Format: date-time */
+            readonly closes_at: string;
+            readonly state: components["schemas"]["StudyCheckStateEnum"];
+            readonly passed: boolean;
+            readonly counted_for_streak: boolean;
+            readonly tries_left: number;
+            readonly best_correct: number | null;
+            readonly card_count: number;
+            readonly pass_mark: number;
+            readonly attempt: components["schemas"]["Attempt"] | null;
+            readonly milestone: number | null;
+            readonly streak: number;
+        };
+        /**
+         * @description * `scheduled` - Scheduled
+         *     * `early` - Early
+         * @enum {string}
+         */
+        StudyCheckKindEnum: "scheduled" | "early";
+        /**
+         * @description * `upcoming` - upcoming
+         *     * `open` - open
+         *     * `passed` - passed
+         *     * `not_passed` - not_passed
+         *     * `missed` - missed
+         * @enum {string}
+         */
+        StudyCheckStateEnum: "upcoming" | "open" | "passed" | "not_passed" | "missed";
         Submission: {
             readonly id: number;
             readonly status: components["schemas"]["SubmissionStatusEnum"];
@@ -2220,6 +2375,110 @@ export interface operations {
             };
         };
     };
+    v1_assistant_conversation_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Conversation"];
+                };
+            };
+        };
+    };
+    v1_assistant_conversation_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_assistant_messages_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewMessageRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["NewMessageRequest"];
+                "multipart/form-data": components["schemas"]["NewMessageRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Conversation"];
+                };
+            };
+        };
+    };
+    v1_assistant_messages_confirm_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatMessage"];
+                };
+            };
+        };
+    };
+    v1_assistant_messages_decline_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatMessage"];
+                };
+            };
+        };
+    };
     v1_attempts_retrieve: {
         parameters: {
             query?: never;
@@ -2546,6 +2805,96 @@ export interface operations {
             };
         };
     };
+    v1_checks_list: {
+        parameters: {
+            query?: {
+                state?: "open" | "past" | "upcoming";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudyCheck"][];
+                };
+            };
+        };
+    };
+    v1_checks_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                check_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudyCheckDetail"];
+                };
+            };
+        };
+    };
+    v1_checks_answer_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                check_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AnswerRequest"];
+                "multipart/form-data": components["schemas"]["AnswerRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudyCheckDetail"];
+                };
+            };
+        };
+    };
+    v1_checks_start_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                check_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudyCheckDetail"];
+                };
+            };
+        };
+    };
     v1_courses_list: {
         parameters: {
             query?: never;
@@ -2702,134 +3051,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Syllabus"];
-                };
-            };
-        };
-    };
-    v1_decks_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DailyDeck"][];
-                };
-            };
-        };
-    };
-    v1_decks_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                deck_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DailyDeckDetail"];
-                };
-            };
-        };
-    };
-    v1_decks_answer_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                deck_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AnswerRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["AnswerRequest"];
-                "multipart/form-data": components["schemas"]["AnswerRequest"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DailyDeckDetail"];
-                };
-            };
-        };
-    };
-    v1_decks_finish_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                deck_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DailyDeckDetail"];
-                };
-            };
-        };
-    };
-    v1_decks_start_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                deck_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DailyDeckDetail"];
-                };
-            };
-        };
-    };
-    v1_decks_today_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DailyDeckDetail"];
                 };
             };
         };
@@ -3343,6 +3564,28 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    v1_pulse_course_calendar_retrieve: {
+        parameters: {
+            query?: {
+                /** @description Local date YYYY-MM-DD */
+                from?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseCalendar"];
+                };
             };
         };
     };

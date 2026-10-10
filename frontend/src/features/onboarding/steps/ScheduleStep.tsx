@@ -7,9 +7,8 @@ import { TODAY } from "@/features/auth/redirects";
 import { useCancelJob, useGenerate, useLatestJob } from "@/features/pulse/api";
 import { PlanProgress } from "@/features/pulse/PlanProgress";
 import { PlanReview } from "@/features/pulse/PlanReview";
-import { useTodayDeck } from "@/features/quiz/api";
-import { focusLine } from "@/features/quiz/topics";
-import { useTimezone } from "@/lib/time";
+import { useChecks } from "@/features/quiz/api";
+import { formatExact, useTimezone } from "@/lib/time";
 import { onboardingKey, useCompleteOnboarding } from "../api";
 import type { StepProps } from "../stepTypes";
 import { YourChoices } from "./YourChoices";
@@ -27,7 +26,7 @@ export function ScheduleStep({ state, goTo, saving }: StepProps) {
     if (latest?.state === "done") {
       void client.invalidateQueries({ queryKey: onboardingKey });
       void client.invalidateQueries({ queryKey: ["pulse", "schedule"] });
-      void client.invalidateQueries({ queryKey: ["decks"] });
+      void client.invalidateQueries({ queryKey: ["checks"] });
     }
   }, [client, latest?.id, latest?.state]);
 
@@ -89,7 +88,7 @@ function Review({ state, goTo, saving }: Pick<StepProps, "state" | "goTo" | "sav
     <section aria-label="Review your schedule" className="flex flex-col gap-5">
       <YourChoices state={state} goTo={goTo} disabled={saving || complete.isPending} />
       <PlanReview onAddTime={() => goTo(2)} />
-      <DailyCards />
+      <FirstCheck />
       <div className="flex flex-col gap-3 border-t border-line pt-4">
         {complete.isError && (
           <p role="alert" className="text-sm font-bold text-berry">
@@ -118,21 +117,28 @@ function Review({ state, goTo, saving }: Pick<StepProps, "state" | "goTo" | "sav
   );
 }
 
-function DailyCards() {
+function FirstCheck() {
   const tz = useTimezone();
-  const today = useTodayDeck();
-  if (today.isPending) return <Skeleton className="h-16 w-full" />;
+  const open = useChecks("open");
+  const upcoming = useChecks("upcoming");
+  if (open.isPending || upcoming.isPending) return <Skeleton className="h-16 w-full" />;
+  const first = [...(open.data ?? []), ...(upcoming.data ?? [])].sort(
+    (a, b) => Date.parse(a.opens_at) - Date.parse(b.opens_at),
+  )[0];
   return (
-    <section aria-labelledby="daily-cards" className="rounded-lg border border-line bg-surface p-4">
-      <h2 id="daily-cards" className="mb-1 font-bold">
-        Daily flashcards
+    <section aria-labelledby="first-check" className="rounded-lg border border-line bg-surface p-4">
+      <h2 id="first-check" className="mb-1 font-bold">
+        Your first study check
       </h2>
-      <p className="text-sm">
-        Each day you get a short deck from your courses, about 3 minutes. Finish it before midnight
-        to keep your streak going.
-      </p>
-      {today.data && (
-        <p className="mt-1 text-sm font-bold text-pine">Today: {focusLine(today.data.focus, tz)}</p>
+      {first ? (
+        <p className="text-sm">
+          Four flashcards on {first.title}. It opens {formatExact(first.opens_at, tz)} and closes{" "}
+          {formatExact(first.closes_at, tz)}. Get three right to start your streak.
+        </p>
+      ) : (
+        <p className="text-sm text-ink-soft">
+          A check opens on each day your plan gives you a chapter. None are scheduled yet.
+        </p>
       )}
     </section>
   );

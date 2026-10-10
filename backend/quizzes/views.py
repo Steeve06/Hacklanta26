@@ -1,5 +1,4 @@
-from datetime import timedelta
-
+from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.response import Response
@@ -7,90 +6,92 @@ from rest_framework.views import APIView
 
 from accounts.clock import now as clock_now
 from lms.access import require_student
+from lms.models import Chapter
 
-from .models import DailyDeck, StreakEvent
+from .models import CheckAttempt, StreakEvent, StudyCheck
 from .serializers import (
     AnswerSerializer,
-    DailyDeckDetailSerializer,
-    DailyDeckSerializer,
     LeaderboardSerializer,
     StreakSerializer,
+    StudyCheckDetailSerializer,
+    StudyCheckSerializer,
 )
-from .services import decks as deck_service
-from .services.decks import local_day, today_deck
-from .services.streaks import FREEZE_EVERY, MILESTONES, get_streak, settle
+from .services.checks import answer, settle_expired, start_attempt
+from .services.missed import missed_deadlines
+from .services.streaks import FREEZE_EVERY, MILESTONES, get_streak, sweep_student, week_of
 
-HISTORY = 30
-WEEK = 7
+CHAPTERS = Prefetch("chapters", queryset=Chapter.objects.select_related("course"))
+ATTEMPTS = Prefetch("attempts", queryset=CheckAttempt.objects.prefetch_related("answers"))
 
 
-def _own(request, deck_id: int) -> DailyDeck:
+def _checks(student):
+    return StudyCheck.objects.filter(student=student).prefetch_related(CHAPTERS, ATTEMPTS)
+
+
+def _own(request, check_id: int) -> StudyCheck:
     require_student(request.user)
-    return get_object_or_404(
-        DailyDeck.objects.select_related("student", "course", "assessment"),
-        pk=deck_id,
-        student=request.user,
+    return get_object_or_404(_checks(request.user), pk=check_id)
+
+
+def _detail(request, check_id: int, milestone: int | None = None) -> Response:
+    check = _own(request, check_id)
+    now = clock_now(request.user)
+    if settle_expired(check, now):
+        check = _own(request, check_id)
+    context = {"now": now, "milestone": milestone}
+    return Response(StudyCheckDetailSerializer(check, context=context).data)
+
+
+class CheckListView(APIView):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("state", str, enum=["open", "upcoming", "past"], required=False)
+        ],
+        responses=StudyCheckSerializer(many=True),
     )
-
-
-def _detail(request, deck: DailyDeck, milestone: int | None = None) -> Response:
-    if milestone:
-        from notifications.engine import notify_streak_milestone
-
-        notify_streak_milestone(request.user, deck, milestone)
-    context = {"now": clock_now(request.user), "milestone": milestone}
-    return Response(DailyDeckDetailSerializer(deck, context=context).data)
-
-
-def _settled(request, outcome: deck_service.AnswerOutcome) -> Response:
-    return _detail(request, outcome.deck, outcome.milestone)
-
-
-class DeckListView(APIView):
-    @extend_schema(responses=DailyDeckSerializer(many=True))
     def get(self, request):
         require_student(request.user)
-        decks = DailyDeck.objects.filter(student=request.user).select_related(
-            "student", "course", "assessment"
-        )[:HISTORY]
-        context = {"now": clock_now(request.user)}
-        return Response(DailyDeckSerializer(decks, many=True, context=context).data)
+        now = clock_now(request.user)
+        sweep_student(request.user, now)
+        qs = _checks(request.user)
+        state = request.query_params.get("state")
+        if state == "open":
+            qs = qs.filter(opens_at__lte=now, closes_at__gte=now, passed=False, resolved=False)
+        elif state == "upcoming":
+            qs = qs.filter(opens_at__gt=now)
+        elif state == "past":
+            qs = qs.filter(Q(closes_at__lt=now) | Q(passed=True) | Q(resolved=True))
+            qs = qs.order_by("-closes_at")[:30]
+        return Response(StudyCheckSerializer(qs, many=True, context={"now": now}).data)
 
 
-class TodayDeckView(APIView):
-    @extend_schema(responses=DailyDeckDetailSerializer)
-    def get(self, request):
-        require_student(request.user)
-        settle(request.user)
-        return _settled(request, deck_service.expire_if_due(today_deck(request.user)))
+class CheckDetailView(APIView):
+    @extend_schema(responses=StudyCheckDetailSerializer)
+    def get(self, request, check_id: int):
+        return _detail(request, check_id)
 
 
-class DeckDetailView(APIView):
-    @extend_schema(responses=DailyDeckDetailSerializer)
-    def get(self, request, deck_id: int):
-        return _settled(request, deck_service.expire_if_due(_own(request, deck_id)))
+class CheckStartView(APIView):
+    @extend_schema(request=None, responses=StudyCheckDetailSerializer)
+    def post(self, request, check_id: int):
+        start_attempt(_own(request, check_id))
+        return _detail(request, check_id)
 
 
-class DeckStartView(APIView):
-    @extend_schema(request=None, responses=DailyDeckDetailSerializer)
-    def post(self, request, deck_id: int):
-        return _detail(request, deck_service.start(_own(request, deck_id)))
-
-
-class DeckFinishView(APIView):
-    @extend_schema(request=None, responses=DailyDeckDetailSerializer)
-    def post(self, request, deck_id: int):
-        return _settled(request, deck_service.finish(_own(request, deck_id)))
-
-
-class DeckAnswerView(APIView):
-    @extend_schema(request=AnswerSerializer, responses=DailyDeckDetailSerializer)
-    def post(self, request, deck_id: int):
-        deck = _own(request, deck_id)
+class CheckAnswerView(APIView):
+    @extend_schema(request=AnswerSerializer, responses=StudyCheckDetailSerializer)
+    def post(self, request, check_id: int):
+        check = _own(request, check_id)
         serializer = AnswerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        outcome = deck_service.answer(deck, **serializer.validated_data)
-        return _settled(request, outcome)
+        data = dict(serializer.validated_data)
+        position = data.pop("position")
+        outcome = answer(check, position, data)
+        if outcome.milestone:
+            from notifications.engine import notify_streak_milestone
+
+            notify_streak_milestone(request.user, check, outcome.milestone)
+        return _detail(request, check_id, outcome.milestone)
 
 
 class LeaderboardView(APIView):
@@ -117,44 +118,14 @@ class LeaderboardView(APIView):
         )
 
 
-def week_of(student, now) -> list[dict]:
-    """The last seven local days, oldest first, with how each went for the streak."""
-    today = local_day(student, now)
-    first = today - timedelta(days=WEEK - 1)
-    done = set(
-        DailyDeck.objects.filter(
-            student=student, day__gte=first, counted_for_streak=True
-        ).values_list("day", flat=True)
-    )
-    events = dict(
-        StreakEvent.objects.filter(student=student, day__gte=first)
-        .exclude(result=StreakEvent.Result.ON_TIME)
-        .values_list("day", "result")
-    )
-    days = []
-    for offset in range(WEEK):
-        day = first + timedelta(days=offset)
-        if day in done:
-            result = "done"
-        elif day in events:
-            result = events[day]
-        elif day == today:
-            result = "open"
-        else:
-            result = "none"
-        days.append({"day": day, "result": result})
-    return days
-
-
 class StreakView(APIView):
     @extend_schema(responses=StreakSerializer)
     def get(self, request):
         require_student(request.user)
         now = clock_now(request.user)
-        settle(request.user, now)
+        sweep_student(request.user, now)
         streak = get_streak(request.user)
         upcoming = [m for m in MILESTONES if m > streak.current]
-        week = week_of(request.user, now)
         return Response(
             StreakSerializer(
                 {
@@ -163,9 +134,9 @@ class StreakView(APIView):
                     "freezes": streak.freezes,
                     "toward_next_freeze": FREEZE_EVERY - streak.on_time_toward_freeze,
                     "next_milestone": upcoming[0] if upcoming else None,
-                    "done_today": week[-1]["result"] == "done",
-                    "week": week,
+                    "week": week_of(request.user, now),
                     "recent": StreakEvent.objects.filter(student=request.user)[:10],
+                    "missed_deadlines": missed_deadlines(request.user, now),
                 }
             ).data
         )

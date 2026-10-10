@@ -1,160 +1,231 @@
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from .models import DailyDeck, Flashcard, Streak
+from .models import CheckAttempt, CheckQuestion, StudyCheck
+
+CHECK_STATES = ["upcoming", "open", "passed", "not_passed", "missed"]
 
 
-class DeckItemSerializer(serializers.Serializer):
-    position = serializers.IntegerField()
-    type = serializers.ChoiceField(choices=["flashcard", "mcq", "short", "match"])
-    source = serializers.CharField(help_text="e.g. CS 201 · Ch 5: Hashing, or a general topic")
-    chapter_id = serializers.IntegerField(allow_null=True)
-    course_id = serializers.IntegerField(allow_null=True)
-    prompt = serializers.CharField(help_text="question text (the card front for flashcards)")
-    back = serializers.CharField(allow_null=True, help_text="flashcards only: the other side")
-    options = serializers.ListField(child=serializers.CharField(), allow_null=True)
-    terms = serializers.ListField(child=serializers.CharField(), allow_null=True)
-    clues = serializers.ListField(child=serializers.CharField(), allow_null=True)
-    answered = serializers.BooleanField()
-    correct = serializers.BooleanField(allow_null=True)
-    response = serializers.JSONField(allow_null=True)
-    solution = serializers.JSONField(
-        allow_null=True, help_text="after answering: {answer, explanation, choice?} or {pairs}"
-    )
+class CheckChapterSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    course_id = serializers.IntegerField()
+    course_code = serializers.CharField(source="course.code")
+    order = serializers.IntegerField()
+    title = serializers.CharField()
 
 
-class DeckFocusSerializer(serializers.Serializer):
-    kind = serializers.ChoiceField(choices=DailyDeck.Kind.choices)
-    course_id = serializers.IntegerField(allow_null=True)
-    course_code = serializers.CharField(allow_null=True)
-    assessment_id = serializers.IntegerField(allow_null=True)
-    assessment_title = serializers.CharField(allow_null=True)
-    due_at = serializers.DateTimeField(allow_null=True)
-
-
-class DailyDeckSerializer(serializers.ModelSerializer):
+class StudyCheckSerializer(serializers.ModelSerializer):
+    title = serializers.SerializerMethodField()
+    chapters = serializers.SerializerMethodField()
     state = serializers.SerializerMethodField()
-    question_count = serializers.SerializerMethodField()
-    focus = serializers.SerializerMethodField()
-    deadline = serializers.SerializerMethodField()
+    tries_left = serializers.SerializerMethodField()
+    best_correct = serializers.SerializerMethodField()
+    card_count = serializers.SerializerMethodField()
+    pass_mark = serializers.SerializerMethodField()
 
     class Meta:
-        model = DailyDeck
+        model = StudyCheck
         fields = [
-            "id", "day", "state", "question_count", "time_limit_seconds", "focus", "started_at",
-            "deadline", "completed_at", "knew", "xp", "counted_for_streak",
+            "id", "title", "chapters", "kind", "scheduled_date", "opens_at", "closes_at", "state",
+            "passed", "counted_for_streak", "tries_left", "best_correct", "card_count", "pass_mark",
         ]  # fmt: skip
         read_only_fields = fields
 
-    @extend_schema_field(DeckFocusSerializer)
-    def get_focus(self, obj):
-        """What the deck is about. due_at is the student's own deadline (extensions included)."""
-        assessment = obj.assessment
-        due_at = None
-        if assessment is not None:
-            from lms.models import DueDateOverride
+    def _chapters(self, obj):
+        return sorted(obj.chapters.all(), key=lambda c: (c.course.code, c.order))
 
-            override = DueDateOverride.objects.filter(
-                assessment=assessment, student_id=obj.student_id
-            ).first()
-            due_at = override.due_at if override else assessment.due_at
-        return {
-            "kind": obj.kind,
-            "course_id": obj.course_id,
-            "course_code": obj.course.code if obj.course else None,
-            "assessment_id": obj.assessment_id,
-            "assessment_title": assessment.title if assessment else None,
-            "due_at": due_at,
-        }
+    def get_title(self, obj) -> str:
+        return ", ".join(f"{c.course.code} Ch {c.order}" for c in self._chapters(obj))
 
+    @extend_schema_field(CheckChapterSerializer(many=True))
+    def get_chapters(self, obj):
+        return CheckChapterSerializer(self._chapters(obj), many=True).data
+
+    @extend_schema_field(serializers.ChoiceField(choices=CHECK_STATES))
     def get_state(self, obj) -> str:
-        from .services.decks import state_of
+        from .services.checks import state_of
 
         return state_of(obj, self.context["now"])
 
-    def get_question_count(self, obj) -> int:
-        return len(obj.items)
+    def get_tries_left(self, obj) -> int:
+        from .services.checks import MAX_ATTEMPTS
 
-    @extend_schema_field(serializers.DateTimeField(allow_null=True))
-    def get_deadline(self, obj):
-        from .services.decks import deadline
+        finished = sum(1 for a in obj.attempts.all() if a.finished_at)
+        return 0 if obj.passed else max(0, MAX_ATTEMPTS - finished)
 
-        when = deadline(obj)
-        return serializers.DateTimeField().to_representation(when) if when else None
+    def get_best_correct(self, obj) -> int | None:
+        finished = [a.correct for a in obj.attempts.all() if a.finished_at]
+        return max(finished) if finished else None
+
+    def get_card_count(self, obj) -> int:
+        from django.conf import settings
+
+        latest = _latest_attempt(obj)
+        return len(latest.cards) if latest else settings.STUDY_CHECK_CARDS
+
+    def get_pass_mark(self, obj) -> int:
+        from .services.checks import pass_mark
+
+        return pass_mark(self.get_card_count(obj))
 
 
-class DailyDeckDetailSerializer(DailyDeckSerializer):
-    items = serializers.SerializerMethodField()
+def _latest_attempt(check: StudyCheck) -> CheckAttempt | None:
+    attempts = sorted(check.attempts.all(), key=lambda a: a.number)
+    return attempts[-1] if attempts else None
+
+
+class CardResultSerializer(serializers.Serializer):
+    correct = serializers.BooleanField()
+    explanation = serializers.CharField()
+    source_excerpt = serializers.CharField()
+    chosen = serializers.IntegerField(allow_null=True, help_text="choice: option tapped, as shown")
+    answer = serializers.IntegerField(allow_null=True, help_text="choice: right option, as shown")
+    given_text = serializers.CharField(allow_null=True, help_text="short: what was typed")
+    expected_text = serializers.CharField(allow_null=True, help_text="short: the key term")
+    pairs = serializers.ListField(
+        child=serializers.IntegerField(),
+        allow_null=True,
+        help_text="match: sentence picked per term",
+    )
+    right_pairs = serializers.ListField(
+        child=serializers.IntegerField(),
+        allow_null=True,
+        help_text="match: right sentence per term",
+    )
+
+
+class CheckCardSerializer(serializers.Serializer):
+    position = serializers.IntegerField()
+    kind = serializers.ChoiceField(choices=["choice", "short", "match"])
+    type = serializers.CharField(help_text="multiple_choice, true_false, short_answer or matching")
+    front = serializers.CharField()
+    options = serializers.ListField(child=serializers.CharField())
+    terms = serializers.ListField(child=serializers.CharField(), help_text="match: the key terms")
+    clues = serializers.ListField(child=serializers.CharField(), help_text="match: the sentences")
+    source = serializers.CharField(help_text="e.g. CS 201 · Ch 4: Stacks and Queues")
+    chapter_id = serializers.IntegerField()
+    course_id = serializers.IntegerField()
+    result = CardResultSerializer(allow_null=True, help_text="null until the card is answered")
+
+
+class AttemptSerializer(serializers.Serializer):
+    number = serializers.IntegerField()
+    correct = serializers.IntegerField()
+    finished = serializers.BooleanField()
+    timed_out = serializers.BooleanField()
+    expires_at = serializers.DateTimeField(allow_null=True)
+    xp = serializers.IntegerField()
+    cards = CheckCardSerializer(many=True)
+
+
+def _source(q: CheckQuestion) -> str:
+    return f"{q.chapter.course.code} · Ch {q.chapter.order}: {q.chapter.title}"
+
+
+def _empty_result(given, q: CheckQuestion) -> dict:
+    return {
+        "correct": given.correct, "explanation": q.explanation, "source_excerpt": q.source_excerpt,
+        "chosen": None, "answer": None, "given_text": None, "expected_text": None,
+        "pairs": None, "right_pairs": None,
+    }  # fmt: skip
+
+
+def _card(position: int, item: dict, questions: dict, given) -> dict:
+    kind = item.get("kind", "choice")
+    if kind == "match":
+        qs = [questions[i] for i in item["question_ids"]]
+        clue_qs = [questions[i] for i in item["clues"]]
+        first = qs[0]
+        result = None
+        if given:
+            result = _empty_result(given, first)
+            result["explanation"] = "Each key term goes with the sentence that introduces it."
+            result["source_excerpt"] = " ".join(q.explanation for q in qs)[:600]
+            result["pairs"] = given.response.get("pairs")
+            result["right_pairs"] = [item["clues"].index(i) for i in item["question_ids"]]
+        sources = list(dict.fromkeys(_source(q) for q in qs))
+        return {
+            "position": position, "kind": kind, "type": "matching",
+            "front": "Match each key term to the sentence it completes.",
+            "options": [], "terms": [q.answer for q in qs], "clues": [q.prompt for q in clue_qs],
+            "source": "; ".join(sources), "chapter_id": first.chapter_id,
+            "course_id": first.chapter.course_id, "result": result,
+        }  # fmt: skip
+    q = questions[item["question_id"]]
+    result = _empty_result(given, q) if given else None
+    options: list[str] = []
+    if kind == "choice":
+        order = item["order"]
+        options = [q.options[i] for i in order]
+        if given:
+            result["chosen"] = order.index(given.chosen_index)
+            result["answer"] = order.index(q.correct_index)
+    elif given:
+        result["given_text"] = given.response.get("text", "")
+        result["expected_text"] = q.answer
+    return {
+        "position": position, "kind": kind, "type": q.type, "front": q.prompt, "options": options,
+        "terms": [], "clues": [], "source": _source(q), "chapter_id": q.chapter_id,
+        "course_id": q.chapter.course_id, "result": result,
+    }  # fmt: skip
+
+
+def attempt_data(attempt: CheckAttempt) -> dict:
+    """Cards as the student sees them. Answers are only included once a card has been answered."""
+    from .services.checks import _question_ids
+
+    ids = [qid for c in attempt.cards for qid in _question_ids(c)]
+    questions = {
+        q.id: q for q in CheckQuestion.objects.filter(id__in=ids).select_related("chapter__course")
+    }
+    answers = {a.position: a for a in attempt.answers.all()}
+    cards = [_card(i, item, questions, answers.get(i)) for i, item in enumerate(attempt.cards)]
+    timed_out = bool(
+        attempt.finished_at and attempt.expires_at and attempt.finished_at == attempt.expires_at
+    )
+    return {
+        "number": attempt.number,
+        "correct": attempt.correct,
+        "finished": attempt.finished_at is not None,
+        "timed_out": timed_out,
+        "expires_at": attempt.expires_at,
+        "xp": attempt.xp,
+        "cards": cards,
+    }
+
+
+class StudyCheckDetailSerializer(StudyCheckSerializer):
+    attempt = serializers.SerializerMethodField()
     milestone = serializers.SerializerMethodField()
     streak = serializers.SerializerMethodField()
 
-    class Meta(DailyDeckSerializer.Meta):
-        fields = [*DailyDeckSerializer.Meta.fields, "items", "milestone", "streak"]
+    class Meta(StudyCheckSerializer.Meta):
+        fields = [*StudyCheckSerializer.Meta.fields, "attempt", "milestone", "streak"]
         read_only_fields = fields
 
-    @extend_schema_field(DeckItemSerializer(many=True))
-    def get_items(self, obj):
-        from .services.items import item_cards, solution
-
-        ids = {c for item in obj.items for c in item_cards(item)}
-        cards = {
-            c.id: c for c in Flashcard.objects.filter(id__in=ids).select_related("chapter__course")
-        }
-        answers = {a.position: a for a in obj.answers.all()}
-        reveal = obj.completed_at is not None
-        rows = []
-        for position, item in enumerate(obj.items):
-            used = [cards[c] for c in item_cards(item) if c in cards]
-            if not used:
-                continue
-            first = used[0]
-            done = answers.get(position)
-            row = {
-                "position": position, "type": item["type"], "source": _source(first),
-                "chapter_id": first.chapter_id,
-                "course_id": first.chapter.course_id if first.chapter else None,
-                "prompt": first.front, "back": None, "options": None, "terms": None,
-                "clues": None, "answered": done is not None,
-                "correct": done.correct if done else None,
-                "response": done.response if done else None,
-                "solution": solution(item, cards) if (done or reveal) else None,
-            }  # fmt: skip
-            if item["type"] == "flashcard":
-                row["back"] = first.back
-            elif item["type"] == "mcq":
-                row["options"] = item["options"]
-            elif item["type"] == "match":
-                row["prompt"] = "Match each term to the sentence it completes."
-                row["terms"] = [cards[c].answer for c in item["cards"]]
-                row["clues"] = [cards[c].clue for c in item["clues"]]
-            rows.append(row)
-        return rows
+    @extend_schema_field(AttemptSerializer(allow_null=True))
+    def get_attempt(self, obj):
+        latest = _latest_attempt(obj)
+        return attempt_data(latest) if latest else None
 
     def get_milestone(self, obj) -> int | None:
         return self.context.get("milestone")
 
     def get_streak(self, obj) -> int:
-        streak = Streak.objects.filter(student=obj.student).first()
-        return streak.current if streak else 0
+        from .services.streaks import get_streak
 
-
-def _source(card: Flashcard) -> str:
-    if card.chapter is None:
-        return card.get_topic_display()
-    chapter = card.chapter
-    return f"{chapter.course.code} · Ch {chapter.order}: {chapter.title}"
+        return get_streak(obj.student).current
 
 
 class AnswerSerializer(serializers.Serializer):
-    position = serializers.IntegerField(min_value=0)
-    response = serializers.JSONField(
-        help_text='{"knew": bool} | {"choice": int} | {"text": str} | {"pairs": [int, ...]}'
-    )
+    """Send the field for the card's kind: choice, text or pairs."""
 
-    def validate_response(self, value):
-        if not isinstance(value, dict):
-            raise serializers.ValidationError("Send the answer as an object.")
-        return value
+    position = serializers.IntegerField(min_value=0, max_value=9)
+    choice = serializers.IntegerField(min_value=0, max_value=3, required=False)
+    text = serializers.CharField(max_length=120, required=False, trim_whitespace=True)
+    pairs = serializers.ListField(
+        child=serializers.IntegerField(min_value=0, max_value=5), max_length=6, required=False
+    )
 
 
 class LeaderboardRowSerializer(serializers.Serializer):
@@ -190,12 +261,27 @@ class StreakDaySerializer(serializers.Serializer):
     result = serializers.ChoiceField(choices=["done", "frozen", "missed", "open", "none"])
 
 
+class MissedDeadlineSerializer(serializers.Serializer):
+    assessment_id = serializers.IntegerField()
+    course_id = serializers.IntegerField()
+    course_code = serializers.CharField()
+    title = serializers.CharField()
+    due_at = serializers.DateTimeField()
+    late_until = serializers.DateTimeField(allow_null=True)
+    streak_result = serializers.ChoiceField(
+        choices=["frozen", "missed"], allow_null=True, help_text="what it did to the streak"
+    )
+
+
 class StreakSerializer(serializers.Serializer):
     current = serializers.IntegerField()
     longest = serializers.IntegerField()
     freezes = serializers.IntegerField()
     toward_next_freeze = serializers.IntegerField()
     next_milestone = serializers.IntegerField(allow_null=True)
-    done_today = serializers.BooleanField()
     week = StreakDaySerializer(many=True)
     recent = StreakEventSerializer(many=True)
+    missed_deadlines = MissedDeadlineSerializer(
+        many=True,
+        help_text="past-due work from the last 7 days; each one counts against the streak",
+    )

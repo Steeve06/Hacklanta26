@@ -13,6 +13,7 @@ from .types import Constraints, Interval, Placement, Preferences, Shortfall, Sol
 
 MAX_ITERATIONS = 500
 MAX_SECONDS = 2.0
+QUIZ_MINUTES = 5
 
 
 def buffer_for(task: TaskSpec, now: datetime) -> timedelta:
@@ -45,12 +46,34 @@ class Solver:
         for t in tasks:
             for dep in t.depends_on:
                 self.successors[dep].append(t.key)
+        self.due_by, self.late = self._inherited_urgency()
         self.at_risk: set[str] = set()
         self.shortfalls: list[Shortfall] = []
         for p in pinned or []:
             self._commit(p)
             if p.task_key in self.remaining:
                 self.remaining[p.task_key] = max(0, self.remaining[p.task_key] - p.minutes)
+
+    def _inherited_urgency(self) -> tuple[dict[str, datetime], dict[str, bool]]:
+        """A task needed before something due sooner is as urgent as that thing: reading a
+        chapter for a discussion due tonight has to happen tonight, whatever the chapter's own
+        deadline. Used for ordering only; each task still has to finish by its own deadline."""
+        due_by = {k: t.deadline for k, t in self.tasks.items()}
+        late = {k: t.late_window for k, t in self.tasks.items()}
+        for _ in range(len(self.tasks)):
+            changed = False
+            for t in self.tasks.values():
+                need_by = due_by[t.key] - timedelta(minutes=t.minutes) - t.lag_after_deps
+                for dep in t.depends_on:
+                    if dep not in due_by:
+                        continue
+                    if need_by < due_by[dep] or (late[t.key] and not late[dep]):
+                        due_by[dep] = min(due_by[dep], need_by)
+                        late[dep] = late[dep] or late[t.key]
+                        changed = True
+            if not changed:
+                break
+        return due_by, late
 
     def day_of(self, moment: datetime) -> date:
         return moment.astimezone(self.c.tz).date()
@@ -73,10 +96,13 @@ class Solver:
 
     def priority(self, task: TaskSpec) -> tuple:
         earliest = self.earliest(task)
-        slack_hours = (self.limit(task, use_buffer=True) - earliest).total_seconds() / 3600
+        due = min(self.due_by[task.key], self.c.horizon_end)
+        late = self.late[task.key]
+        buffer = timedelta(0) if late else max(timedelta(hours=12), (due - self.c.now) * 0.10)
+        slack_hours = (due - buffer - earliest).total_seconds() / 3600
         slack_hours -= self.remaining[task.key] / 60
         urgency = task.weight / max(slack_hours, 0.5)
-        return (task.late_window, urgency, -task.deadline.timestamp(), task.weight, task.minutes)
+        return (late, urgency, -due.timestamp(), task.weight, task.minutes)
 
     def day_cap(self, day: date, *, strict: bool) -> int:
         cap = self.c.max_minutes_per_day
@@ -185,6 +211,51 @@ class Solver:
             task = max(ready, key=self.priority)
             self.place(task)
             pending.discard(task.key)
+
+    def place_chapter_quizzes(self) -> list[tuple[date, list[str]]]:
+        """One 10-minute quiz per local day on which chapters finish their study sessions."""
+        last_day: dict[str, date] = {}
+        for p in self.placements:
+            task = self.tasks.get(p.task_key)
+            if task and task.chapter_id is not None and p.kind == "study":
+                last_day[p.task_key] = max(last_day.get(p.task_key, p.day), p.day)
+        by_day: dict[date, list[str]] = defaultdict(list)
+        for key, day in last_day.items():
+            if self.remaining.get(key, 0) <= 0:
+                by_day[day].append(key)
+        quiz_days = []
+        for day in sorted(by_day):
+            keys = sorted(by_day[day], key=lambda k: (self.tasks[k].course_code, k))
+            after = max(p.end for p in self.placements if p.task_key in keys and p.day == day)
+            if self._place_quiz(keys, day, after):
+                quiz_days.append((day, keys))
+        return quiz_days
+
+    def _place_quiz(self, keys: list[str], day: date, after: datetime) -> bool:
+        first = self.tasks[keys[0]]
+        for candidate_day in (day, day + timedelta(days=1)):
+            for iv in self.free.get(candidate_day, []):
+                start = max(iv.start, after + timedelta(minutes=self.c.break_minutes))
+                end = start + timedelta(minutes=QUIZ_MINUTES)
+                if end > iv.end or end > self.c.horizon_end:
+                    continue
+                if self.day_minutes[candidate_day] + QUIZ_MINUTES > self.c.max_minutes_per_day:
+                    break
+                if self.week_left(candidate_day) < QUIZ_MINUTES:
+                    break
+                self._commit(
+                    Placement(
+                        task_key=first.key,
+                        start=start,
+                        end=end,
+                        day=candidate_day,
+                        course_id=first.course_id,
+                        kind="chapter_quiz",
+                        quiz_keys=tuple(keys),
+                    )  # fmt: skip
+                )
+                return True
+        return False
 
     def penalty(self, placements: list[Placement] | None = None) -> float:
         placements = placements if placements is not None else self.placements
@@ -322,6 +393,7 @@ class Solver:
         self.run_greedy()
         iterations, penalty = self.improve() if local_search else (0, self.penalty())
         self._rebuild_free()
+        self.place_chapter_quizzes()
         self.placements.sort(key=lambda p: p.start)
         for p in self.placements:
             if p.task_key in self.at_risk:
@@ -369,6 +441,7 @@ def check_hard_constraints(
                     if (
                         other.task_key == dep
                         and other.kind != "chapter_quiz"
+                        and not p.pinned
                         and other.end + task.lag_after_deps > p.start
                     ):
                         problems.append(f"{p.task_key} starts before {dep} finishes")

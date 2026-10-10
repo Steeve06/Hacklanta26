@@ -1,19 +1,15 @@
-"""The flashcard library and a few days of quiz-session history for the demo students and their
-classmates, so streaks and the leaderboard have something to show."""
+"""Card banks for every chapter and some streak history for the demo students."""
 
 import random
 from datetime import datetime, time, timedelta
-from zoneinfo import ZoneInfo
 
 from django.utils import timezone
 
-from quizzes.models import CardReview, DailyDeck, DeckAnswer, Flashcard, Streak, StreakEvent
-from quizzes.services import items as item_service
-from quizzes.services.cards import pick, sync_cards
-from quizzes.services.decks import session_size
-from quizzes.services.focus import choose
-
-from .pulse_seed import AVAILABILITY
+from lms.models import Chapter, ChapterProgress
+from lms.selectors import enrolled_courses
+from quizzes.models import CheckAttempt, Streak, StreakEvent, StudyCheck
+from quizzes.services.bank import choices, rebuild_bank
+from quizzes.services.checks import XP_FOR_FINISHING, XP_PER_CORRECT
 
 STREAKS = {
     "on_track": (6, 9, 1),
@@ -21,98 +17,111 @@ STREAKS = {
     "slightly_behind": (2, 5, 0),
     "badly_behind": (0, 3, 0),
 }
-# Classmates have already done today's session, so the leaderboard is lively on any day.
-CLASSMATE_STREAKS = {"Priya": 12, "Tomás": 3, "Hannah": 8, "Kwame": 1}
-SKILL = {"Priya": 0.9, "Tomás": 0.6, "Hannah": 0.8, "Kwame": 0.5}
 
 
-def seed_cards() -> int:
-    return sync_cards()
+def seed_banks() -> int:
+    """Key-term cards, so seeding is fast and works offline. With AI configured, banks are
+    upgraded to model-written cards in the background when checks open."""
+    return sum(rebuild_bank(chapter, allow_ai=False) for chapter in Chapter.objects.all())
 
 
-def _response(item: dict, correct: bool, cards: dict[int, Flashcard], rng) -> dict:
-    kind = item["type"]
-    if kind == "flashcard":
-        return {"knew": correct}
-    if kind == "short":
-        return {"text": cards[item["card"]].answer if correct else "not sure"}
-    if kind == "mcq":
-        card = cards[item["card"]]
-        right = item["options"].index(card.answer or card.back)
-        return {"choice": right if correct else (right + 1) % len(item["options"])}
-    pairs = [item["clues"].index(c) for c in item["cards"]]
-    return {"pairs": pairs if correct else pairs[1:] + pairs[:1]}
-
-
-def finished_session(student, day, finished: datetime, skill: float, rng) -> DailyDeck:
-    """A session done on `day`, answered about as well as `skill`, counted for the streak."""
-    focus = choose(student, finished)
-    questions, seconds = session_size(focus)
-    cards = pick(student, day, focus.pools, size=item_service.cards_needed(questions))
-    plan = item_service.build(cards, questions, rng)
-    deck = DailyDeck.objects.create(
-        student=student, day=day, kind=focus.kind, course_id=focus.course_id,
-        assessment_id=focus.assessment_id, cards=cards, items=plan, time_limit_seconds=seconds,
-        started_at=finished - timedelta(seconds=seconds - 20), completed_at=finished,
-        counted_for_streak=True,
-    )  # fmt: skip
-    by_id = {c.id: c for c in Flashcard.objects.filter(id__in=cards)}
-    right = 0
-    for position, item in enumerate(plan):
-        response = _response(item, rng.random() < skill, by_id, rng)
-        correct, per_card = item_service.grade(item, response, by_id)
-        right += correct
-        DeckAnswer.objects.create(deck=deck, position=position, response=response, correct=correct)
-        CardReview.objects.bulk_create(
-            CardReview(deck=deck, card_id=c, knew=k) for c, k in per_card.items()
-        )
-    deck.knew = right
-    deck.xp = right * item_service.XP_PER_CORRECT + item_service.XP_FOR_FINISHING
-    deck.save(update_fields=["knew", "xp"])
-    return deck
-
-
-def _history(student, tz, days: list, current: int, longest: int, freezes: int, skill, rng):
-    for i, day in enumerate(days, start=1):
-        finished = datetime.combine(day, time(20, rng.randrange(60)), tzinfo=tz)
-        finished = min(finished, timezone.now() - timedelta(minutes=30))
-        deck = finished_session(student, day, finished, skill, rng)
-        event = StreakEvent.objects.create(
-            student=student, deck=deck, day=day, result=StreakEvent.Result.ON_TIME,
-            streak_after=current - len(days) + i,
-        )  # fmt: skip
-        StreakEvent.objects.filter(pk=event.pk).update(created_at=finished)
-    Streak.objects.update_or_create(
-        student=student,
-        defaults={
-            "current": current, "longest": max(longest, current), "freezes": freezes,
-            "on_time_toward_freeze": current % 5, "last_day": days[-1] if days else None,
-        },
-    )  # fmt: skip
-
-
-def seed_streaks(students: dict, classmates: list | None = None) -> None:
-    """Demo students finished a session every day up to yesterday, so today's session is the one
-    that keeps the streak going. Classmates have done today's already."""
+def seed_streaks(students: dict) -> None:
     now = timezone.now()
     for profile, (current, longest, freezes) in STREAKS.items():
         student = students[profile]
-        tz = ZoneInfo(AVAILABILITY[profile]["tz"])
-        today = now.astimezone(tz).date()
-        days = [today - timedelta(days=i) for i in range(current, 0, -1)]
-        _history(student, tz, days, current, longest, freezes, 0.75, random.Random(profile))
-        if current == 0:
+        Streak.objects.update_or_create(
+            student=student,
+            defaults={
+                "current": current,
+                "longest": longest,
+                "freezes": freezes,
+                "on_time_toward_freeze": current % 5,
+            },  # fmt: skip
+        )
+        for i in range(current):
+            when = now - timedelta(days=2 * i + 1)
             event = StreakEvent.objects.create(
-                student=student, day=today - timedelta(days=3), result=StreakEvent.Result.MISSED
+                student=student,
+                day=when.date(),
+                result=StreakEvent.Result.ON_TIME,
+                streak_after=current - i,
             )
-            StreakEvent.objects.filter(pk=event.pk).update(created_at=now - timedelta(days=2))
-    for classmate in classmates or []:
-        current = CLASSMATE_STREAKS.get(classmate.first_name, 2)
-        tz = classmate.tz
-        today = now.astimezone(tz).date()
-        days = [today - timedelta(days=i) for i in range(current - 1, -1, -1)]
-        if now.astimezone(tz).hour < 1:
-            days = days[:-1]  # too early in the day to have done today's
-        rng = random.Random(classmate.email)
-        _history(classmate, tz, days, len(days), len(days), min(2, len(days) // 5),
-                 SKILL.get(classmate.first_name, 0.7), rng)  # fmt: skip
+            StreakEvent.objects.filter(pk=event.pk).update(created_at=when)
+        if current == 0:
+            when = now - timedelta(days=3)
+            event = StreakEvent.objects.create(
+                student=student, day=when.date(), result=StreakEvent.Result.MISSED
+            )
+            StreakEvent.objects.filter(pk=event.pk).update(created_at=when)
+
+
+# (cards right out of four, chance of doing a check on a given day) for this week's leaderboard.
+HABITS = {
+    "on_track": (3.3, 0.95), "extension": (3.0, 0.7), "slightly_behind": (2.7, 0.55),
+    "badly_behind": (2.2, 0.25),
+}  # fmt: skip
+CLASSMATE_HABIT = (3.0, 0.75)
+
+
+def _finished_check(student, chapter: Chapter, finished: datetime, skill: float, rng) -> None:
+    right = max(0, min(4, round(rng.gauss(skill, 0.6))))
+    passed = right >= 3
+    check = StudyCheck.objects.create(
+        student=student, scheduled_date=finished.astimezone(student.tz).date(),
+        opens_at=finished - timedelta(hours=6),
+        closes_at=min(finished + timedelta(hours=4), timezone.now() - timedelta(minutes=1)),
+        timezone=student.timezone, passed=passed, counted_for_streak=passed, resolved=True,
+    )  # fmt: skip
+    check.chapters.set([chapter])
+    cards = [
+        {"kind": "choice", "question_id": q.id, "order": list(range(len(q.options)))}
+        for q in choices(chapter).order_by("?")[:4]
+    ]
+    CheckAttempt.objects.create(
+        study_check=check, number=1, cards=cards, started_at=finished - timedelta(minutes=2),
+        expires_at=finished + timedelta(minutes=1), finished_at=finished, correct=right,
+        xp=right * XP_PER_CORRECT + XP_FOR_FINISHING,
+    )  # fmt: skip
+
+
+def seed_xp(students: dict, classmates: list) -> None:
+    """Finished study checks from Monday to now, so the weekly leaderboard has something to show.
+    Demo students only get checks on chapters they finished before today, so nothing about their
+    upcoming checks changes; classmates (who have no schedule) use any released chapter."""
+    now = timezone.now()
+    people = [(u, *HABITS[p], True) for p, u in students.items() if p in HABITS]
+    for u in classmates:
+        skill, often = CLASSMATE_HABIT
+        jitter = random.Random(u.email)
+        people.append(
+            (u, skill + jitter.uniform(-0.6, 0.4), often + jitter.uniform(-0.2, 0.1), False)
+        )
+        Streak.objects.update_or_create(student=u, defaults={"current": jitter.randint(1, 5)})
+    for user, skill, often, own_chapters in people:
+        rng = random.Random(f"xp:{user.email}")
+        today = now.astimezone(user.tz).date()
+        monday = today - timedelta(days=today.weekday())
+        if own_chapters:
+            start_of_today = datetime.combine(today, time(0), tzinfo=user.tz)
+            ids = ChapterProgress.objects.filter(
+                student=user, completed_at__lt=start_of_today
+            ).values_list("chapter_id", flat=True)
+            chapters = list(Chapter.objects.filter(id__in=ids).order_by("id"))
+        else:
+            chapters = list(
+                Chapter.objects.filter(
+                    course__in=enrolled_courses(user), available_from__lte=now
+                ).order_by("id")
+            )
+        if not chapters:
+            continue
+        day = monday
+        while day <= today:
+            finished = datetime.combine(day, time(19, 30), tzinfo=user.tz)
+            if day == today:
+                finished = max(
+                    now - timedelta(hours=2), datetime.combine(day, time(0, 5), tzinfo=user.tz)
+                )
+            if finished <= now and rng.random() < often:
+                _finished_check(user, rng.choice(chapters), finished, skill, rng)
+            day += timedelta(days=1)

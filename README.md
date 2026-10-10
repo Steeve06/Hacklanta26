@@ -1,6 +1,6 @@
 # Pulse and Learning Hub
 
-Pulse is a study planner for students. It reads courses, chapters and deadlines from Learning Hub, a small LMS in the same app, and builds a personal study schedule around the student's free time. It sends reminders with an opinionated mascot, shows how the student is doing (good, medium or bad), and keeps a Duolingo-style daily streak: five quick flashcards a day built from the student's own courses, aimed at the next quiz or assignment coming up, with review decks in quiet weeks.
+Pulse is a study planner for students. It reads courses, chapters and deadlines from Learning Hub, a small LMS in the same app, and builds a personal study schedule around the student's free time. It sends reminders with an opinionated mascot, shows how the student is doing (good, medium or bad), and keeps a streak of study checks: after the schedule gives a student a chapter, a 3-minute check of four cards on it (options, a short answer and a matching card) opens for that day and the next, three right answers keep the streak going, and every check earns XP for a weekly leaderboard among classmates. Students can also ask Pulse, a chat panel on every page, to change their schedule in plain words.
 
 - Backend: Python 3.12, Django 5.1, Django REST Framework, Celery and Redis, PostgreSQL (SQLite for quick local runs).
 - Frontend: React 18, TypeScript, Vite, TanStack Query, Tailwind, Framer Motion and Lottie.
@@ -88,7 +88,7 @@ All passwords are `pulse-demo`.
 
 | Account | Who |
 | --- | --- |
-| maya@pulse.test | Student, on track, 6-day quiz streak with today's quiz still to do, mid-table on the leaderboard |
+| maya@pulse.test | Student, on track, 6-check streak with a study check open now, top of this week's leaderboard |
 | sam@pulse.test | Student, slightly behind |
 | jordan@pulse.test | Student, badly behind, not enough study time |
 | alex@pulse.test | Student with an extension in CS 201, Central time |
@@ -109,6 +109,7 @@ The seeded term is 15 weeks and starts 4 weeks before today (set `TERM_START_DAT
 - **Remember me** keeps you signed in for 30 days instead of 7. Signing out, or changing or resetting a password, ends the session in every tab (and, for password changes, on other devices).
 - **Weekly study hours** are the student's choice (2 to 40, default 10). Pulse never plans more than that in a week; if the work doesn't fit, the overload report names whichever is full: the weekly limit, the daily maximum, or the free time marked.
 - **Onboarding** is five steps (courses, study time, preferences, reminders, your schedule), saved each time you press Next. Close the tab or sign out and you pick up at the same step. Pulse pages stay locked until you press **Looks good** on step 5. Everything can be changed later in Settings.
+- **Ask Pulse** (the chat button in the sidebar, or the speech bubble at the top on a phone) takes requests like "skip tonight's session", "I'm working Friday evening" or "keep Sundays free". It answers with the change it would make, and nothing happens until the student presses **Confirm**. Each change is checked against the student's own schedule, hours and deadlines both when it's suggested and when it's confirmed.
 - Ten wrong passwords for one email lock it for 15 minutes; sign-in, sign-up and reset are limited to 5 a minute per IP and per email.
 
 ## Updating an existing install
@@ -125,18 +126,19 @@ Without Docker (virtualenv active): `pip install -r backend/requirements-dev.txt
 ## Manual test steps
 
 1. **Sign up:** open `/signup`, create an account, and check that the password rules tick as you type and a taken email shows an error next to the field.
-2. **Onboarding:** go through all five steps. Reload on step 3 and you stay on step 3 with your earlier answers. On step 5, check that **Your choices** shows the hours you marked and your limits, and that the advice under the plan names the limit that's actually full (weekly, daily, or free time). Check the week's plan and the daily flashcards note, then press **Looks good** to land on Today.
+2. **Onboarding:** go through all five steps. Reload on step 3 and you stay on step 3 with your earlier answers. On step 5, check that **Your choices** shows the hours you marked and your limits, and that the advice under the plan names the limit that's actually full (weekly, daily, or free time). Check the week's plan and the study checks note, then press **Looks good** to land on Today.
 3. **Resume:** sign in as `casey@pulse.test` and you land on step 3. Sign in as `riley@pulse.test` and you land on step 1. Sign in as `maya@pulse.test` and you go straight to Today.
 4. **Redirects:** while signed in, open `/login` and you're sent home. As `prof.okafor@pulse.test`, open `/onboarding` and you're sent to Learning Hub.
 5. **Password reset:** on the sign-in page, choose **Forgot password?**, then copy the link from the backend log, set a new password, and sign in with it. The same link fails a second time.
 6. **Persistence check:** sign up and finish onboarding, then run `docker compose down` and `docker compose up`. Sign in again: your study time, preferences, reminder style and schedule are all still there.
-7. **Two tabs:** sign in, open a second tab, and sign out in the first. The second tab's next action sends it to the sign-in page.
+7. **Ask Pulse:** as `alex@pulse.test`, open **Ask Pulse** and send "Skip my next session". The reply lists the change; the session is still planned until you press **Confirm**, then it shows as skipped in Week.
+8. **Two tabs:** sign in, open a second tab, and sign out in the first. The second tab's next action sends it to the sign-in page.
 
 ## Tests
 
 ```sh
 # backend (from backend/, virtualenv active)
-pytest                                   # 227 tests, about 20 s
+pytest                                   # 290 tests, about 25 s
 pytest --cov --cov-report=term-missing   # coverage, 93% overall
 
 # frontend (from frontend/)
@@ -150,6 +152,24 @@ npx playwright test
 The E2E run uses `python` from your PATH; set `PYTHON=/path/to/.venv/bin/python` if that isn't the virtualenv. CI (`.github/workflows/ci.yml`) runs lint, type checks, unit tests on Postgres, and the E2E flows. It never deploys.
 
 After changing an API serializer or view, regenerate the TypeScript types with `make api-types`.
+
+## Turning on the AI
+
+Without a key, Pulse runs on built-in rules: the schedule is planned from heuristics, study-check cards come from each chapter's key terms, and Ask Pulse recognises common requests by keyword. With a key, the model:
+
+- estimates each piece of work and splits it into study tasks in a sensible order (the solver still places them, so hours and deadlines are always respected),
+- writes session titles, the plan summary, and reads notes like "mornings are best",
+- writes the four study-check questions from the chapter text (each one checked against a quote from the chapter),
+- answers in Ask Pulse and proposes changes.
+
+To turn it on, put your own key in `.env` (never commit it):
+
+```sh
+AI_PROVIDER=anthropic        # or openai
+AI_API_KEY=your-key-here
+```
+
+Then run `docker compose up -d`. It recreates the containers that use `.env`; `docker compose restart` would keep the old settings. `GET /api/health` shows `"ai": "configured (anthropic)"` (or openai) when it's picked up. Every call, its tokens and cost are logged in Django admin under **AI call logs**. If the provider fails five times in a row, Pulse switches to the built-in rules for 10 minutes.
 
 ## Environment variables
 
@@ -181,7 +201,8 @@ backend/
   lms/            Learning Hub: courses, chapters, assessments, submissions
   pulse/          availability, planner and solver, sessions, status, demo controls
   notifications/  templates, triggers, delivery (in-app, push, email), guardrails
-  quizzes/        course cards, timed daily quizzes, streaks, leaderboard
+  quizzes/        study checks, question banks, streaks, weekly XP leaderboard
+  assistant/      the Ask Pulse chat: replies, proposed changes, keyword fallback
   ai/             provider client, prompts, schemas, cost log
   seed/           seed_demo command and course content
 frontend/

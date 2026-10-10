@@ -270,6 +270,9 @@ def seed_chapters(student, profile, chapters, now) -> None:
     }[profile]
     for chapter in available[:done_count]:
         finished = min(now - timedelta(hours=6), chapter.available_from + timedelta(days=4))
+        if profile == "on_track" and chapter == available[-1]:
+            # Finished this week's chapter earlier today, so the demo always has an open check.
+            finished = now - timedelta(minutes=30)
         ChapterProgress.objects.create(
             student=student,
             chapter=chapter,

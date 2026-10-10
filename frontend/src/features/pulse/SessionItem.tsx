@@ -13,7 +13,7 @@ const kindLabel: Record<string, string> = {
   assignment: "Assignment",
   discussion: "Discussion",
   quiz: "Quiz",
-  chapter_quiz: "Chapter quiz",
+  chapter_quiz: "Study check",
 };
 
 const statusLabel: Record<string, string> = {
