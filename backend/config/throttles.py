@@ -11,7 +11,16 @@ class WriteThrottle(UserRateThrottle):
 
 
 class RegenerateThrottle(UserRateThrottle):
+    """Limits the manual "Rebuild schedule" button. Students still in onboarding aren't
+    counted: step 5 rebuilds every time they go back and change an answer."""
+
     scope = "regenerate"
+
+    def allow_request(self, request, view):
+        profile = getattr(request.user, "profile", None)
+        if profile is not None and not profile.onboarding_done:
+            return True
+        return super().allow_request(request, view)
 
 
 class AuthIPThrottle(AnonRateThrottle):

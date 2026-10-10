@@ -260,3 +260,18 @@ class TestConstraints:
         AvailabilityBlock.objects.create(
             student=student, weekday=0, start_time=time(22), end_time=time(0)
         )
+
+
+def test_onboarding_rebuilds_are_not_rate_limited(newcomer, django_capture_on_commit_callbacks):
+    client = client_for(newcomer)
+    finish_steps_1_to_4(client)
+    for _ in range(7):
+        generate(client, django_capture_on_commit_callbacks)
+    assert client.post(f"{URL}/complete").status_code == 200
+    statuses = []
+    for _ in range(6):
+        with django_capture_on_commit_callbacks(execute=True):
+            statuses.append(
+                client.post("/api/v1/pulse/schedules/generate", {}, format="json").status_code
+            )
+    assert statuses.count(429) >= 1
