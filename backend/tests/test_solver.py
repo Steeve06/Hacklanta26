@@ -302,3 +302,16 @@ def test_work_due_within_a_day_gets_its_own_advice():
     assert advice["text"].startswith("Find 25 more minutes for “Linked lists” before")
     later = {**entry, "due_at": (NOW + timedelta(days=3)).isoformat()}
     assert _urgent_suggestion(later, c) == []
+
+
+def test_a_task_needed_for_something_due_tonight_goes_first():
+    c = constraints(max_minutes_per_day=60, session_minutes=25)
+    read = task("read", 15, 7)
+    post = task("post", 30, 0.6, deps=["read"], weight=2.0)
+    post.late_window = True
+    other = task("other", 60, 2, weight=10.0)
+    result, _, _ = solve([read, post, other], evenings(3), c)
+    first_day = min(p.day for p in result.placements)
+    today = {p.task_key for p in result.placements if p.day == first_day}
+    assert {"read", "post"} <= today
+    assert not [s for s in result.shortfalls if s.task_key in {"read", "post"}]

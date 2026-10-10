@@ -47,8 +47,11 @@ export function OverloadPanel({
         Not everything fits
       </h2>
       <p>
-        You'd need about <strong>{report.extra_hours_needed} more hours</strong> to finish these on
-        time:
+        You'd need about{" "}
+        <strong>
+          {report.extra_hours_needed} more {report.extra_hours_needed === 1 ? "hour" : "hours"}
+        </strong>{" "}
+        to finish these on time:
       </p>
       <ul className="flex flex-col gap-1 text-sm">
         {report.items.slice(0, 5).map((item) => (

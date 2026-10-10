@@ -33,6 +33,11 @@ Choices made where the build prompt left room, with the reason for each.
 - **Re-plan debounce coalesces.** Automatic triggers set a 60-second "pending" flag per student; further triggers inside that window are absorbed because the queued job reads the latest data when it starts (5 seconds later with a worker, immediately without one).
 - **OR-Tools is optional.** `SOLVER=cpsat` is accepted but falls back to the greedy solver (with a log line) unless `ortools` is installed; the greedy + local search meets every budget on its own.
 
+- **Urgency flows back through dependencies.** A task that something due sooner depends on (reading a chapter before a discussion post due tonight) is ordered as if it were due then. It still only has to finish by its own deadline.
+- **Replies don't wait for classmates on late work.** The one-day gap before discussion replies is dropped when the discussion is overdue or due within 12 hours of that gap.
+- **Tonight's sessions stay put unless something due within a day would be missed.** Re-planning keeps sessions in the next 24 hours where they were, but if dropping that rule covers more work due within a day, the new plan wins even if it's slightly worse overall.
+- **Overload advice names what's actually full.** If unused free time sits behind a full daily or weekly limit, the advice says to raise that limit. Free-time advice only names days before the deadline, and work due within a day gets its own line.
+
 ## AI layer
 
 - **Structured output via a forced tool call (Anthropic) or `json_schema` (OpenAI).** Either way the result is validated with Pydantic before anything uses it.

@@ -39,6 +39,7 @@ KIND_BY_ITEM = {
 }
 MIN_REMAINING_MINUTES = 5
 PIN_WINDOW = timedelta(hours=24)
+LAG_NEEDS = timedelta(hours=12)
 VERSIONS_KEPT = 20
 
 ProgressCallback = Callable[[str, int], None]
@@ -209,6 +210,10 @@ def _task_specs(
         remaining = round(draft.est_minutes * pace) - done.get(draft.key, 0)
         if remaining < MIN_REMAINING_MINUTES:
             continue
+        lag = timedelta(hours=draft.lag_hours)
+        if item.late_window or item.deadline - now < lag + LAG_NEEDS:
+            # Overdue or nearly due: classmates have had their chance to post, so don't wait.
+            lag = timedelta(0)
         specs[draft.key] = TaskSpec(
             key=draft.key,
             source_type=item.source_type,
@@ -225,7 +230,7 @@ def _task_specs(
             deadline=item.deadline,
             weight=item.weight,
             depends_on=list(draft.depends_on),
-            lag_after_deps=timedelta(hours=draft.lag_hours),
+            lag_after_deps=lag,
             chapter_id=item.source_id if item.source_type == "chapter" else None,
             late_window=item.late_window,
         )
@@ -300,9 +305,17 @@ def _solve(specs, free, constraints, preferences, previous, now) -> SolveResult:
     result = Solver(specs, free, constraints, preferences, pins).solve()
     if pins and result.shortfalls:
         unpinned = Solver(specs, free, constraints, preferences).solve()
-        if sum(s.minutes for s in unpinned.shortfalls) < sum(s.minutes for s in result.shortfalls):
+        if _shortfall_cost(unpinned, specs, now) < _shortfall_cost(result, specs, now):
             return unpinned
     return result
+
+
+def _shortfall_cost(result: SolveResult, specs: list[TaskSpec], now: datetime) -> tuple[int, int]:
+    """Minutes missing from work due within a day count first, then minutes missing overall.
+    Keeping tonight's sessions where they were is not worth missing something due tonight."""
+    soon = {s.key for s in specs if s.deadline - now <= PIN_WINDOW}
+    urgent = sum(s.minutes for s in result.shortfalls if s.task_key in soon)
+    return urgent, sum(s.minutes for s in result.shortfalls)
 
 
 @transaction.atomic

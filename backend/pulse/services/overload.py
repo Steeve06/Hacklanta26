@@ -8,6 +8,7 @@ from ..planning.inventory import Inventory
 from ..planning.types import Constraints, SolveResult, TaskSpec
 
 URGENT = timedelta(hours=24)
+UNUSED_MINUTES = 15
 WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
@@ -132,7 +133,7 @@ def _capacity_suggestions(result, free: dict, constraints: Constraints, before) 
     last = before.astimezone(tz).date()
     while day <= last:
         spare = sum(iv.minutes for iv in free.get(day, [])) - placed_day[day]
-        if spare >= constraints.session_minutes:
+        if spare >= UNUSED_MINUTES:
             if placed_day[day] >= constraints.max_minutes_per_day - 15:
                 day_full = True
             week_cap = constraints.max_minutes_per_week

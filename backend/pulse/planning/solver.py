@@ -46,12 +46,34 @@ class Solver:
         for t in tasks:
             for dep in t.depends_on:
                 self.successors[dep].append(t.key)
+        self.due_by, self.late = self._inherited_urgency()
         self.at_risk: set[str] = set()
         self.shortfalls: list[Shortfall] = []
         for p in pinned or []:
             self._commit(p)
             if p.task_key in self.remaining:
                 self.remaining[p.task_key] = max(0, self.remaining[p.task_key] - p.minutes)
+
+    def _inherited_urgency(self) -> tuple[dict[str, datetime], dict[str, bool]]:
+        """A task needed before something due sooner is as urgent as that thing: reading a
+        chapter for a discussion due tonight has to happen tonight, whatever the chapter's own
+        deadline. Used for ordering only; each task still has to finish by its own deadline."""
+        due_by = {k: t.deadline for k, t in self.tasks.items()}
+        late = {k: t.late_window for k, t in self.tasks.items()}
+        for _ in range(len(self.tasks)):
+            changed = False
+            for t in self.tasks.values():
+                need_by = due_by[t.key] - timedelta(minutes=t.minutes) - t.lag_after_deps
+                for dep in t.depends_on:
+                    if dep not in due_by:
+                        continue
+                    if need_by < due_by[dep] or (late[t.key] and not late[dep]):
+                        due_by[dep] = min(due_by[dep], need_by)
+                        late[dep] = late[dep] or late[t.key]
+                        changed = True
+            if not changed:
+                break
+        return due_by, late
 
     def day_of(self, moment: datetime) -> date:
         return moment.astimezone(self.c.tz).date()
@@ -74,10 +96,13 @@ class Solver:
 
     def priority(self, task: TaskSpec) -> tuple:
         earliest = self.earliest(task)
-        slack_hours = (self.limit(task, use_buffer=True) - earliest).total_seconds() / 3600
+        due = min(self.due_by[task.key], self.c.horizon_end)
+        late = self.late[task.key]
+        buffer = timedelta(0) if late else max(timedelta(hours=12), (due - self.c.now) * 0.10)
+        slack_hours = (due - buffer - earliest).total_seconds() / 3600
         slack_hours -= self.remaining[task.key] / 60
         urgency = task.weight / max(slack_hours, 0.5)
-        return (task.late_window, urgency, -task.deadline.timestamp(), task.weight, task.minutes)
+        return (late, urgency, -due.timestamp(), task.weight, task.minutes)
 
     def day_cap(self, day: date, *, strict: bool) -> int:
         cap = self.c.max_minutes_per_day
