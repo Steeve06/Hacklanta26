@@ -1,0 +1,7 @@
+db.sqlite3
+media
+staticfiles
+.pytest_cache
+.ruff_cache
+.hypothesis
+__pycache__

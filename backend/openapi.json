@@ -1,0 +1,515 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Pulse API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "operationId": "v1_auth_login_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccessToken"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "operationId": "v1_auth_logout_create",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "operationId": "v1_auth_refresh_create",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccessToken"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/me": {
+            "get": {
+                "operationId": "v1_me_retrieve",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Me"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_me_partial_update",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedMeUpdateRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedMeUpdateRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedMeUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Me"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_me_destroy",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/me/export": {
+            "get": {
+                "operationId": "v1_me_export_retrieve",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/me/profile": {
+            "get": {
+                "operationId": "v1_me_profile_retrieve",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Me"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_me_profile_partial_update",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedMeUpdateRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedMeUpdateRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedMeUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Me"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_me_profile_destroy",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AccessToken": {
+                "type": "object",
+                "properties": {
+                    "access": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "access"
+                ]
+            },
+            "LoginRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    },
+                    "password": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ]
+            },
+            "Me": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "readOnly": true
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "role": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/RoleEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "maxLength": 64
+                    },
+                    "profile": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Profile"
+                            }
+                        ],
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "email",
+                    "first_name",
+                    "id",
+                    "profile",
+                    "role"
+                ]
+            },
+            "PatchedMeUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "first_name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                    },
+                    "profile": {
+                        "$ref": "#/components/schemas/ProfileRequest"
+                    }
+                }
+            },
+            "Profile": {
+                "type": "object",
+                "properties": {
+                    "sass_level": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "max_hours_per_day": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$"
+                    },
+                    "session_minutes": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SessionMinutesEnum"
+                            }
+                        ],
+                        "minimum": 0,
+                        "maximum": 9223372036854775807
+                    },
+                    "earliest_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "latest_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "quiet_start": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "quiet_end": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "quiet_hours_override_for_deadlines": {
+                        "type": "boolean"
+                    },
+                    "supportive_mode": {
+                        "type": "boolean"
+                    },
+                    "onboarding_done": {
+                        "type": "boolean"
+                    },
+                    "push_prompt_seen": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "ProfileRequest": {
+                "type": "object",
+                "properties": {
+                    "sass_level": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "max_hours_per_day": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$"
+                    },
+                    "session_minutes": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SessionMinutesEnum"
+                            }
+                        ],
+                        "minimum": 0,
+                        "maximum": 9223372036854775807
+                    },
+                    "earliest_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "latest_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "quiet_start": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "quiet_end": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "quiet_hours_override_for_deadlines": {
+                        "type": "boolean"
+                    },
+                    "supportive_mode": {
+                        "type": "boolean"
+                    },
+                    "onboarding_done": {
+                        "type": "boolean"
+                    },
+                    "push_prompt_seen": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "RoleEnum": {
+                "enum": [
+                    "student",
+                    "instructor",
+                    "admin"
+                ],
+                "type": "string",
+                "description": "* `student` - Student\n* `instructor` - Instructor\n* `admin` - Admin"
+            },
+            "SessionMinutesEnum": {
+                "enum": [
+                    25,
+                    50,
+                    90
+                ],
+                "type": "integer",
+                "description": "* `25` - Short\n* `50` - Medium\n* `90` - Long"
+            }
+        },
+        "securitySchemes": {
+            "jwtAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    }
+}

@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
+backend/.coverage
+backend/htmlcov/
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+frontend/node_modules/
+frontend/dist/
+frontend/playwright-report/
+frontend/test-results/
+.DS_Store

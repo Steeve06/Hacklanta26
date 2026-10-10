@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --paper: 245 247 242;
+    --surface: 255 255 255;
+    --sunken: 236 240 233;
+    --line: 214 220 208;
+    --ink: 28 34 48;
+    --ink-soft: 74 84 104;
+    --ink-faint: 102 111 129;
+    --pine: 31 111 92;
+    --pine-strong: 22 85 70;
+    --pine-soft: 220 239 231;
+    --on-pine: 255 255 255;
+    --mustard: 242 193 78;
+    --mustard-ink: 122 86 0;
+    --mustard-soft: 252 240 207;
+    --berry: 184 50 79;
+    --berry-soft: 248 221 227;
+    --tint: 245 247 242;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: 18 22 28;
+      --surface: 26 31 39;
+      --sunken: 14 17 22;
+      --line: 52 59 72;
+      --ink: 233 236 230;
+      --ink-soft: 182 189 200;
+      --ink-faint: 150 158 172;
+      --pine: 94 196 165;
+      --pine-strong: 128 214 186;
+      --pine-soft: 24 56 48;
+      --on-pine: 12 30 25;
+      --mustard: 242 193 78;
+      --mustard-ink: 242 200 100;
+      --mustard-soft: 60 48 20;
+      --berry: 240 128 150;
+      --berry-soft: 66 28 38;
+      --tint: 18 22 28;
+      color-scheme: dark;
+    }
+  }
+
+  [data-mood="good"] {
+    --tint: 240 248 243;
+  }
+  [data-mood="medium"] {
+    --tint: 250 246 234;
+  }
+  [data-mood="bad"] {
+    --tint: 250 240 241;
+  }
+  @media (prefers-color-scheme: dark) {
+    [data-mood="good"] {
+      --tint: 17 25 24;
+    }
+    [data-mood="medium"] {
+      --tint: 25 23 18;
+    }
+    [data-mood="bad"] {
+      --tint: 27 19 22;
+    }
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-paper font-body text-base text-ink antialiased;
+    background-color: rgb(var(--tint));
+    transition: background-color 600ms ease;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display text-ink;
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 3px solid rgb(var(--pine));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .prose-chapter {
+    @apply max-w-prose text-base leading-7 text-ink;
+  }
+  .prose-chapter h2 {
+    @apply mb-3 mt-8 text-xl font-bold;
+  }
+  .prose-chapter h3 {
+    @apply mb-2 mt-6 text-lg font-bold;
+  }
+  .prose-chapter p,
+  .prose-chapter ul,
+  .prose-chapter ol {
+    @apply mb-4;
+  }
+  .prose-chapter ul {
+    @apply list-disc pl-6;
+  }
+  .prose-chapter ol {
+    @apply list-decimal pl-6;
+  }
+  .prose-chapter code {
+    @apply rounded-sm bg-sunken px-1 text-sm;
+  }
+  .prose-chapter pre {
+    @apply mb-4 overflow-x-auto rounded-md bg-sunken p-4 text-sm;
+  }
+  .prose-chapter a {
+    @apply text-pine underline underline-offset-2;
+  }
+  .prose-chapter blockquote {
+    @apply mb-4 border-l-4 border-pine pl-4 text-ink-soft;
+  }
+  .prose-chapter table {
+    @apply mb-4 w-full text-sm;
+  }
+  .prose-chapter th,
+  .prose-chapter td {
+    @apply border-b border-line px-2 py-1 text-left;
+  }
+}

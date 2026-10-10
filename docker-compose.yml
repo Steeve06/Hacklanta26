@@ -1,0 +1,66 @@
+x-backend: &backend
+  build: ./backend
+  env_file: .env
+  environment:
+    DJANGO_SETTINGS_MODULE: config.settings.dev
+    DATABASE_URL: postgres://pulse:pulse@db:5432/pulse
+    REDIS_URL: redis://redis:6379/0
+  volumes:
+    - ./backend:/app
+    - media:/app/media
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: pulse
+      POSTGRES_USER: pulse
+      POSTGRES_PASSWORD: pulse
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulse"]
+      interval: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      retries: 20
+
+  web:
+    <<: *backend
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    ports: ["8000:8000"]
+
+  worker:
+    <<: *backend
+    command: celery -A config worker --loglevel=info --concurrency=2
+
+  beat:
+    <<: *backend
+    command: celery -A config beat --loglevel=info
+
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_PROXY_TARGET: http://web:8000
+      VITE_DEMO_MODE: "true"
+    env_file: .env
+    ports: ["5173:5173"]
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on: [web]
+
+volumes:
+  pgdata:
+  media:
