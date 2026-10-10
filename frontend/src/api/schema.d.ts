@@ -564,6 +564,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_onboarding_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["v1_onboarding_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/onboarding/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_onboarding_complete_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pulse/availability": {
         parameters: {
             query?: never;
@@ -988,6 +1020,8 @@ export interface components {
         };
         Availability: {
             blocks: components["schemas"]["AvailabilityBlock"][];
+            /** @default 0 */
+            readonly merged: number;
         };
         AvailabilityBlock: {
             /** @description 0 = Monday */
@@ -1266,6 +1300,25 @@ export interface components {
             readonly read_at: string | null;
             readonly action_taken: components["schemas"]["ActionTakenEnum"];
         };
+        NotificationsAnswer: {
+            sass_level: number;
+            /** Format: time */
+            quiet_start: string;
+            /** Format: time */
+            quiet_end: string;
+        };
+        OnboardingState: {
+            step: number;
+            completed_steps: number[];
+            version: number;
+            done: boolean;
+            schedule_ready: boolean;
+            stale: boolean;
+            note: string;
+            availability: components["schemas"]["Availability"];
+            preferences: components["schemas"]["PreferencesAnswer"];
+            notifications: components["schemas"]["NotificationsAnswer"];
+        };
         OverloadItem: {
             source_type: string;
             source_id: number;
@@ -1358,6 +1411,13 @@ export interface components {
             timezone?: string;
             profile?: components["schemas"]["ProfileUpdateRequest"];
         };
+        PatchedOnboardingPatchRequest: {
+            step?: number;
+            version?: number;
+            data?: {
+                [key: string]: unknown;
+            } | null;
+        };
         PatchedScoreRequest: {
             /** Format: decimal */
             score?: string | null;
@@ -1399,6 +1459,16 @@ export interface components {
         PostCreateRequest: {
             body: string;
             parent?: number | null;
+        };
+        PreferencesAnswer: {
+            /** Format: decimal */
+            max_hours_per_day: string;
+            session_minutes: number;
+            /** Format: time */
+            earliest_time: string;
+            /** Format: time */
+            latest_time: string;
+            timezone: string;
         };
         Profile: {
             readonly sass_level: number;
@@ -2828,6 +2898,69 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    v1_onboarding_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingState"];
+                };
+            };
+        };
+    };
+    v1_onboarding_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedOnboardingPatchRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedOnboardingPatchRequest"];
+                "multipart/form-data": components["schemas"]["PatchedOnboardingPatchRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingState"];
+                };
+            };
+        };
+    };
+    v1_onboarding_complete_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
             };
         };
     };

@@ -201,7 +201,7 @@ def test_no_repeated_text_within_14_days(at_noon):
 
 
 def test_tone_it_down_and_supportive_after_five(at_noon):
-    student, _, _ = student_with({"due_at": at_noon + timedelta(hours=20)})
+    student, _, _ = student_with({"due_at": at_noon + timedelta(hours=20)}, sass_level=3)
     n = scan_student(student)[0]
     profile = take_action(student, n, "tone_down")
     assert profile.sass_level == 2

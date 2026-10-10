@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from accounts.models import StudentProfile
 from lms.models import Submission
-from pulse.models import AvailabilityBlock, Session
+from pulse.models import AvailabilityBlock, Onboarding, Session
 from pulse.services.planner import plan
 
 AVAILABILITY = {
@@ -82,3 +82,20 @@ def record_history(schedule, now, done_share: float) -> None:
         else:
             session.status = Session.Status.SKIPPED
         session.save(update_fields=["status", "completed_minutes"])
+
+
+HALFWAY_BLOCKS = [(0, time(18), time(20)), (2, time(18), time(20)), (5, time(10), time(12))]
+
+
+def seed_onboarding(students: dict) -> None:
+    """Riley hasn't started onboarding; Casey confirmed courses and saved availability, and
+    stopped at the preferences step."""
+    Onboarding.objects.get_or_create(student=students["new"])
+    casey = students["halfway"]
+    AvailabilityBlock.objects.bulk_create(
+        AvailabilityBlock(student=casey, weekday=d, start_time=s, end_time=e)
+        for d, s, e in HALFWAY_BLOCKS
+    )
+    Onboarding.objects.update_or_create(
+        student=casey, defaults={"current_step": 3, "completed_steps": [1, 2]}
+    )

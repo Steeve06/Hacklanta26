@@ -1,6 +1,5 @@
 from datetime import datetime, time, timedelta
 
-from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.exceptions import NotFound, ValidationError
@@ -14,6 +13,7 @@ from lms.access import require_student
 from lms.selectors import student_snapshot
 
 from .models import AvailabilityBlock, Blackout, PlanJob
+from .onboarding import replace_availability
 from .serializers import (
     AvailabilitySerializer,
     BlackoutSerializer,
@@ -47,15 +47,10 @@ class AvailabilityView(StudentView):
     def put(self, request):
         serializer = AvailabilitySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        with transaction.atomic():
-            AvailabilityBlock.objects.filter(student=request.user).delete()
-            AvailabilityBlock.objects.bulk_create(
-                AvailabilityBlock(student=request.user, **b)
-                for b in serializer.validated_data["blocks"]
-            )
+        merged = replace_availability(request.user, serializer.validated_data["blocks"])
         request_replan(request.user, "availability")
         blocks = AvailabilityBlock.objects.filter(student=request.user)
-        return Response(AvailabilitySerializer({"blocks": blocks}).data)
+        return Response(AvailabilitySerializer({"blocks": blocks, "merged": merged}).data)
 
 
 class BlackoutListView(StudentView):

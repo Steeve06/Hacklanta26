@@ -326,6 +326,7 @@ STUDENTS = [
     {"email": "jordan@pulse.test", "first": "Jordan", "last": "Brooks", "profile": "badly_behind"},
     {"email": "alex@pulse.test", "first": "Alex", "last": "Rivera", "profile": "extension"},
     {"email": "riley@pulse.test", "first": "Riley", "last": "Okoye", "profile": "new"},
+    {"email": "casey@pulse.test", "first": "Casey", "last": "Lindqvist", "profile": "halfway"},
 ]
 
 CLASSMATES = [

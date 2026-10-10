@@ -1791,6 +1791,98 @@
                 }
             }
         },
+        "/api/v1/onboarding": {
+            "get": {
+                "operationId": "v1_onboarding_retrieve",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OnboardingState"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_onboarding_partial_update",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedOnboardingPatchRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedOnboardingPatchRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedOnboardingPatchRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OnboardingState"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/onboarding/complete": {
+            "post": {
+                "operationId": "v1_onboarding_complete_create",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Me"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/pulse/availability": {
             "get": {
                 "operationId": "v1_pulse_availability_retrieve",
@@ -3070,10 +3162,16 @@
                         "items": {
                             "$ref": "#/components/schemas/AvailabilityBlock"
                         }
+                    },
+                    "merged": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "default": 0
                     }
                 },
                 "required": [
-                    "blocks"
+                    "blocks",
+                    "merged"
                 ]
             },
             "AvailabilityBlock": {
@@ -4188,6 +4286,77 @@
                     "trigger"
                 ]
             },
+            "NotificationsAnswer": {
+                "type": "object",
+                "properties": {
+                    "sass_level": {
+                        "type": "integer"
+                    },
+                    "quiet_start": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "quiet_end": {
+                        "type": "string",
+                        "format": "time"
+                    }
+                },
+                "required": [
+                    "quiet_end",
+                    "quiet_start",
+                    "sass_level"
+                ]
+            },
+            "OnboardingState": {
+                "type": "object",
+                "properties": {
+                    "step": {
+                        "type": "integer"
+                    },
+                    "completed_steps": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "version": {
+                        "type": "integer"
+                    },
+                    "done": {
+                        "type": "boolean"
+                    },
+                    "schedule_ready": {
+                        "type": "boolean"
+                    },
+                    "stale": {
+                        "type": "boolean"
+                    },
+                    "note": {
+                        "type": "string"
+                    },
+                    "availability": {
+                        "$ref": "#/components/schemas/Availability"
+                    },
+                    "preferences": {
+                        "$ref": "#/components/schemas/PreferencesAnswer"
+                    },
+                    "notifications": {
+                        "$ref": "#/components/schemas/NotificationsAnswer"
+                    }
+                },
+                "required": [
+                    "availability",
+                    "completed_steps",
+                    "done",
+                    "note",
+                    "notifications",
+                    "preferences",
+                    "schedule_ready",
+                    "stale",
+                    "step",
+                    "version"
+                ]
+            },
             "OverloadItem": {
                 "type": "object",
                 "properties": {
@@ -4539,6 +4708,24 @@
                     }
                 }
             },
+            "PatchedOnboardingPatchRequest": {
+                "type": "object",
+                "properties": {
+                    "step": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "version": {
+                        "type": "integer"
+                    },
+                    "data": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "nullable": true
+                    }
+                }
+            },
             "PatchedScoreRequest": {
                 "type": "object",
                 "properties": {
@@ -4667,6 +4854,37 @@
                 },
                 "required": [
                     "body"
+                ]
+            },
+            "PreferencesAnswer": {
+                "type": "object",
+                "properties": {
+                    "max_hours_per_day": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$"
+                    },
+                    "session_minutes": {
+                        "type": "integer"
+                    },
+                    "earliest_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "latest_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "earliest_time",
+                    "latest_time",
+                    "max_hours_per_day",
+                    "session_minutes",
+                    "timezone"
                 ]
             },
             "Profile": {

@@ -130,8 +130,8 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_max_hours_per_day(self, value):
-        if not 0.5 <= float(value) <= 12:
-            raise serializers.ValidationError("Choose between 0.5 and 12 hours.")
+        if not 1 <= float(value) <= 12:
+            raise serializers.ValidationError("Choose between 1 and 12 hours.")
         return value
 
     def validate(self, attrs):

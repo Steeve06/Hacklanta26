@@ -1,10 +1,13 @@
+from datetime import time, timedelta
+
 from django.conf import settings
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
 
 from config.models import TimeStamped
 
 User = settings.AUTH_USER_MODEL
+HALF_HOUR = timedelta(minutes=30)
 
 
 class AvailabilityBlock(TimeStamped):
@@ -15,6 +18,23 @@ class AvailabilityBlock(TimeStamped):
 
     class Meta:
         ordering = ["weekday", "start_time"]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(weekday__gte=0, weekday__lte=6), name="availability_weekday"
+            ),
+            models.CheckConstraint(
+                condition=Q(end_time__gt=F("start_time")) | Q(end_time=time(0)),
+                name="availability_end_after_start",
+            ),
+            # At least 30 minutes; an end of 00:00 means midnight at the end of the day.
+            models.CheckConstraint(
+                condition=(
+                    Q(start_time__lt=time(23, 30), end_time__gte=F("start_time") + HALF_HOUR)
+                    | Q(end_time=time(0), start_time__lte=time(23, 30))
+                ),
+                name="availability_min_30_minutes",
+            ),
+        ]
 
 
 class Blackout(TimeStamped):
@@ -158,3 +178,28 @@ class StatusSnapshot(TimeStamped):
     class Meta:
         ordering = ["-computed_at", "-id"]
         indexes = [models.Index(fields=["student", "course_id", "computed_at"])]
+
+
+class Onboarding(TimeStamped):
+    """Where a student is in the first-run wizard. The answers themselves live in their real
+    tables (profile, availability, blackouts); this only remembers progress."""
+
+    STEPS = 5
+
+    student = models.OneToOneField(User, on_delete=models.CASCADE, related_name="onboarding")
+    current_step = models.PositiveSmallIntegerField(default=1)
+    completed_steps = models.JSONField(default=list)
+    inputs_changed_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    version = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(current_step__gte=1, current_step__lte=5),
+                name="onboarding_step_1_to_5",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"Onboarding<{self.student_id}:{self.current_step}>"
