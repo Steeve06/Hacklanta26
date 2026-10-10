@@ -9,7 +9,7 @@ export function QuizAside() {
   return (
     <Card aria-labelledby="quiz-aside">
       <h2 id="quiz-aside" className="sr-only">
-        Streak and today&apos;s flashcards
+        Streak and today&apos;s quiz
       </h2>
       {streak.data ? (
         <StreakBadge streak={streak.data} compact />

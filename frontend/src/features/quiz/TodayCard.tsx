@@ -3,12 +3,13 @@ import { Icon } from "@/components/Icon";
 import { cx } from "@/lib/cx";
 import { useTimezone } from "@/lib/time";
 import type { DeckDetail } from "./api";
-import { focusLine } from "./topics";
+import { focusLine, sessionLine } from "./topics";
 
 export function TodayCard({ deck }: { deck: DeckDetail }) {
   const tz = useTimezone();
   const done = Boolean(deck.completed_at);
-  const reviewed = deck.cards.filter((c) => c.knew !== null).length;
+  const answered = deck.items.filter((i) => i.answered).length;
+  const left = deck.question_count - answered;
   return (
     <Link
       to="/pulse/quiz/today"
@@ -20,19 +21,21 @@ export function TodayCard({ deck }: { deck: DeckDetail }) {
       <span className="flex flex-col">
         <span className="font-bold">
           {done
-            ? "Today's deck is done"
-            : reviewed
-              ? "Finish today's flashcards"
-              : "Start today's flashcards"}
+            ? "Today's quiz is done"
+            : deck.started_at
+              ? "Finish today's quiz"
+              : "Start today's quiz"}
         </span>
         <span className="text-sm font-bold text-pine">{focusLine(deck.focus, tz)}</span>
         <span className="text-sm text-ink-soft">
           {done
-            ? `${deck.knew} of ${deck.card_count} known. See you tomorrow.`
-            : `${deck.card_count - reviewed} ${deck.card_count - reviewed === 1 ? "card" : "cards"} to go, about 3 minutes`}
+            ? `${deck.knew} of ${deck.question_count} correct, +${deck.xp} XP. See you tomorrow.`
+            : deck.started_at
+              ? `${left} ${left === 1 ? "question" : "questions"} to go, the clock is running`
+              : sessionLine(deck)}
         </span>
       </span>
-      <Icon name={done ? "check" : "chevron"} className="h-5 w-5 text-ink-faint" />
+      <Icon name={done ? "check" : "chevron"} className="h-5 w-5 shrink-0 text-ink-faint" />
     </Link>
   );
 }

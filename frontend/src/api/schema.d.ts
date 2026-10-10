@@ -420,7 +420,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/decks/{deck_id}/review": {
+    "/api/v1/decks/{deck_id}/answer": {
         parameters: {
             query?: never;
             header?: never;
@@ -429,7 +429,39 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["v1_decks_review_create"];
+        post: operations["v1_decks_answer_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/decks/{deck_id}/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_decks_finish_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/decks/{deck_id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_decks_start_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -510,6 +542,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["v1_demo_time_travel_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leaderboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_leaderboard_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -929,6 +977,11 @@ export interface components {
          * @enum {string}
          */
         ActionTakenEnum: "open" | "snooze" | "tone_down";
+        AnswerRequest: {
+            position: number;
+            /** @description {"knew": bool} | {"choice": int} | {"text": str} | {"pairs": [int, ...]} */
+            response: unknown;
+        };
         AnswersRequest: {
             answers: {
                 [key: string]: number;
@@ -1134,13 +1187,18 @@ export interface components {
             /** Format: date */
             readonly day: string;
             readonly state: string;
-            readonly card_count: number;
+            readonly question_count: number;
+            readonly time_limit_seconds: number;
             readonly focus: components["schemas"]["DeckFocus"];
             /** Format: date-time */
             readonly started_at: string | null;
             /** Format: date-time */
+            readonly deadline: string | null;
+            /** Format: date-time */
             readonly completed_at: string | null;
+            /** @description questions answered correctly */
             readonly knew: number;
+            readonly xp: number;
             readonly counted_for_streak: boolean;
         };
         DailyDeckDetail: {
@@ -1148,15 +1206,20 @@ export interface components {
             /** Format: date */
             readonly day: string;
             readonly state: string;
-            readonly card_count: number;
+            readonly question_count: number;
+            readonly time_limit_seconds: number;
             readonly focus: components["schemas"]["DeckFocus"];
             /** Format: date-time */
             readonly started_at: string | null;
             /** Format: date-time */
+            readonly deadline: string | null;
+            /** Format: date-time */
             readonly completed_at: string | null;
+            /** @description questions answered correctly */
             readonly knew: number;
+            readonly xp: number;
             readonly counted_for_streak: boolean;
-            readonly cards: components["schemas"]["DeckCard"][];
+            readonly items: components["schemas"]["DeckItem"][];
             readonly milestone: number | null;
             readonly streak: number;
         };
@@ -1175,18 +1238,6 @@ export interface components {
             weight_pct: number;
             extended: boolean;
         };
-        DeckCard: {
-            id: number;
-            topic: components["schemas"]["FlashcardTopicEnum"];
-            /** @description where the card comes from, e.g. CS 201 · Ch 5: Hashing */
-            source: string;
-            chapter_id: number | null;
-            course_id: number | null;
-            front: string;
-            back: string;
-            /** @description null until the card is rated */
-            knew: boolean | null;
-        };
         DeckFocus: {
             kind: components["schemas"]["DeckFocusKindEnum"];
             course_id: number | null;
@@ -1203,6 +1254,34 @@ export interface components {
          * @enum {string}
          */
         DeckFocusKindEnum: "upcoming" | "review" | "general";
+        DeckItem: {
+            position: number;
+            type: components["schemas"]["DeckItemTypeEnum"];
+            /** @description e.g. CS 201 · Ch 5: Hashing, or a general topic */
+            source: string;
+            chapter_id: number | null;
+            course_id: number | null;
+            /** @description question text (the card front for flashcards) */
+            prompt: string;
+            /** @description flashcards only: the other side */
+            back: string | null;
+            options: string[] | null;
+            terms: string[] | null;
+            clues: string[] | null;
+            answered: boolean;
+            correct: boolean | null;
+            response: unknown;
+            /** @description after answering: {answer, explanation, choice?} or {pairs} */
+            solution: unknown;
+        };
+        /**
+         * @description * `flashcard` - flashcard
+         *     * `mcq` - mcq
+         *     * `short` - short
+         *     * `match` - match
+         * @enum {string}
+         */
+        DeckItemTypeEnum: "flashcard" | "mcq" | "short" | "match";
         DemoStudent: {
             id: number;
             /** Format: email */
@@ -1246,19 +1325,6 @@ export interface components {
             student: number;
             excused: boolean;
         };
-        /**
-         * @description * `study_skills` - Study skills
-         *     * `memory` - Memory
-         *     * `focus` - Focus
-         *     * `wellbeing` - Well-being
-         *     * `money` - Money
-         *     * `digital` - Digital life
-         *     * `science` - Science
-         *     * `world` - World
-         *     * `course` - Course
-         * @enum {string}
-         */
-        FlashcardTopicEnum: "study_skills" | "memory" | "focus" | "wellbeing" | "money" | "digital" | "science" | "world" | "course";
         GenerateRequest: {
             feedback?: string;
         };
@@ -1273,6 +1339,25 @@ export interface components {
             /** Format: uri */
             support_url: string;
             results: components["schemas"]["Notification"][];
+        };
+        Leaderboard: {
+            /** Format: date */
+            week_start: string;
+            course_id: number | null;
+            courses: components["schemas"]["LeaderboardCourse"][];
+            rows: components["schemas"]["LeaderboardRow"][];
+        };
+        LeaderboardCourse: {
+            id: number;
+            code: string;
+        };
+        LeaderboardRow: {
+            rank: number;
+            student_id: number;
+            name: string;
+            xp: number;
+            streak: number;
+            is_me: boolean;
         };
         Link: {
             label: string;
@@ -1637,10 +1722,6 @@ export interface components {
          * @enum {string}
          */
         ResultEnum: "done" | "frozen" | "missed" | "open" | "none";
-        ReviewRequest: {
-            card_id: number;
-            knew: boolean;
-        };
         /**
          * @description * `student` - Student
          *     * `instructor` - Instructor
@@ -2665,7 +2746,7 @@ export interface operations {
             };
         };
     };
-    v1_decks_review_create: {
+    v1_decks_answer_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2676,11 +2757,53 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ReviewRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["ReviewRequest"];
-                "multipart/form-data": components["schemas"]["ReviewRequest"];
+                "application/json": components["schemas"]["AnswerRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AnswerRequest"];
+                "multipart/form-data": components["schemas"]["AnswerRequest"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyDeckDetail"];
+                };
+            };
+        };
+    };
+    v1_decks_finish_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deck_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyDeckDetail"];
+                };
+            };
+        };
+    };
+    v1_decks_start_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deck_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
@@ -2797,6 +2920,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DemoStudent"];
+                };
+            };
+        };
+    };
+    v1_leaderboard_retrieve: {
+        parameters: {
+            query?: {
+                course_id?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Leaderboard"];
                 };
             };
         };

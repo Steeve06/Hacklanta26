@@ -19,6 +19,7 @@ class Focus:
     kind: str
     course_id: int | None = None
     assessment_id: int | None = None
+    assessment_type: str | None = None
     pools: list[list[int]] = field(default_factory=list)
 
 
@@ -45,7 +46,7 @@ def choose(student, now: datetime) -> Focus:
             continue
         same_course = _cards_for([c.id for c in released if c.course_id == target.course_id])
         return Focus(
-            DailyDeck.Kind.UPCOMING, target.course_id, target.id,
+            DailyDeck.Kind.UPCOMING, target.course_id, target.id, target.type,
             [prep, same_course, general_ids()],
         )  # fmt: skip
     # Chapters the student has opened come first; anything released fills in.

@@ -37,8 +37,8 @@ def _useful(term: str) -> bool:
     return len(term.split()) > 1 or len(term) >= 6 or (len(term) >= 4 and term[0].isupper())
 
 
-def build(chapter: Chapter) -> list[tuple[str, str, str]]:
-    """(slug, front, back) for each key term, in reading order."""
+def build(chapter: Chapter) -> list[tuple[str, str, str, str, str]]:
+    """(slug, front, back, answer, clue) for each key term, in reading order."""
     cards = []
     seen: set[str] = set()
     for sentence in _sentences(chapter.body_md):
@@ -52,8 +52,11 @@ def build(chapter: Chapter) -> list[tuple[str, str, str]]:
             if "_____" not in blanked:
                 continue
             digest = hashlib.sha1(f"{key}|{blanked}".encode()).hexdigest()[:10]
-            back = f"{term[0].upper()}{term[1:]}\n\n{_plain(sentence)}"
-            cards.append((f"ch{chapter.id}-{digest}", f"Fill in the blank: {blanked}", back))
+            answer = f"{term[0].upper()}{term[1:]}"
+            back = f"{answer}\n\n{_plain(sentence)}"
+            cards.append(
+                (f"ch{chapter.id}-{digest}", f"Fill in the blank: {blanked}", back, answer, blanked)
+            )
             break
         if len(cards) >= MAX_PER_CHAPTER:
             break
@@ -64,22 +67,20 @@ def build(chapter: Chapter) -> list[tuple[str, str, str]]:
 def ensure(chapter: Chapter) -> list[int]:
     """Active card ids for the chapter's current text, building them on first use. Cards from an
     older version of the chapter are retired, not deleted, so past decks still read."""
-    current = list(
-        Flashcard.objects.filter(
-            chapter=chapter, content_hash=chapter.content_hash, active=True
-        ).values_list("id", flat=True)
+    current = Flashcard.objects.filter(
+        chapter=chapter, content_hash=chapter.content_hash, active=True
     )
-    if current:
-        return current
+    if current.exists() and not current.filter(answer="").exists():
+        return list(current.values_list("id", flat=True))
     Flashcard.objects.filter(chapter=chapter).update(active=False)
     ids = []
-    for slug, front, back in build(chapter):
+    for slug, front, back, answer, clue in build(chapter):
         card, _ = Flashcard.objects.update_or_create(
             slug=slug,
             defaults={
                 "chapter": chapter, "content_hash": chapter.content_hash,
                 "topic": Flashcard.Topic.COURSE, "front": front[:300], "back": back,
-                "active": True,
+                "answer": answer[:80], "clue": clue, "active": True,
             },
         )  # fmt: skip
         ids.append(card.id)
