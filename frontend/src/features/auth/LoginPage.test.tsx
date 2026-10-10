@@ -26,3 +26,18 @@ describe("LoginPage", () => {
     expect(screen.getByLabelText("Email")).toBeDisabled();
   });
 });
+
+describe("LoginPage when the server is down", () => {
+  beforeEach(() => useAuth.setState({ status: "signed-out", access: null }));
+
+  it("says the server can't be reached and offers Retry", async () => {
+    globalThis.fetch = () => Promise.reject(new TypeError("Failed to fetch"));
+    renderRoute(<LoginPage />, "/login");
+    await userEvent.type(screen.getByLabelText("Email"), "maya@pulse.test");
+    await userEvent.type(screen.getByLabelText("Password", { selector: "input" }), "pulse-demo");
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(await screen.findByText(/Can't reach the server/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
+  });
+});
