@@ -59,7 +59,7 @@ class PreferencesStep(StepSerializer):
         max_digits=4, decimal_places=1, min_value=1, max_value=12
     )
     max_hours_per_week = serializers.DecimalField(
-        max_digits=4, decimal_places=1, min_value=2, max_value=40
+        max_digits=4, decimal_places=1, min_value=2, max_value=40, required=False
     )
     session_minutes = serializers.ChoiceField(choices=[25, 50, 90])
     earliest_time = serializers.TimeField()
@@ -74,8 +74,8 @@ class PreferencesStep(StepSerializer):
         return attrs
 
     def apply(self):
-        data = self.validated_data
         profile = self.student.profile
+        data = {"max_hours_per_week": profile.max_hours_per_week, **self.validated_data}
         user = self.student
         fields = [
             "max_hours_per_day", "max_hours_per_week", "session_minutes", "earliest_time",

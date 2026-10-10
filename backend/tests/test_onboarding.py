@@ -281,3 +281,13 @@ def test_onboarding_rebuilds_are_not_rate_limited(newcomer, django_capture_on_co
                 client.post("/api/v1/pulse/schedules/generate", {}, format="json").status_code
             )
     assert statuses.count(429) >= 1
+
+
+def test_weekly_limit_is_optional_and_keeps_the_saved_value(newcomer):
+    client = client_for(newcomer)
+    patch(client, 1, {})
+    patch(client, 2, {"blocks": BLOCKS})
+    without = {k: v for k, v in PREFS.items() if k != "max_hours_per_week"}
+    assert patch(client, 3, without).status_code == 200
+    newcomer.profile.refresh_from_db()
+    assert newcomer.profile.max_hours_per_week == Decimal("10.0")
