@@ -72,6 +72,12 @@ class Constraints:
     break_minutes: int = 10
     slack_ratio: float = 0.15
     max_same_course_per_day: int = 2
+    max_minutes_per_week: int | None = None
+    # Minutes already studied or scheduled earlier in a week, keyed by that week's Monday.
+    week_used: dict = field(default_factory=dict)
+
+    def week_of(self, day: date) -> date:
+        return day - timedelta(days=day.weekday())
 
 
 @dataclass

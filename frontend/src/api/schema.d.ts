@@ -196,6 +196,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/password/change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_auth_password_change_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_auth_password_reset_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password/reset/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_auth_password_reset_confirm_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/refresh": {
         parameters: {
             query?: never;
@@ -206,6 +254,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["v1_auth_refresh_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/signup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_auth_signup_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -558,6 +622,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["v1_notifications_read_all_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_onboarding_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["v1_onboarding_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/onboarding/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_onboarding_complete_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -929,6 +1025,8 @@ export interface components {
         };
         Availability: {
             blocks: components["schemas"]["AvailabilityBlock"][];
+            /** @default 0 */
+            readonly merged: number;
         };
         AvailabilityBlock: {
             /**
@@ -1118,6 +1216,9 @@ export interface components {
             sass_level: number;
             supportive_mode: boolean;
         };
+        Detail: {
+            detail: string;
+        };
         Discussion: {
             posts: components["schemas"]["DiscussionPost"][];
             progress: components["schemas"]["DiscussionProgress"] | null;
@@ -1187,6 +1288,8 @@ export interface components {
             /** Format: email */
             email: string;
             password: string;
+            /** @default false */
+            remember: boolean;
         };
         Me: {
             readonly id: number;
@@ -1232,6 +1335,25 @@ export interface components {
             readonly read_at: string | null;
             readonly action_taken: components["schemas"]["ActionTakenEnum"];
         };
+        NotificationsAnswer: {
+            sass_level: number;
+            /** Format: time */
+            quiet_start: string;
+            /** Format: time */
+            quiet_end: string;
+        };
+        OnboardingState: {
+            step: number;
+            completed_steps: number[];
+            version: number;
+            done: boolean;
+            schedule_ready: boolean;
+            stale: boolean;
+            note: string;
+            availability: components["schemas"]["Availability"];
+            preferences: components["schemas"]["PreferencesAnswer"];
+            notifications: components["schemas"]["NotificationsAnswer"];
+        };
         OverloadItem: {
             source_type: string;
             source_id: number;
@@ -1267,6 +1389,21 @@ export interface components {
             /** Format: date-time */
             cutoff_at?: string | null;
             reason?: string;
+        };
+        PasswordChangeRequest: {
+            current_password: string;
+            new_password: string;
+            new_password_confirm: string;
+        };
+        PasswordResetConfirmRequest: {
+            uid: string;
+            token: string;
+            password: string;
+            password_confirm: string;
+        };
+        PasswordResetRequestRequest: {
+            /** Format: email */
+            email: string;
         };
         PatchedAnswersRequest: {
             answers?: {
@@ -1316,6 +1453,13 @@ export interface components {
             timezone?: string;
             profile?: components["schemas"]["ProfileUpdateRequest"];
         };
+        PatchedOnboardingPatchRequest: {
+            step?: number;
+            version?: number;
+            data?: {
+                [key: string]: unknown;
+            } | null;
+        };
         PatchedScoreRequest: {
             /** Format: decimal */
             score?: string | null;
@@ -1358,10 +1502,24 @@ export interface components {
             body: string;
             parent?: number | null;
         };
+        PreferencesAnswer: {
+            /** Format: decimal */
+            max_hours_per_day: string;
+            /** Format: decimal */
+            max_hours_per_week: string;
+            session_minutes: number;
+            /** Format: time */
+            earliest_time: string;
+            /** Format: time */
+            latest_time: string;
+            timezone: string;
+        };
         Profile: {
             readonly sass_level: number;
             /** Format: decimal */
             readonly max_hours_per_day: string;
+            /** Format: decimal */
+            readonly max_hours_per_week: string;
             readonly session_minutes: components["schemas"]["SessionMinutesEnum"];
             /** Format: time */
             readonly earliest_time: string;
@@ -1382,6 +1540,8 @@ export interface components {
             sass_level?: number;
             /** Format: decimal */
             max_hours_per_day?: string;
+            /** Format: decimal */
+            max_hours_per_week?: string;
             session_minutes?: components["schemas"]["SessionMinutesEnum"];
             /** Format: time */
             earliest_time?: string;
@@ -1580,6 +1740,15 @@ export interface components {
          * @enum {string}
          */
         SessionUpdateStatusEnum: "done" | "partial" | "skipped" | "planned";
+        SignupRequest: {
+            first_name: string;
+            last_name: string;
+            /** Format: email */
+            email: string;
+            password: string;
+            password_confirm: string;
+            timezone?: string;
+        };
         Status: {
             /** Format: date-time */
             computed_at: string;
@@ -2088,6 +2257,81 @@ export interface operations {
             };
         };
     };
+    v1_auth_password_change_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PasswordChangeRequest"];
+                "multipart/form-data": components["schemas"]["PasswordChangeRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    v1_auth_password_reset_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PasswordResetRequestRequest"];
+                "multipart/form-data": components["schemas"]["PasswordResetRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    v1_auth_password_reset_confirm_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetConfirmRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PasswordResetConfirmRequest"];
+                "multipart/form-data": components["schemas"]["PasswordResetConfirmRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
     v1_auth_refresh_create: {
         parameters: {
             query?: never;
@@ -2098,6 +2342,31 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessToken"];
+                };
+            };
+        };
+    };
+    v1_auth_signup_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SignupRequest"];
+                "multipart/form-data": components["schemas"]["SignupRequest"];
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2759,6 +3028,69 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    v1_onboarding_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingState"];
+                };
+            };
+        };
+    };
+    v1_onboarding_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedOnboardingPatchRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedOnboardingPatchRequest"];
+                "multipart/form-data": components["schemas"]["PatchedOnboardingPatchRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingState"];
+                };
+            };
+        };
+    };
+    v1_onboarding_complete_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
             };
         };
     };

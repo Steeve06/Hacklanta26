@@ -51,7 +51,7 @@ def build_overload_report(
         return None if blocks_exist else _no_availability()
     minutes = sum(e["minutes_short"] for e in short.values())
     earliest_due = min(by_key[g.task_key].deadline for g in result.shortfalls)
-    suggestions = _availability_suggestions(free, constraints, earliest_due)
+    suggestions = _capacity_suggestions(result, free, constraints, earliest_due)
     for entry in sorted(short.values(), key=lambda e: e["due_at"]):
         if entry["source_type"] == "assessment":
             suggestions.append(
@@ -90,6 +90,50 @@ def _no_availability() -> dict:
 
 def _longest_block(free: dict) -> int:
     return max((iv.minutes for ivs in free.values() for iv in ivs), default=0)
+
+
+def _capacity_suggestions(result, free: dict, constraints: Constraints, before) -> list[dict]:
+    """Name the limit that is actually full before the first missed deadline. Adding free time
+    only helps when no limit is full; otherwise it's the student's own daily or
+    weekly limit that stops the plan."""
+    tz = constraints.tz
+    placed_day: dict = defaultdict(int)
+    placed_week: dict = defaultdict(int, constraints.week_used)
+    for p in result.placements:
+        placed_day[p.day] += p.minutes
+        placed_week[constraints.week_of(p.day)] += p.minutes
+    day_full = week_full = False
+    day = constraints.now.astimezone(tz).date()
+    last = before.astimezone(tz).date()
+    while day <= last:
+        spare = sum(iv.minutes for iv in free.get(day, [])) - placed_day[day]
+        if spare >= constraints.session_minutes:
+            if placed_day[day] >= constraints.max_minutes_per_day - 15:
+                day_full = True
+            week_cap = constraints.max_minutes_per_week
+            if week_cap is not None and placed_week[constraints.week_of(day)] >= week_cap - 15:
+                week_full = True
+        day += timedelta(days=1)
+    suggestions = []
+    if week_full:
+        hours = f"{constraints.max_minutes_per_week / 60:g}"
+        suggestions.append(
+            {
+                "type": "raise_weekly_limit",
+                "text": f"Raise your weekly study limit (now {hours} hours).",
+            }
+        )
+    if day_full:
+        hours = f"{constraints.max_minutes_per_day / 60:g}"
+        suggestions.append(
+            {
+                "type": "raise_daily_limit",
+                "text": f"Raise your most study hours in one day (now {hours} hours).",
+            }
+        )
+    if not suggestions:
+        suggestions += _availability_suggestions(free, constraints, before)
+    return suggestions
 
 
 def _availability_suggestions(free: dict, constraints: Constraints, before) -> list[dict]:

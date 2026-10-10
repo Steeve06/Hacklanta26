@@ -1,9 +1,12 @@
+import uuid
 from datetime import time
 from zoneinfo import ZoneInfo, available_timezones
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import F, Q
+from django.db.models.functions import Lower
 
 from config.models import TimeStamped
 
@@ -51,8 +54,15 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStamped):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name"]
 
+    class Meta:
+        constraints = [models.UniqueConstraint(Lower("email"), name="uniq_user_email_ci")]
+
     def __str__(self) -> str:
         return self.email
+
+    def save(self, *args, **kwargs):
+        self.email = self.email.strip().lower()
+        super().save(*args, **kwargs)
 
     @property
     def tz(self) -> ZoneInfo:
@@ -74,8 +84,9 @@ class StudentProfile(TimeStamped):
         LONG = 90
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    sass_level = models.PositiveSmallIntegerField(default=3)
+    sass_level = models.PositiveSmallIntegerField(default=2)
     max_hours_per_day = models.DecimalField(max_digits=4, decimal_places=1, default=3)
+    max_hours_per_week = models.DecimalField(max_digits=4, decimal_places=1, default=10)
     session_minutes = models.PositiveSmallIntegerField(
         choices=SessionLength.choices, default=SessionLength.MEDIUM
     )
@@ -92,8 +103,46 @@ class StudentProfile(TimeStamped):
     plan_feedback = models.CharField(max_length=300, blank=True)
     clock_offset_minutes = models.IntegerField(default=0)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(sass_level__gte=1, sass_level__lte=4), name="profile_sass_1_to_4"
+            ),
+            models.CheckConstraint(
+                condition=Q(max_hours_per_day__gte=1, max_hours_per_day__lte=12),
+                name="profile_hours_1_to_12",
+            ),
+            models.CheckConstraint(
+                condition=Q(max_hours_per_week__gte=2, max_hours_per_week__lte=40),
+                name="profile_week_2_to_40",
+            ),
+            models.CheckConstraint(
+                condition=Q(session_minutes__in=[25, 50, 90]), name="profile_session_length"
+            ),
+            models.CheckConstraint(
+                condition=Q(latest_time__gt=F("earliest_time")),
+                name="profile_latest_after_earliest",
+            ),
+        ]
+
     def effective_sass(self) -> int:
         return 1 if self.supportive_mode else self.sass_level
 
     def __str__(self) -> str:
         return f"Profile<{self.user_id}>"
+
+
+class AuthSession(TimeStamped):
+    """One signed-in browser. Every token carries its id, so revoking it ends that session's
+    access tokens too, in every tab."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="auth_sessions")
+    remember = models.BooleanField(default=False)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["user", "revoked_at"])]
+
+    def __str__(self) -> str:
+        return f"AuthSession<{self.user_id}:{self.id}>"

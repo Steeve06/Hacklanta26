@@ -15,7 +15,7 @@ export function RouteError() {
       </p>
       <div className="flex gap-3">
         <Link
-          to="/pulse"
+          to="/"
           className="inline-flex min-h-11 items-center rounded-md bg-pine px-4 font-bold text-on-pine"
         >
           Go to the start page

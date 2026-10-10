@@ -37,6 +37,7 @@ class Solver:
         self.free = {day: list(ivs) for day, ivs in free.items()}
         self.capacity = {day: sum(iv.minutes for iv in ivs) for day, ivs in free.items()}
         self.day_minutes: dict[date, int] = defaultdict(int)
+        self.week_minutes: dict[date, int] = defaultdict(int, constraints.week_used)
         self.day_course: dict[tuple[date, int], int] = defaultdict(int)
         self.placements: list[Placement] = []
         self.remaining = {t.key: t.minutes for t in tasks}
@@ -85,6 +86,12 @@ class Solver:
             cap = min(int(cap * factor), reserve)
         return cap
 
+    def week_left(self, day: date) -> int:
+        """Minutes still allowed in the week containing `day` (the student's weekly limit)."""
+        if self.c.max_minutes_per_week is None:
+            return 10**9
+        return self.c.max_minutes_per_week - self.week_minutes[self.c.week_of(day)]
+
     def _commit(self, p: Placement) -> None:
         pad = timedelta(minutes=self.c.break_minutes)
         hole = Interval(p.start - pad, p.end + pad)
@@ -100,6 +107,7 @@ class Solver:
                 remaining_ivs.append(Interval(hole.end, iv.end))
         self.free[day] = [iv for iv in remaining_ivs if iv.minutes > 0]
         self.day_minutes[day] += p.minutes
+        self.week_minutes[self.c.week_of(day)] += p.minutes
         if p.kind != "chapter_quiz":
             self.day_course[(day, p.course_id)] += 1
         self.placements.append(p)
@@ -124,7 +132,9 @@ class Solver:
                 start = max(iv.start, cursor)
                 end_cap = min(iv.end, limit)
                 room = int((end_cap - start).total_seconds() // 60)
-                cap_left = self.day_cap(day, strict=strict) - self.day_minutes[day]
+                cap_left = min(
+                    self.day_cap(day, strict=strict) - self.day_minutes[day], self.week_left(day)
+                )
                 length = min(need, session if task.splittable else need, room, cap_left)
                 if not task.splittable:
                     if length < need:
@@ -217,6 +227,15 @@ class Solver:
         used = sum(o.minutes for j, o in enumerate(self.placements) if j != index and o.day == day)
         if used + p.minutes > self.day_cap(day, strict=False):
             return False
+        if self.c.max_minutes_per_week is not None:
+            week = self.c.week_of(day)
+            week_used = self.c.week_used.get(week, 0) + sum(
+                o.minutes
+                for j, o in enumerate(self.placements)
+                if j != index and self.c.week_of(o.day) == week
+            )
+            if week_used + p.minutes > self.c.max_minutes_per_week:
+                return False
         for dep in task.depends_on:
             for o in self.placements:
                 if (
@@ -277,6 +296,7 @@ class Solver:
         placements = self.placements
         self.free = {day: list(ivs) for day, ivs in self.base.items()}
         self.day_minutes = defaultdict(int)
+        self.week_minutes = defaultdict(int, self.c.week_used)
         self.day_course = defaultdict(int)
         self.placements = []
         for p in placements:
@@ -358,4 +378,13 @@ def check_hard_constraints(
     for day, minutes in per_day.items():
         if minutes > constraints.max_minutes_per_day:
             problems.append(f"{day} has {minutes} minutes, over the daily maximum")
+    if constraints.max_minutes_per_week is not None:
+        per_week: dict[date, int] = defaultdict(int, constraints.week_used)
+        for day, minutes in per_day.items():
+            per_week[constraints.week_of(day)] += minutes
+        for week, minutes in per_week.items():
+            if minutes > constraints.max_minutes_per_week and any(
+                constraints.week_of(d) == week for d in per_day
+            ):
+                problems.append(f"week of {week} has {minutes} minutes, over the weekly limit")
     return problems

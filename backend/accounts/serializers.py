@@ -1,5 +1,6 @@
 from django.conf import settings
-from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from accounts.clock import now as clock_now
@@ -7,16 +8,88 @@ from accounts.clock import now as clock_now
 from .models import StudentProfile, User, validate_timezone
 
 
+def normalize_email(value: str) -> str:
+    return value.strip().lower()
+
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, trim_whitespace=False)
+    remember = serializers.BooleanField(required=False, default=False)
+
+    def validate_email(self, value):
+        return normalize_email(value)
+
+
+def _check_password(password: str, user: User, field: str = "password") -> None:
+    try:
+        validate_password(password, user=user)
+    except DjangoValidationError as exc:
+        raise serializers.ValidationError({field: list(exc.messages)}) from exc
+
+
+class SignupSerializer(serializers.Serializer):
+    first_name = serializers.CharField(max_length=80)
+    last_name = serializers.CharField(max_length=80)
+    email = serializers.EmailField(max_length=254)
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+    password_confirm = serializers.CharField(write_only=True, trim_whitespace=False)
+    timezone = serializers.CharField(max_length=64, required=False, validators=[validate_timezone])
+
+    def validate_email(self, value):
+        email = normalize_email(value)
+        if User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return email
 
     def validate(self, attrs):
-        user = authenticate(email=attrs["email"].lower(), password=attrs["password"])
-        if user is None or not user.is_active:
-            raise serializers.ValidationError("Email or password is incorrect.")
-        attrs["user"] = user
+        if attrs["password"] != attrs["password_confirm"]:
+            raise serializers.ValidationError({"password_confirm": "Passwords don't match."})
+        candidate = User(
+            email=attrs["email"], first_name=attrs["first_name"], last_name=attrs["last_name"]
+        )
+        _check_password(attrs["password"], candidate)
         return attrs
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return normalize_email(value)
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+    password_confirm = serializers.CharField(write_only=True, trim_whitespace=False)
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["password_confirm"]:
+            raise serializers.ValidationError({"password_confirm": "Passwords don't match."})
+        return attrs
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    new_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    new_password_confirm = serializers.CharField(write_only=True, trim_whitespace=False)
+
+    def validate(self, attrs):
+        user = self.context["user"]
+        if not user.check_password(attrs["current_password"]):
+            raise serializers.ValidationError(
+                {"current_password": "That isn't your current password."}
+            )
+        if attrs["new_password"] != attrs["new_password_confirm"]:
+            raise serializers.ValidationError({"new_password_confirm": "Passwords don't match."})
+        _check_password(attrs["new_password"], user, field="new_password")
+        return attrs
+
+
+class DetailSerializer(serializers.Serializer):
+    detail = serializers.CharField()
 
 
 class AccessTokenSerializer(serializers.Serializer):
@@ -26,6 +99,7 @@ class AccessTokenSerializer(serializers.Serializer):
 PROFILE_FIELDS = [
     "sass_level",
     "max_hours_per_day",
+    "max_hours_per_week",
     "session_minutes",
     "earliest_time",
     "latest_time",
@@ -56,9 +130,14 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Sass level must be between 1 and 4.")
         return value
 
+    def validate_max_hours_per_week(self, value):
+        if not 2 <= float(value) <= 40:
+            raise serializers.ValidationError("Choose between 2 and 40 hours.")
+        return value
+
     def validate_max_hours_per_day(self, value):
-        if not 0.5 <= float(value) <= 12:
-            raise serializers.ValidationError("Choose between 0.5 and 12 hours.")
+        if not 1 <= float(value) <= 12:
+            raise serializers.ValidationError("Choose between 1 and 12 hours.")
         return value
 
     def validate(self, attrs):

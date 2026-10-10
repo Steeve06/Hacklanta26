@@ -11,7 +11,8 @@ DEMO_MODE = True
 REST_FRAMEWORK = {**REST_FRAMEWORK}  # noqa: F405
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {
     "write": "10000/min",
-    "login": "5/min",
+    "auth": "5/min",
+    "auth_email": "5/min",
     "regenerate": "5/hour",
 }
 AI_PARALLEL = False

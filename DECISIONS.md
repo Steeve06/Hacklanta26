@@ -92,3 +92,22 @@ Choices made where the build prompt left room, with the reason for each.
 - **`init_env` fills in secrets.** `make setup` (or `python manage.py init_env .env`) writes a fresh Django secret and a VAPID key pair into `.env`, so browser push works without generating keys by hand. The browser reads the public key from the API, so there is no frontend copy.
 - **Production refuses a weak secret.** `config.settings.prod` raises at startup if `DJANGO_SECRET_KEY` is the dev default or shorter than 40 characters.
 - **E2E runs against its own server pair** (Django on 8001 with a throwaway SQLite file, Vite on 5174), re-seeded at start, so it never touches the dev database.
+- **Quiz window sync locks the student's profile row**, so two workers syncing the same student can't both create a window.
+
+## Sign-in, database and onboarding
+
+- **Sessions are rows.** Each sign-in creates an `AuthSession`; its id is a claim in the refresh token and every access token minted from it. The authentication class rejects tokens whose session was revoked (cached for 60 s), so signing out ends every tab's access token on its next request, not 15 minutes later. Tokens issued before this change have no session and must sign in again.
+- **CSRF on the cookie endpoints is a custom header plus Origin.** Refresh and logout require `X-Requested-With: pulse` (a custom header forces a CORS preflight that only the frontend origin passes) and, when the browser sends an Origin, one of the allowed origins. The cookie is also `SameSite=Lax`.
+- **Lockout lives in the cache**, keyed by email whether or not the account exists, so it doesn't reveal which emails are registered. Throttles count per IP and per email (`THROTTLE_AUTH`).
+- **Sign-up says when an email is taken.** The brief asks for a clear field error; password reset still never reveals whether an email exists.
+- **Late sign-ups start fresh.** Joining mid-term enrols you in the term's courses and excuses work whose deadline (or late cut-off) has already passed, so day one is never "falling behind". Chapters from earlier weeks still need reading and are planned.
+- **Onboarding progress is its own table; answers live where the app reads them.** Each step writes straight to the profile, user timezone or availability. `Onboarding` stores the current step, completed steps, a version and when schedule inputs last changed; step 5 rebuilds the schedule when availability or preferences changed after it was generated.
+- **Two tabs: last save wins.** Every save bumps a version. A save from a tab with an older version still applies, and the response tells that tab to show the latest state.
+- **Overlapping blocks merge** (server and browser) instead of being rejected, with a note.
+- **The availability grid is hourly, 6 AM to midnight.** At 360 px each cell is about 41 × 44 px; the exact-times editor keeps 30-minute precision and earlier hours. Mouse drags paint several cells; on touch screens cells toggle on tap only, so the page can still scroll.
+- **The 30-minute minimum is checked by Postgres**, not SQLite, which can't evaluate time arithmetic in a constraint; the API checks it everywhere. End-after-start, the profile ranges and the email constraint work on both.
+- **Default sass level for new students is 2.** Seeded demo students keep 3 so the demo script's "Tone it down" step still goes 3 to 2.
+- **SQLite stays for the no-Docker quick start only.** Docker, CI and production run on Postgres.
+- **New addresses.** Onboarding is `/onboarding` (outside the app shell), Today is `/pulse/today` (`/pulse` redirects), and Settings is `/settings` for every role. Old `/pulse/onboarding` and `/pulse/settings` links redirect.
+- **Instructors and admins go to Learning Hub**; admins also get Django admin in the navigation.
+- **Students choose their weekly study hours (2–40, default 10), and it's a hard cap.** The solver never places more than that in a calendar week (Monday to Sunday, the student's time zone), counting sessions already done or scheduled earlier in the week. If work doesn't fit, the overload report says so and, when the weekly limit is what's full, suggests raising it. Seeded students have limits close to their free time so the demo looks the same.

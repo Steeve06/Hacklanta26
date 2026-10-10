@@ -5,22 +5,27 @@ import { useAuth } from "@/features/auth/store";
 const API_BASE = import.meta.env.VITE_API_URL ?? window.location.origin;
 const REQUEST_TIMEOUT_MS = 20_000;
 
-let refreshing: Promise<string | null> | null = null;
+/** "expired": the server said no (sign in again). "offline": it couldn't be reached. */
+export type RefreshResult = "ok" | "expired" | "offline";
 
-export async function refreshAccess(): Promise<string | null> {
-  refreshing ??= (async () => {
+let refreshing: Promise<RefreshResult> | null = null;
+
+export async function refreshAccess(): Promise<RefreshResult> {
+  refreshing ??= (async (): Promise<RefreshResult> => {
     try {
       const res = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
         method: "POST",
         credentials: "include",
+        headers: { "X-Requested-With": "pulse" },
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
-      if (!res.ok) return null;
+      if (res.status === 401 || res.status === 403) return "expired";
+      if (!res.ok) return "offline";
       const body = (await res.json()) as { access: string };
       useAuth.getState().setAccess(body.access);
-      return body.access;
+      return "ok";
     } catch {
-      return null;
+      return "offline";
     } finally {
       refreshing = null;
     }
@@ -31,6 +36,7 @@ export async function refreshAccess(): Promise<string | null> {
 async function send(request: Request, token: string | null): Promise<Response> {
   const headers = new Headers(request.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
+  headers.set("X-Requested-With", "pulse");
   return fetch(new Request(request, { headers, credentials: "include" }), {
     signal: AbortSignal.any([request.signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]),
   });
@@ -40,12 +46,10 @@ export async function authFetch(input: Request): Promise<Response> {
   const retryCopy = input.clone();
   const response = await send(input, useAuth.getState().access);
   if (response.status !== 401 || input.url.includes("/auth/")) return response;
-  const fresh = await refreshAccess();
-  if (!fresh) {
-    useAuth.getState().expire();
-    return response;
-  }
-  return send(retryCopy, fresh);
+  const result = await refreshAccess();
+  if (result === "expired") useAuth.getState().expire();
+  if (result !== "ok") return response;
+  return send(retryCopy, useAuth.getState().access);
 }
 
 export const api = createClient<paths>({ baseUrl: API_BASE, fetch: authFetch });
@@ -88,10 +92,15 @@ export function unwrap<T>(result: { data?: T; error?: unknown; response: Respons
   return result.data as T;
 }
 
+/** The request never got an answer: network down, server stopped, or timed out. */
+export function isUnreachable(error: unknown): boolean {
+  if (error instanceof TypeError) return true;
+  if (error instanceof DOMException) return error.name === "TimeoutError";
+  return error instanceof ApiError && [502, 503, 504].includes(error.status);
+}
+
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError) return error.message;
-  if (error instanceof DOMException && error.name === "TimeoutError")
-    return "The server took too long to respond.";
-  if (error instanceof TypeError) return "Can't reach the server. Check your connection.";
+  if (isUnreachable(error)) return "Can't reach the server. It may still be starting; try again.";
   return "Something went wrong. Try again.";
 }

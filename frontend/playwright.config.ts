@@ -34,6 +34,7 @@ export default defineConfig({
         AI_API_KEY: "",
         DEMO_MODE: "true",
         CORS_ALLOWED_ORIGINS: "http://localhost:5174",
+        THROTTLE_AUTH: "1000/min",
       },
     },
     {

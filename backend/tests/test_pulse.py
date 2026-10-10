@@ -318,15 +318,26 @@ def test_schedule_endpoint_query_count(setup, django_assert_max_num_queries):
         client.get("/api/v1/pulse/schedule?view=overall")
 
 
-def test_availability_validation():
+def test_availability_merges_overlaps_and_validates_length():
     student = make_student()
     client = client_for(student)
     overlapping = {
         "blocks": [
             {"weekday": 0, "start_time": "18:00", "end_time": "20:00"},
             {"weekday": 0, "start_time": "19:00", "end_time": "21:00"},
+            {"weekday": 0, "start_time": "21:00", "end_time": "22:00"},
+            {"weekday": 2, "start_time": "22:00", "end_time": "00:00"},
         ]
     }
-    assert client.put("/api/v1/pulse/availability", overlapping, format="json").status_code == 400
-    ok = {"blocks": [{"weekday": 0, "start_time": "18:00", "end_time": "20:00"}]}
-    assert client.put("/api/v1/pulse/availability", ok, format="json").status_code == 200
+    response = client.put("/api/v1/pulse/availability", overlapping, format="json")
+    assert response.status_code == 200
+    assert response.data["merged"] == 2
+    assert [(b["weekday"], b["start_time"], b["end_time"]) for b in response.data["blocks"]] == [
+        (0, "18:00:00", "22:00:00"),
+        (2, "22:00:00", "00:00:00"),
+    ]
+    too_short = {"blocks": [{"weekday": 0, "start_time": "18:00", "end_time": "18:20"}]}
+    bad = client.put("/api/v1/pulse/availability", too_short, format="json")
+    assert bad.status_code == 400
+    backwards = {"blocks": [{"weekday": 0, "start_time": "18:00", "end_time": "17:00"}]}
+    assert client.put("/api/v1/pulse/availability", backwards, format="json").status_code == 400

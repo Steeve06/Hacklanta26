@@ -6,7 +6,7 @@ import { courseLookup } from "./courseColors";
 import { OverloadPanel } from "./OverloadPanel";
 import { SessionItem } from "./SessionItem";
 
-export function PlanReview() {
+export function PlanReview({ onAddTime }: { onAddTime?: () => void } = {}) {
   const schedule = useSchedule("overall");
   const tz = useTimezone();
   const now = useNow();
@@ -22,7 +22,9 @@ export function PlanReview() {
         return (
           <div className="flex flex-col gap-4">
             <p className="max-w-prose text-lg">{data.summary}</p>
-            {data.overload_report && <OverloadPanel report={data.overload_report} />}
+            {data.overload_report && (
+              <OverloadPanel report={data.overload_report} onAddTime={onAddTime} />
+            )}
             <h3 className="text-lg font-bold">The next seven days</h3>
             {days.length === 0 ? (
               <p className="text-ink-soft">No sessions in the next week.</p>

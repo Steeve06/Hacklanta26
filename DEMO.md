@@ -4,6 +4,8 @@ About 10 minutes. It follows the acceptance criteria in the build brief.
 
 **Before you start:** run `make demo` (or `python manage.py seed_demo`) to reset the data. This also clears any time-travel. Use one normal browser window for students and a private window for the admin and instructor, so you can stay signed in to both. All passwords are `pulse-demo`.
 
+**Optional opener: a new student.** Click **Create an account** on the sign-in page, sign up, and go through the five onboarding steps: courses, study time on the grid, preferences, reminder style with its live sample, then the schedule Pulse builds. Press **Looks good** to land on Today. (Or sign in as `casey@pulse.test`, who stopped at step 3.)
+
 ## 1. A student who is badly behind
 
 Sign in as **jordan@pulse.test**.
@@ -13,7 +15,7 @@ Sign in as **jordan@pulse.test**.
 
 ## 2. Add study time
 
-Click **Add study time** (it opens Settings). Add a block on Monday and one on Wednesday, then **Save study time**.
+Click **Add study time** (it opens Settings). In the weekly grid, tap a few evening hours on Monday and Wednesday, then **Save study time**.
 
 - The schedule re-plans in the background (a few seconds with the worker running).
 - Back on Today, the shortfall drops from about 27 hours to under 10, and the week view shows the new sessions. Add a Saturday block too if you want the overload to shrink further.

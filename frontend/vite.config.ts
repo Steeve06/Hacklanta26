@@ -11,6 +11,8 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    // Docker on Windows and macOS doesn't pass file-change events into the container.
+    watch: process.env.VITE_POLL === "true" ? { usePolling: true, interval: 300 } : undefined,
     proxy: {
       "/api": { target: backend, changeOrigin: true },
       "/admin": { target: backend, changeOrigin: true },

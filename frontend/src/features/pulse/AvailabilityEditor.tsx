@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui";
 import type { AvailabilityBlock } from "./api";
-import { overlaps, shortTime, WEEKDAYS } from "./availability";
+import { blockMinutes, mergeBlocks, shortTime, WEEKDAYS } from "./availability";
 
 const TIMES = Array.from(
   { length: 48 },
@@ -9,17 +9,21 @@ const TIMES = Array.from(
 );
 
 function label(t: string): string {
+  if (t === "24:00" || t === "00:00") return t === "24:00" ? "midnight" : "12:00 am";
   const [h, m] = t.split(":").map(Number);
   const hour = (h ?? 0) % 12 || 12;
   return `${hour}:${String(m ?? 0).padStart(2, "0")} ${(h ?? 0) < 12 ? "am" : "pm"}`;
 }
 
+/** Exact start and end times per day. Adding a block that overlaps another merges them. */
 export function AvailabilityEditor({
   value,
   onChange,
+  onMerged,
 }: {
   value: AvailabilityBlock[];
   onChange: (blocks: AvailabilityBlock[]) => void;
+  onMerged?: (count: number) => void;
 }) {
   return (
     <div className="flex flex-col divide-y divide-line rounded-lg border border-line bg-surface">
@@ -29,9 +33,12 @@ export function AvailabilityEditor({
           name={name}
           weekday={weekday}
           blocks={value.filter((b) => b.weekday === weekday)}
-          onAdd={(block) => onChange([...value, block])}
+          onAdd={(block) => {
+            const result = mergeBlocks([...value, block]);
+            onChange(result.blocks);
+            if (result.merged) onMerged?.(result.merged);
+          }}
           onRemove={(block) => onChange(value.filter((b) => b !== block))}
-          all={value}
         />
       ))}
     </div>
@@ -44,24 +51,27 @@ function DayRow({
   blocks,
   onAdd,
   onRemove,
-  all,
 }: {
   name: string;
   weekday: number;
   blocks: AvailabilityBlock[];
   onAdd: (b: AvailabilityBlock) => void;
   onRemove: (b: AvailabilityBlock) => void;
-  all: AvailabilityBlock[];
 }) {
   const [adding, setAdding] = useState(false);
   const [start, setStart] = useState("18:00");
   const [end, setEnd] = useState("20:00");
-  const candidate = { weekday, start_time: `${start}:00`, end_time: `${end}:00` };
+  const candidate = {
+    weekday,
+    start_time: `${start}:00`,
+    end_time: end === "24:00" ? "00:00:00" : `${end}:00`,
+  };
+  const length = blockMinutes(candidate);
   const error =
-    end <= start
+    length <= 0
       ? "End must be after start."
-      : overlaps(all, candidate)
-        ? "Overlaps another block."
+      : length < 30
+        ? "A study block needs at least 30 minutes."
         : undefined;
   return (
     <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-start">
@@ -78,11 +88,11 @@ function DayRow({
                 key={`${b.start_time}-${b.end_time}`}
                 className="flex min-h-11 items-center gap-1 rounded-full border border-pine bg-pine-soft pl-3 text-sm font-bold text-pine-strong"
               >
-                {label(shortTime(b.start_time))}–{label(shortTime(b.end_time))}
+                {label(shortTime(b.start_time))}–{label(endLabel(b.end_time))}
                 <button
                   type="button"
                   onClick={() => onRemove(b)}
-                  aria-label={`Remove ${name} ${label(shortTime(b.start_time))} to ${label(shortTime(b.end_time))}`}
+                  aria-label={`Remove ${name} ${label(shortTime(b.start_time))} to ${label(endLabel(b.end_time))}`}
                   className="flex min-h-11 min-w-11 items-center justify-center rounded-full hover:bg-pine/10"
                 >
                   ×
@@ -123,6 +133,10 @@ function DayRow({
   );
 }
 
+function endLabel(t: string): string {
+  return shortTime(t) === "00:00" ? "24:00" : shortTime(t);
+}
+
 function TimeSelect({
   label: text,
   value,
@@ -145,7 +159,7 @@ function TimeSelect({
             {label(t)}
           </option>
         ))}
-        <option value="23:59">11:59 pm</option>
+        <option value="24:00">midnight</option>
       </select>
     </label>
   );

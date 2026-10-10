@@ -340,6 +340,14 @@ def test_seed_demo_is_idempotent():
     assert counts == (3, 24, 30)
     assert all(len(c.body_md.split()) >= 600 for c in Chapter.objects.all())
 
+    from pulse.models import AvailabilityBlock, Onboarding
+
+    casey = Onboarding.objects.get(student__email="casey@pulse.test")
+    assert (casey.current_step, casey.completed_steps) == (3, [1, 2])
+    assert AvailabilityBlock.objects.filter(student=casey.student).count() == 3
+    assert Onboarding.objects.get(student__email="riley@pulse.test").current_step == 1
+    assert not casey.student.profile.onboarding_done
+
 
 @pytest.mark.parametrize("hour", [1, 9, 15, 23])
 def test_seed_gives_on_track_student_a_live_streak_and_todays_deck_at_any_time_of_day(

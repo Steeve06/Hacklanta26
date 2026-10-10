@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from accounts.models import StudentProfile
 from lms.models import Submission
-from pulse.models import AvailabilityBlock, Session
+from pulse.models import AvailabilityBlock, Onboarding, Session
 from pulse.services.planner import plan
 
 AVAILABILITY = {
@@ -16,22 +16,22 @@ AVAILABILITY = {
             (5, time(10), time(13)),
             (6, time(14), time(17)),
         ],
-        "max_hours": 3, "session": 50, "tz": "America/New_York",
+        "max_hours": 3, "week": 18, "session": 50, "tz": "America/New_York",
     },
     "slightly_behind": {
         "blocks": [
             *[(d, time(17), time(20)) for d in (0, 2, 4)],
             (6, time(13), time(16)),
         ],
-        "max_hours": 2.5, "session": 50, "tz": "America/New_York",
+        "max_hours": 2.5, "week": 12, "session": 50, "tz": "America/New_York",
     },
     "badly_behind": {
         "blocks": [(1, time(19), time(20, 30)), (3, time(19), time(20, 30))],
-        "max_hours": 1.5, "session": 25, "tz": "America/New_York",
+        "max_hours": 1.5, "week": 6, "session": 25, "tz": "America/New_York",
     },
     "extension": {
         "blocks": [(d, time(16), time(19)) for d in range(5)],
-        "max_hours": 3, "session": 50, "tz": "America/Chicago",
+        "max_hours": 3, "week": 15, "session": 50, "tz": "America/Chicago",
     },
 }  # fmt: skip
 
@@ -50,6 +50,7 @@ def seed_plans(students: dict) -> None:
         )
         StudentProfile.objects.filter(user=student).update(
             max_hours_per_day=settings["max_hours"],
+            max_hours_per_week=settings["week"],
             session_minutes=settings["session"],
             onboarding_done=True,
         )
@@ -82,3 +83,20 @@ def record_history(schedule, now, done_share: float) -> None:
         else:
             session.status = Session.Status.SKIPPED
         session.save(update_fields=["status", "completed_minutes"])
+
+
+HALFWAY_BLOCKS = [(0, time(18), time(20)), (2, time(18), time(20)), (5, time(10), time(12))]
+
+
+def seed_onboarding(students: dict) -> None:
+    """Riley hasn't started onboarding; Casey confirmed courses and saved availability, and
+    stopped at the preferences step."""
+    Onboarding.objects.get_or_create(student=students["new"])
+    casey = students["halfway"]
+    AvailabilityBlock.objects.bulk_create(
+        AvailabilityBlock(student=casey, weekday=d, start_time=s, end_time=e)
+        for d, s, e in HALFWAY_BLOCKS
+    )
+    Onboarding.objects.update_or_create(
+        student=casey, defaults={"current_step": 3, "completed_steps": [1, 2]}
+    )

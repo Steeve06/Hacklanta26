@@ -14,6 +14,31 @@ STAGE_LABELS = {
 }
 
 
+def block_minutes(start: time, end: time) -> int:
+    """Length of a block; an end of 00:00 means midnight at the end of the day."""
+    end_minutes = 24 * 60 if end == time(0) else end.hour * 60 + end.minute
+    return end_minutes - (start.hour * 60 + start.minute)
+
+
+def merge_blocks(blocks: list[dict]) -> tuple[list[dict], int]:
+    """Join overlapping or touching blocks on the same day. Returns the blocks and how many
+    were absorbed."""
+    merged: list[dict] = []
+    for block in sorted(blocks, key=lambda b: (b["weekday"], b["start_time"])):
+        last = merged[-1] if merged else None
+        end_of_last = None
+        if last and last["weekday"] == block["weekday"]:
+            end_of_last = time(23, 59, 59) if last["end_time"] == time(0) else last["end_time"]
+        if end_of_last is not None and block["start_time"] <= end_of_last:
+            if last["end_time"] != time(0) and (
+                block["end_time"] == time(0) or block["end_time"] > last["end_time"]
+            ):
+                last["end_time"] = block["end_time"]
+            continue
+        merged.append(dict(block))
+    return merged, len(blocks) - len(merged)
+
+
 class AvailabilityBlockSerializer(serializers.ModelSerializer):
     class Meta:
         model = AvailabilityBlock
@@ -25,23 +50,21 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        if attrs["end_time"] <= attrs["start_time"] and attrs["end_time"] != time(0):
+        length = block_minutes(attrs["start_time"], attrs["end_time"])
+        if length <= 0:
             raise serializers.ValidationError({"end_time": "End time must be after start time."})
+        if length < 30:
+            raise serializers.ValidationError(
+                {"end_time": "A study block needs at least 30 minutes."}
+            )
         return attrs
 
 
 class AvailabilitySerializer(serializers.Serializer):
     blocks = AvailabilityBlockSerializer(many=True)
+    merged = serializers.IntegerField(read_only=True, default=0)
 
     def validate_blocks(self, blocks):
-        by_day: dict[int, list] = {}
-        for b in blocks:
-            by_day.setdefault(b["weekday"], []).append(b)
-        for day_blocks in by_day.values():
-            day_blocks.sort(key=lambda b: b["start_time"])
-            for a, b in zip(day_blocks, day_blocks[1:], strict=False):
-                if b["start_time"] < a["end_time"]:
-                    raise serializers.ValidationError("Blocks on the same day can't overlap.")
         if len(blocks) > 50:
             raise serializers.ValidationError("That's more blocks than Pulse can use.")
         return blocks

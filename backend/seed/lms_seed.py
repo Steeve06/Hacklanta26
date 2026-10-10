@@ -90,6 +90,17 @@ def reset() -> None:
     User.objects.filter(email__endswith="@pulse.test").delete()
 
 
+def reenroll_signups() -> int:
+    """Students who signed up themselves keep their accounts across reseeds; put them back in
+    the freshly created courses."""
+    from lms.enrolment import enroll_in_current_term
+
+    students = User.objects.filter(role=User.Role.STUDENT).exclude(email__endswith="@pulse.test")
+    for student in students:
+        enroll_in_current_term(student)
+    return students.count()
+
+
 def make_user(email, first, last, role, **extra) -> User:
     user = User.objects.create_user(
         email=email, password=PASSWORD, first_name=first, last_name=last, role=role, **extra
@@ -255,6 +266,7 @@ def seed_chapters(student, profile, chapters, now) -> None:
         "slightly_behind": max(0, len(available) - 1),
         "badly_behind": min(1, len(available)),
         "new": 0,
+        "halfway": 0,
     }[profile]
     for chapter in available[:done_count]:
         finished = min(now - timedelta(hours=6), chapter.available_from + timedelta(days=4))
@@ -272,7 +284,7 @@ def seed_chapters(student, profile, chapters, now) -> None:
 
 def outcome(profile: str, assessment: Assessment, index: int, now: datetime) -> str | None:
     """What the student did with an assessment whose due date has passed."""
-    if profile == "new":
+    if profile in ("new", "halfway"):
         return "excused"
     if profile in ("on_track", "extension"):
         return "on_time"
@@ -384,5 +396,8 @@ def extend_next_homework(student, assessments, now) -> None:
 
 
 def mark_profiles(demo: DemoTerm) -> None:
-    StudentProfile.objects.filter(user__in=demo.students.values()).update(sass_level=3)
-    StudentProfile.objects.filter(user=demo.students["new"]).update(onboarding_done=False)
+    not_onboarded = [demo.students["new"], demo.students["halfway"]]
+    StudentProfile.objects.filter(user__in=demo.students.values()).exclude(
+        user__in=not_onboarded
+    ).update(sass_level=3)
+    StudentProfile.objects.filter(user__in=not_onboarded).update(onboarding_done=False)

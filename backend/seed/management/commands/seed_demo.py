@@ -17,8 +17,12 @@ class Command(BaseCommand):
             quiz_seed.seed_cards()
             quiz_seed.seed_streaks(demo.students)
             pulse_seed.seed_plans(demo.students)
+            pulse_seed.seed_onboarding(demo.students)
+            reenrolled = lms_seed.reenroll_signups()
         catalog.invalidate_all()
         self.stdout.write(self.style.SUCCESS(f"Seeded {demo.term.name}, starting {demo.start}."))
+        if reenrolled:
+            self.stdout.write(f"Re-enrolled {reenrolled} signed-up students in the new term.")
         self.stdout.write("")
         self.stdout.write(f"All demo passwords: {lms_seed.PASSWORD}")
         for spec in [
@@ -26,7 +30,8 @@ class Command(BaseCommand):
             ("sam@pulse.test", "student, slightly behind"),
             ("jordan@pulse.test", "student, badly behind"),
             ("alex@pulse.test", "student, has an extension in CS 201"),
-            ("riley@pulse.test", "student, brand new (onboarding not done)"),
+            ("riley@pulse.test", "student, brand new (onboarding not started)"),
+            ("casey@pulse.test", "student, halfway through onboarding (step 3)"),
             ("prof.okafor@pulse.test", "instructor, CS 201"),
             ("dr.marsh@pulse.test", "instructor, PSY 101"),
             ("prof.reyes@pulse.test", "instructor, BUS 210"),

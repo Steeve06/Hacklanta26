@@ -71,9 +71,13 @@ export function uploadForm(
   const promise = (async () => {
     let result = await attempt(url, form, useAuth.getState().access, onProgress, controller.signal);
     if (result.status === 401) {
-      const fresh = await refreshAccess();
-      if (!fresh) throw new UploadError("Your session expired. Sign in again.");
-      result = await attempt(url, form, fresh, onProgress, controller.signal);
+      const refreshed = await refreshAccess();
+      if (refreshed === "offline") throw new UploadError("Can't reach the server. Try again.");
+      if (refreshed === "expired") {
+        useAuth.getState().expire();
+        throw new UploadError("Your session expired. Sign in again.");
+      }
+      result = await attempt(url, form, useAuth.getState().access, onProgress, controller.signal);
     }
     if (result.status >= 400) throw describe(result.body);
     return result.body;
