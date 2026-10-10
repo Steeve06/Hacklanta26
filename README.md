@@ -107,7 +107,7 @@ The seeded term is 15 weeks and starts 4 weeks before today (set `TERM_START_DAT
 - **Passwords** need 10+ characters, can't be common, only numbers, or close to your name or email. They're hashed with Argon2.
 - **Forgot password** emails a link that works once for an hour. Locally, emails print to the backend log: `docker compose logs web` (or the `runserver` terminal). Copy the `/reset-password?...` link into the browser.
 - **Remember me** keeps you signed in for 30 days instead of 7. Signing out, or changing or resetting a password, ends the session in every tab (and, for password changes, on other devices).
-- **Weekly study hours** are the student's choice (2 to 40, default 10). Pulse never plans more than that in a week; if the work doesn't fit, the overload report shows what's left and suggests raising the limit.
+- **Weekly study hours** are the student's choice (2 to 40, default 10). Pulse never plans more than that in a week; if the work doesn't fit, the overload report names whichever is full: the weekly limit, the daily maximum, or the free time marked.
 - **Onboarding** is five steps (courses, study time, preferences, reminders, your schedule), saved each time you press Next. Close the tab or sign out and you pick up at the same step. Pulse pages stay locked until you press **Looks good** on step 5. Everything can be changed later in Settings.
 - Ten wrong passwords for one email lock it for 15 minutes; sign-in, sign-up and reset are limited to 5 a minute per IP and per email.
 
@@ -125,7 +125,7 @@ Without Docker (virtualenv active): `pip install -r backend/requirements-dev.txt
 ## Manual test steps
 
 1. **Sign up:** open `/signup`, create an account, and check that the password rules tick as you type and a taken email shows an error next to the field.
-2. **Onboarding:** go through all five steps. Reload on step 3 and you stay on step 3 with your earlier answers. On step 5, check the week's plan and the first quiz window, then press **Looks good** to land on Today.
+2. **Onboarding:** go through all five steps. Reload on step 3 and you stay on step 3 with your earlier answers. On step 5, check that **Your choices** shows the hours you marked and your limits, and that the advice under the plan names the limit that's actually full (weekly, daily, or free time). Check the week's plan and the first quiz window, then press **Looks good** to land on Today.
 3. **Resume:** sign in as `casey@pulse.test` and you land on step 3. Sign in as `riley@pulse.test` and you land on step 1. Sign in as `maya@pulse.test` and you go straight to Today.
 4. **Redirects:** while signed in, open `/login` and you're sent home. As `prof.okafor@pulse.test`, open `/onboarding` and you're sent to Learning Hub.
 5. **Password reset:** on the sign-in page, choose **Forgot password?**, then copy the link from the backend log, set a new password, and sign in with it. The same link fails a second time.
@@ -136,7 +136,7 @@ Without Docker (virtualenv active): `pip install -r backend/requirements-dev.txt
 
 ```sh
 # backend (from backend/, virtualenv active)
-pytest                                   # 216 tests, about 20 s
+pytest                                   # 227 tests, about 20 s
 pytest --cov --cov-report=term-missing   # coverage, 93% overall
 
 # frontend (from frontend/)

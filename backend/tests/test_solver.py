@@ -228,11 +228,26 @@ def test_time_already_spent_this_week_counts_toward_the_limit():
     assert sum(p.minutes for p in this_week) <= 30
 
 
-def test_overload_suggests_raising_the_weekly_limit():
-    from pulse.services.overload import _weekly_limit_suggestion
+def suggestions_for(tasks, c, days=6):
+    from pulse.services.overload import _capacity_suggestions
 
+    result, _, free = solve(tasks, evenings(7), c)
+    return [s["type"] for s in _capacity_suggestions(result, free, c, NOW + timedelta(days=days))]
+
+
+def test_overload_names_the_weekly_limit_when_it_is_full():
     c = constraints(max_minutes_per_week=2 * 60)
-    tasks = [task(f"t{i}", 120, 6) for i in range(3)]
-    result, _, _ = solve(tasks, evenings(7), c)
-    suggestions = _weekly_limit_suggestion(result, c, NOW + timedelta(days=6))
-    assert suggestions and "weekly study limit (now 2 hours)" in suggestions[0]["text"]
+    assert suggestions_for([task(f"t{i}", 120, 6) for i in range(3)], c) == ["raise_weekly_limit"]
+
+
+def test_overload_names_the_daily_limit_when_free_time_is_left():
+    c = constraints(max_minutes_per_day=60)
+    assert suggestions_for([task(f"t{i}", 120, 3) for i in range(3)], c, days=3) == [
+        "raise_daily_limit"
+    ]
+
+
+def test_overload_suggests_more_free_time_only_when_it_is_used_up():
+    c = constraints(max_minutes_per_day=600)
+    kinds = suggestions_for([task(f"t{i}", 180, 3) for i in range(4)], c, days=3)
+    assert kinds and set(kinds) == {"add_availability"}

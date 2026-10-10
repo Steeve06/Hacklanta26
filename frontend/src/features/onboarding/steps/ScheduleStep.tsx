@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { errorMessage } from "@/api/client";
 import { Button, ErrorState, Skeleton } from "@/components/ui";
@@ -12,12 +12,7 @@ import { quizName } from "@/features/quiz/quizName";
 import { formatExact, useTimezone } from "@/lib/time";
 import { onboardingKey, useCompleteOnboarding } from "../api";
 import type { StepProps } from "../stepTypes";
-
-const CHANGES = [
-  { step: 2, label: "Study time" },
-  { step: 3, label: "Preferences" },
-  { step: 4, label: "Reminders" },
-];
+import { YourChoices } from "./YourChoices";
 
 export function ScheduleStep({ state, goTo, saving }: StepProps) {
   const client = useQueryClient();
@@ -84,15 +79,15 @@ export function ScheduleStep({ state, goTo, saving }: StepProps) {
       </div>
     );
   if (!state.schedule_ready) return <Skeleton className="h-64 w-full" />;
-  return <Review goTo={goTo} saving={saving} />;
+  return <Review state={state} goTo={goTo} saving={saving} />;
 }
 
-function Review({ goTo, saving }: Pick<StepProps, "goTo" | "saving">) {
+function Review({ state, goTo, saving }: Pick<StepProps, "state" | "goTo" | "saving">) {
   const navigate = useNavigate();
   const complete = useCompleteOnboarding();
-  const [changing, setChanging] = useState(false);
   return (
     <section aria-label="Review your schedule" className="flex flex-col gap-5">
+      <YourChoices state={state} goTo={goTo} disabled={saving || complete.isPending} />
       <PlanReview onAddTime={() => goTo(2)} />
       <FirstQuiz />
       <div className="flex flex-col gap-3 border-t border-line pt-4">
@@ -114,35 +109,10 @@ function Review({ goTo, saving }: Pick<StepProps, "goTo" | "saving">) {
           >
             Looks good
           </Button>
-          <Button
-            variant="secondary"
-            aria-expanded={changing}
-            onClick={() => setChanging((v) => !v)}
-            disabled={complete.isPending}
-          >
-            Change something
-          </Button>
         </div>
-        {changing && (
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-ink-soft">
-              Pick what to change. Your schedule is rebuilt when you come back here.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {CHANGES.map((c) => (
-                <Button
-                  key={c.step}
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => goTo(c.step)}
-                  disabled={saving}
-                >
-                  {c.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
+        <p className="text-sm text-ink-soft">
+          Changing an answer rebuilds your schedule when you come back to this step.
+        </p>
       </div>
     </section>
   );
