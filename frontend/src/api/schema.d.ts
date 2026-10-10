@@ -4,6 +4,166 @@
  */
 
 export interface paths {
+    "/api/v1/assessments/{assessment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_assessments_retrieve"];
+        put?: never;
+        post?: never;
+        delete: operations["v1_assessments_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["v1_assessments_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/assessments/{assessment_id}/attempts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_assessments_attempts_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assessments/{assessment_id}/excuse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_assessments_excuse_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assessments/{assessment_id}/overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_assessments_overrides_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assessments/{assessment_id}/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_assessments_posts_retrieve"];
+        put?: never;
+        post: operations["v1_assessments_posts_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assessments/{assessment_id}/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_assessments_questions_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assessments/{assessment_id}/roster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_assessments_roster_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assessments/{assessment_id}/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_assessments_submissions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attempts/{attempt_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_attempts_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["v1_attempts_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/attempts/{attempt_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_attempts_submit_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -46,6 +206,118 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["v1_auth_refresh_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chapters/{chapter_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_chapters_retrieve"];
+        put?: never;
+        post?: never;
+        delete: operations["v1_chapters_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["v1_chapters_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/chapters/{chapter_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_chapters_complete_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_courses_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses/{course_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_courses_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses/{course_id}/assessments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_courses_assessments_list"];
+        put?: never;
+        post: operations["v1_courses_assessments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses/{course_id}/chapters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_courses_chapters_list"];
+        put?: never;
+        post: operations["v1_courses_chapters_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses/{course_id}/syllabus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_courses_syllabus_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -100,12 +372,230 @@ export interface paths {
         patch: operations["v1_me_profile_partial_update"];
         trace?: never;
     };
+    "/api/v1/submissions/{submission_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_submissions_file_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/submissions/{submission_id}/score": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["v1_submissions_score_partial_update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         AccessToken: {
             access: string;
+        };
+        AnswersRequest: {
+            answers: {
+                [key: string]: number;
+            };
+        };
+        Assessment: {
+            readonly id: number;
+            readonly course: number;
+            readonly course_code: string;
+            readonly type: components["schemas"]["AssessmentTypeEnum"];
+            readonly title: string;
+            readonly chapter_ids: number[];
+            /** Format: date-time */
+            readonly open_at: string;
+            /** Format: date-time */
+            readonly due_at: string;
+            /** Format: date-time */
+            readonly cutoff_at: string | null;
+            readonly points: number;
+            /** Format: decimal */
+            readonly weight_pct: string;
+            readonly est_minutes: number | null;
+            readonly published: boolean;
+            readonly status: string | null;
+            readonly effective_due_at: string;
+            readonly effective_cutoff_at: string | null;
+            readonly extended: boolean;
+            readonly overdue: boolean;
+        };
+        AssessmentDetail: {
+            readonly id: number;
+            readonly course: number;
+            readonly course_code: string;
+            readonly type: components["schemas"]["AssessmentTypeEnum"];
+            readonly title: string;
+            readonly chapter_ids: number[];
+            /** Format: date-time */
+            readonly open_at: string;
+            /** Format: date-time */
+            readonly due_at: string;
+            /** Format: date-time */
+            readonly cutoff_at: string | null;
+            readonly points: number;
+            /** Format: decimal */
+            readonly weight_pct: string;
+            readonly est_minutes: number | null;
+            readonly published: boolean;
+            readonly status: string | null;
+            readonly effective_due_at: string;
+            readonly effective_cutoff_at: string | null;
+            readonly extended: boolean;
+            readonly overdue: boolean;
+            readonly instructions: string;
+            readonly instructions_html: string;
+            readonly submissions: components["schemas"]["Submission"][];
+            discussion_replies_required: number;
+            time_limit_minutes: number;
+            max_attempts: number;
+            readonly attempts_used: number;
+            readonly questions_count: number;
+        };
+        /**
+         * @description * `quiz` - Quiz
+         *     * `homework` - Homework
+         *     * `discussion` - Discussion
+         * @enum {string}
+         */
+        AssessmentTypeEnum: "quiz" | "homework" | "discussion";
+        AssessmentWriteRequest: {
+            type: components["schemas"]["AssessmentTypeEnum"];
+            title: string;
+            instructions: string;
+            chapter_ids?: number[];
+            /** Format: date-time */
+            open_at: string;
+            /** Format: date-time */
+            due_at: string;
+            /** Format: date-time */
+            cutoff_at?: string | null;
+            /** Format: int64 */
+            points?: number;
+            /** Format: decimal */
+            weight_pct?: string;
+            /** Format: int64 */
+            est_minutes?: number | null;
+            /** Format: int64 */
+            discussion_replies_required?: number;
+            /** Format: int64 */
+            time_limit_minutes?: number;
+            /** Format: int64 */
+            max_attempts?: number;
+            published?: boolean;
+            questions?: components["schemas"]["QuestionWriteRequest"][];
+        };
+        ChapterDetail: {
+            readonly id: number;
+            readonly order: number;
+            readonly title: string;
+            readonly reading_minutes: number;
+            /** Format: date-time */
+            readonly available_from: string;
+            readonly locked: boolean;
+            readonly completed_at: string | null;
+            readonly opened_at: string | null;
+            readonly body_html: string;
+            readonly body_md: string;
+            objectives: string[];
+            links: components["schemas"]["Link"][];
+            readonly course_code: string;
+            readonly course_id: number;
+        };
+        ChapterList: {
+            readonly id: number;
+            readonly order: number;
+            readonly title: string;
+            readonly reading_minutes: number;
+            /** Format: date-time */
+            readonly available_from: string;
+            readonly locked: boolean;
+            readonly completed_at: string | null;
+            readonly opened_at: string | null;
+        };
+        ChapterRef: {
+            id: number;
+            order: number;
+            title: string;
+        };
+        ChapterWriteRequest: {
+            /** Format: int64 */
+            order: number;
+            title: string;
+            body_md: string;
+            links?: components["schemas"]["LinkRequest"][];
+            /** Format: int64 */
+            reading_minutes?: number;
+            objectives: string[];
+            /** Format: date-time */
+            available_from: string;
+        };
+        Course: {
+            readonly id: number;
+            readonly code: string;
+            readonly title: string;
+            readonly color: string;
+            readonly instructor_name: string;
+            readonly chapters_total: number;
+            readonly chapters_completed: number;
+            readonly next_due: components["schemas"]["NextDue"] | null;
+        };
+        Discussion: {
+            posts: components["schemas"]["DiscussionPost"][];
+            progress: components["schemas"]["DiscussionProgress"] | null;
+        };
+        DiscussionPost: {
+            readonly id: number;
+            parent?: number | null;
+            body: string;
+            readonly author_name: string;
+            readonly is_mine: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        DiscussionProgress: {
+            original_posted: boolean;
+            replies_made: number;
+            replies_required: number;
+        };
+        ExcuseRequest: {
+            student: number;
+            excused: boolean;
+        };
+        GradingItem: {
+            label: string;
+            /** Format: double */
+            weight_pct: number;
+        };
+        Link: {
+            label: string;
+            /** Format: uri */
+            url: string;
+        };
+        LinkRequest: {
+            label: string;
+            /** Format: uri */
+            url: string;
         };
         LoginRequest: {
             /** Format: email */
@@ -122,10 +612,89 @@ export interface components {
             timezone?: string;
             readonly profile: components["schemas"]["Profile"];
         };
+        NextDue: {
+            id: number;
+            title: string;
+            type: string;
+            /** Format: date-time */
+            due_at: string;
+        };
+        Override: {
+            readonly id: number;
+            student: number;
+            /** Format: date-time */
+            due_at: string;
+            /** Format: date-time */
+            cutoff_at?: string | null;
+            reason?: string;
+        };
+        OverrideRequest: {
+            student: number;
+            /** Format: date-time */
+            due_at: string;
+            /** Format: date-time */
+            cutoff_at?: string | null;
+            reason?: string;
+        };
+        PatchedAnswersRequest: {
+            answers?: {
+                [key: string]: number;
+            };
+        };
+        PatchedAssessmentWriteRequest: {
+            type?: components["schemas"]["AssessmentTypeEnum"];
+            title?: string;
+            instructions?: string;
+            chapter_ids?: number[];
+            /** Format: date-time */
+            open_at?: string;
+            /** Format: date-time */
+            due_at?: string;
+            /** Format: date-time */
+            cutoff_at?: string | null;
+            /** Format: int64 */
+            points?: number;
+            /** Format: decimal */
+            weight_pct?: string;
+            /** Format: int64 */
+            est_minutes?: number | null;
+            /** Format: int64 */
+            discussion_replies_required?: number;
+            /** Format: int64 */
+            time_limit_minutes?: number;
+            /** Format: int64 */
+            max_attempts?: number;
+            published?: boolean;
+            questions?: components["schemas"]["QuestionWriteRequest"][];
+        };
+        PatchedChapterWriteRequest: {
+            /** Format: int64 */
+            order?: number;
+            title?: string;
+            body_md?: string;
+            links?: components["schemas"]["LinkRequest"][];
+            /** Format: int64 */
+            reading_minutes?: number;
+            objectives?: string[];
+            /** Format: date-time */
+            available_from?: string;
+        };
         PatchedMeUpdateRequest: {
             first_name?: string;
             timezone?: string;
             profile?: components["schemas"]["ProfileRequest"];
+        };
+        PatchedScoreRequest: {
+            /** Format: decimal */
+            score?: string | null;
+        };
+        Policies: {
+            late_work: string;
+            academic_integrity: string;
+        };
+        PostCreateRequest: {
+            body: string;
+            parent?: number | null;
         };
         Profile: {
             /** Format: int64 */
@@ -165,6 +734,64 @@ export interface components {
             onboarding_done?: boolean;
             push_prompt_seen?: boolean;
         };
+        QuestionPublic: {
+            readonly id: number;
+            readonly order: number;
+            readonly type: components["schemas"]["QuestionTypeEnum"];
+            readonly prompt: string;
+            readonly options: unknown;
+            readonly points: number;
+        };
+        QuestionResult: {
+            question: number;
+            correct_index: number;
+        };
+        /**
+         * @description * `multiple_choice` - Multiple Choice
+         *     * `true_false` - True False
+         * @enum {string}
+         */
+        QuestionTypeEnum: "multiple_choice" | "true_false";
+        QuestionWrite: {
+            readonly id: number;
+            /** Format: int64 */
+            order: number;
+            type: components["schemas"]["QuestionTypeEnum"];
+            prompt: string;
+            options: unknown;
+            /** Format: int64 */
+            correct_index: number;
+            /** Format: int64 */
+            points?: number;
+        };
+        QuestionWriteRequest: {
+            /** Format: int64 */
+            order: number;
+            type: components["schemas"]["QuestionTypeEnum"];
+            prompt: string;
+            options: unknown;
+            /** Format: int64 */
+            correct_index: number;
+            /** Format: int64 */
+            points?: number;
+        };
+        QuizAttempt: {
+            readonly id: number;
+            readonly assessment: number;
+            readonly attempt_no: number;
+            /** Format: date-time */
+            readonly started_at: string;
+            /** Format: date-time */
+            readonly deadline_at: string;
+            /** Format: date-time */
+            readonly submitted_at: string | null;
+            readonly answers: unknown;
+            /** Format: decimal */
+            readonly score: string | null;
+            readonly auto_submitted: boolean;
+            readonly questions: components["schemas"]["QuestionPublic"][];
+            readonly results: components["schemas"]["QuestionResult"][] | null;
+        };
         /**
          * @description * `student` - Student
          *     * `instructor` - Instructor
@@ -172,6 +799,22 @@ export interface components {
          * @enum {string}
          */
         RoleEnum: "student" | "instructor" | "admin";
+        RosterRow: {
+            student_id: number;
+            name: string;
+            /** Format: email */
+            email: string;
+            status: string;
+            /** Format: date-time */
+            effective_due_at: string;
+            extended: boolean;
+            submission_id: number | null;
+            /** Format: date-time */
+            submitted_at: string | null;
+            /** Format: decimal */
+            score: string | null;
+            has_file: boolean;
+        };
         /**
          * @description * `25` - Short
          *     * `50` - Medium
@@ -179,6 +822,52 @@ export interface components {
          * @enum {integer}
          */
         SessionMinutesEnum: 25 | 50 | 90;
+        Submission: {
+            readonly id: number;
+            readonly status: components["schemas"]["SubmissionStatusEnum"];
+            readonly text: string;
+            readonly file_name: string | null;
+            /** Format: date-time */
+            readonly submitted_at: string | null;
+            /** Format: decimal */
+            readonly score: string | null;
+            readonly attempt_no: number;
+        };
+        SubmissionCreateRequest: {
+            text?: string;
+            /** Format: binary */
+            file?: string;
+        };
+        /**
+         * @description * `not_started` - Not Started
+         *     * `in_progress` - In Progress
+         *     * `submitted` - Submitted
+         *     * `late` - Late
+         *     * `missed` - Missed
+         *     * `excused` - Excused
+         *     * `graded` - Graded
+         * @enum {string}
+         */
+        SubmissionStatusEnum: "not_started" | "in_progress" | "submitted" | "late" | "missed" | "excused" | "graded";
+        Syllabus: {
+            course_code: string;
+            course_title: string;
+            readonly description: string;
+            readonly instructor_name: string;
+            /** Format: email */
+            instructor_email: string;
+            readonly office_hours: string;
+            grading: components["schemas"]["GradingItem"][];
+            policies: components["schemas"]["Policies"];
+            weeks: components["schemas"]["SyllabusWeek"][];
+        };
+        SyllabusWeek: {
+            readonly week_number: number;
+            /** Format: date */
+            readonly start_date: string;
+            readonly topic: string;
+            readonly chapters: components["schemas"]["ChapterRef"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -188,6 +877,340 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    v1_assessments_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentDetail"];
+                };
+            };
+        };
+    };
+    v1_assessments_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_assessments_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedAssessmentWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAssessmentWriteRequest"];
+                "multipart/form-data": components["schemas"]["PatchedAssessmentWriteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentDetail"];
+                };
+            };
+        };
+    };
+    v1_assessments_attempts_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuizAttempt"];
+                };
+            };
+        };
+    };
+    v1_assessments_excuse_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExcuseRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ExcuseRequest"];
+                "multipart/form-data": components["schemas"]["ExcuseRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_assessments_overrides_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OverrideRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["OverrideRequest"];
+                "multipart/form-data": components["schemas"]["OverrideRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Override"];
+                };
+            };
+        };
+    };
+    v1_assessments_posts_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Discussion"];
+                };
+            };
+        };
+    };
+    v1_assessments_posts_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PostCreateRequest"];
+                "multipart/form-data": components["schemas"]["PostCreateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscussionPost"];
+                };
+            };
+        };
+    };
+    v1_assessments_questions_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionWrite"][];
+                };
+            };
+        };
+    };
+    v1_assessments_roster_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterRow"][];
+                };
+            };
+        };
+    };
+    v1_assessments_submissions_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": components["schemas"]["SubmissionCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SubmissionCreateRequest"];
+                "application/json": components["schemas"]["SubmissionCreateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Submission"];
+                };
+            };
+        };
+    };
+    v1_attempts_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attempt_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuizAttempt"];
+                };
+            };
+        };
+    };
+    v1_attempts_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attempt_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedAnswersRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAnswersRequest"];
+                "multipart/form-data": components["schemas"]["PatchedAnswersRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuizAttempt"];
+                };
+            };
+        };
+    };
+    v1_attempts_submit_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attempt_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswersRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AnswersRequest"];
+                "multipart/form-data": components["schemas"]["AnswersRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuizAttempt"];
+                };
+            };
+        };
+    };
     v1_auth_login_create: {
         parameters: {
             query?: never;
@@ -246,6 +1269,255 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccessToken"];
+                };
+            };
+        };
+    };
+    v1_chapters_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chapter_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChapterDetail"];
+                };
+            };
+        };
+    };
+    v1_chapters_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chapter_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_chapters_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chapter_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedChapterWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedChapterWriteRequest"];
+                "multipart/form-data": components["schemas"]["PatchedChapterWriteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChapterDetail"];
+                };
+            };
+        };
+    };
+    v1_chapters_complete_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chapter_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChapterList"];
+                };
+            };
+        };
+    };
+    v1_courses_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Course"][];
+                };
+            };
+        };
+    };
+    v1_courses_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Course"];
+                };
+            };
+        };
+    };
+    v1_courses_assessments_list: {
+        parameters: {
+            query?: {
+                status?: string;
+                type?: string;
+            };
+            header?: never;
+            path: {
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assessment"][];
+                };
+            };
+        };
+    };
+    v1_courses_assessments_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssessmentWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AssessmentWriteRequest"];
+                "multipart/form-data": components["schemas"]["AssessmentWriteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentDetail"];
+                };
+            };
+        };
+    };
+    v1_courses_chapters_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChapterList"][];
+                };
+            };
+        };
+    };
+    v1_courses_chapters_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChapterWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ChapterWriteRequest"];
+                "multipart/form-data": components["schemas"]["ChapterWriteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChapterDetail"];
+                };
+            };
+        };
+    };
+    v1_courses_syllabus_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Syllabus"];
                 };
             };
         };
@@ -391,6 +1663,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    v1_submissions_file_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                submission_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+        };
+    };
+    v1_submissions_score_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                submission_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedScoreRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedScoreRequest"];
+                "multipart/form-data": components["schemas"]["PatchedScoreRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Submission"];
                 };
             };
         };

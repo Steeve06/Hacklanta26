@@ -5,6 +5,617 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/v1/assessments/{assessment_id}": {
+            "get": {
+                "operationId": "v1_assessments_retrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "assessment_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssessmentDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_assessments_partial_update",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "assessment_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAssessmentWriteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAssessmentWriteRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAssessmentWriteRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssessmentDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_assessments_destroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "assessment_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/assessments/{assessment_id}/attempts": {
+            "post": {
+                "operationId": "v1_assessments_attempts_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "assessment_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QuizAttempt"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/assessments/{assessment_id}/excuse": {
+            "post": {
+                "operationId": "v1_assessments_excuse_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "assessment_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExcuseRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExcuseRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExcuseRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/assessments/{assessment_id}/overrides": {
+            "post": {
+                "operationId": "v1_assessments_overrides_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "assessment_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OverrideRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OverrideRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OverrideRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Override"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/assessments/{assessment_id}/posts": {
+            "get": {
+                "operationId": "v1_assessments_posts_retrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "assessment_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Discussion"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_assessments_posts_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "assessment_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PostCreateRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PostCreateRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PostCreateRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DiscussionPost"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/assessments/{assessment_id}/questions": {
+            "get": {
+                "operationId": "v1_assessments_questions_list",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "assessment_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/QuestionWrite"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/assessments/{assessment_id}/roster": {
+            "get": {
+                "operationId": "v1_assessments_roster_list",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "assessment_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/RosterRow"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/assessments/{assessment_id}/submissions": {
+            "post": {
+                "operationId": "v1_assessments_submissions_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "assessment_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubmissionCreateRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubmissionCreateRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubmissionCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Submission"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/attempts/{attempt_id}": {
+            "get": {
+                "operationId": "v1_attempts_retrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "attempt_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QuizAttempt"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_attempts_partial_update",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "attempt_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAnswersRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAnswersRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAnswersRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QuizAttempt"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/attempts/{attempt_id}/submit": {
+            "post": {
+                "operationId": "v1_attempts_submit_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "attempt_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnswersRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnswersRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnswersRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QuizAttempt"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/auth/login": {
             "post": {
                 "operationId": "v1_auth_login_create",
@@ -79,6 +690,448 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/AccessToken"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/chapters/{chapter_id}": {
+            "get": {
+                "operationId": "v1_chapters_retrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "chapter_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChapterDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_chapters_partial_update",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "chapter_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedChapterWriteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedChapterWriteRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedChapterWriteRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChapterDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_chapters_destroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "chapter_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/chapters/{chapter_id}/complete": {
+            "post": {
+                "operationId": "v1_chapters_complete_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "chapter_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChapterList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/courses": {
+            "get": {
+                "operationId": "v1_courses_list",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Course"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/courses/{course_id}": {
+            "get": {
+                "operationId": "v1_courses_retrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "course_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Course"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/courses/{course_id}/assessments": {
+            "get": {
+                "operationId": "v1_courses_assessments_list",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "course_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Assessment"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_courses_assessments_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "course_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssessmentWriteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssessmentWriteRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssessmentWriteRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssessmentDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/courses/{course_id}/chapters": {
+            "get": {
+                "operationId": "v1_courses_chapters_list",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "course_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ChapterList"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_courses_chapters_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "course_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChapterWriteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChapterWriteRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChapterWriteRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChapterDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/courses/{course_id}/syllabus": {
+            "get": {
+                "operationId": "v1_courses_syllabus_retrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "course_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Syllabus"
                                 }
                             }
                         },
@@ -278,6 +1331,96 @@
                     }
                 }
             }
+        },
+        "/api/v1/submissions/{submission_id}/file": {
+            "get": {
+                "operationId": "v1_submissions_file_retrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "submission_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/octet-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/submissions/{submission_id}/score": {
+            "patch": {
+                "operationId": "v1_submissions_score_partial_update",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "submission_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedScoreRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedScoreRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedScoreRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Submission"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -291,6 +1434,786 @@
                 },
                 "required": [
                     "access"
+                ]
+            },
+            "AnswersRequest": {
+                "type": "object",
+                "properties": {
+                    "answers": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    }
+                },
+                "required": [
+                    "answers"
+                ]
+            },
+            "Assessment": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "course": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "course_code": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "type": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/AssessmentTypeEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "chapter_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "readOnly": true
+                    },
+                    "open_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "cutoff_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "points": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "weight_pct": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+                        "readOnly": true
+                    },
+                    "est_minutes": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "published": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "effective_due_at": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "effective_cutoff_at": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "extended": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "overdue": {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "chapter_ids",
+                    "course",
+                    "course_code",
+                    "cutoff_at",
+                    "due_at",
+                    "effective_cutoff_at",
+                    "effective_due_at",
+                    "est_minutes",
+                    "extended",
+                    "id",
+                    "open_at",
+                    "overdue",
+                    "points",
+                    "published",
+                    "status",
+                    "title",
+                    "type",
+                    "weight_pct"
+                ]
+            },
+            "AssessmentDetail": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "course": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "course_code": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "type": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/AssessmentTypeEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "chapter_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "readOnly": true
+                    },
+                    "open_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "cutoff_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "points": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "weight_pct": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+                        "readOnly": true
+                    },
+                    "est_minutes": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "published": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "effective_due_at": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "effective_cutoff_at": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "extended": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "overdue": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "instructions_html": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "submissions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Submission"
+                        },
+                        "readOnly": true
+                    },
+                    "discussion_replies_required": {
+                        "type": "integer"
+                    },
+                    "time_limit_minutes": {
+                        "type": "integer"
+                    },
+                    "max_attempts": {
+                        "type": "integer"
+                    },
+                    "attempts_used": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "questions_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "attempts_used",
+                    "chapter_ids",
+                    "course",
+                    "course_code",
+                    "cutoff_at",
+                    "discussion_replies_required",
+                    "due_at",
+                    "effective_cutoff_at",
+                    "effective_due_at",
+                    "est_minutes",
+                    "extended",
+                    "id",
+                    "instructions",
+                    "instructions_html",
+                    "max_attempts",
+                    "open_at",
+                    "overdue",
+                    "points",
+                    "published",
+                    "questions_count",
+                    "status",
+                    "submissions",
+                    "time_limit_minutes",
+                    "title",
+                    "type",
+                    "weight_pct"
+                ]
+            },
+            "AssessmentTypeEnum": {
+                "enum": [
+                    "quiz",
+                    "homework",
+                    "discussion"
+                ],
+                "type": "string",
+                "description": "* `quiz` - Quiz\n* `homework` - Homework\n* `discussion` - Discussion"
+            },
+            "AssessmentWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "$ref": "#/components/schemas/AssessmentTypeEnum"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "chapter_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "open_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "cutoff_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "points": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "weight_pct": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$"
+                    },
+                    "est_minutes": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64",
+                        "nullable": true
+                    },
+                    "discussion_replies_required": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "time_limit_minutes": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "max_attempts": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "published": {
+                        "type": "boolean"
+                    },
+                    "questions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/QuestionWriteRequest"
+                        }
+                    }
+                },
+                "required": [
+                    "due_at",
+                    "instructions",
+                    "open_at",
+                    "title",
+                    "type"
+                ]
+            },
+            "ChapterDetail": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "order": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "reading_minutes": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "locked": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "completed_at": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "opened_at": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "body_html": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "body_md": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "objectives": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Link"
+                        }
+                    },
+                    "course_code": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "course_id": {
+                        "type": "integer",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "available_from",
+                    "body_html",
+                    "body_md",
+                    "completed_at",
+                    "course_code",
+                    "course_id",
+                    "id",
+                    "links",
+                    "locked",
+                    "objectives",
+                    "opened_at",
+                    "order",
+                    "reading_minutes",
+                    "title"
+                ]
+            },
+            "ChapterList": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "order": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "reading_minutes": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "locked": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "completed_at": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "opened_at": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "available_from",
+                    "completed_at",
+                    "id",
+                    "locked",
+                    "opened_at",
+                    "order",
+                    "reading_minutes",
+                    "title"
+                ]
+            },
+            "ChapterRef": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "order": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "order",
+                    "title"
+                ]
+            },
+            "ChapterWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "order": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                    },
+                    "body_md": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/LinkRequest"
+                        }
+                    },
+                    "reading_minutes": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "objectives": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 200
+                        },
+                        "minItems": 1
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "available_from",
+                    "body_md",
+                    "objectives",
+                    "order",
+                    "title"
+                ]
+            },
+            "Course": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "code": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "color": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "instructor_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "chapters_total": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "chapters_completed": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "next_due": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/NextDue"
+                            }
+                        ],
+                        "readOnly": true,
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "chapters_completed",
+                    "chapters_total",
+                    "code",
+                    "color",
+                    "id",
+                    "instructor_name",
+                    "next_due",
+                    "title"
+                ]
+            },
+            "Discussion": {
+                "type": "object",
+                "properties": {
+                    "posts": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DiscussionPost"
+                        }
+                    },
+                    "progress": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/DiscussionProgress"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "posts",
+                    "progress"
+                ]
+            },
+            "DiscussionPost": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "parent": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "author_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "is_mine": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "author_name",
+                    "body",
+                    "created_at",
+                    "id",
+                    "is_mine"
+                ]
+            },
+            "DiscussionProgress": {
+                "type": "object",
+                "properties": {
+                    "original_posted": {
+                        "type": "boolean"
+                    },
+                    "replies_made": {
+                        "type": "integer"
+                    },
+                    "replies_required": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "original_posted",
+                    "replies_made",
+                    "replies_required"
+                ]
+            },
+            "ExcuseRequest": {
+                "type": "object",
+                "properties": {
+                    "student": {
+                        "type": "integer"
+                    },
+                    "excused": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "excused",
+                    "student"
+                ]
+            },
+            "GradingItem": {
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "weight_pct": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                },
+                "required": [
+                    "label",
+                    "weight_pct"
+                ]
+            },
+            "Link": {
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "url": {
+                        "type": "string",
+                        "format": "uri"
+                    }
+                },
+                "required": [
+                    "label",
+                    "url"
+                ]
+            },
+            "LinkRequest": {
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "label",
+                    "url"
                 ]
             },
             "LoginRequest": {
@@ -361,6 +2284,223 @@
                     "role"
                 ]
             },
+            "NextDue": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "due_at",
+                    "id",
+                    "title",
+                    "type"
+                ]
+            },
+            "Override": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "student": {
+                        "type": "integer"
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "cutoff_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "reason": {
+                        "type": "string",
+                        "maxLength": 200
+                    }
+                },
+                "required": [
+                    "due_at",
+                    "id",
+                    "student"
+                ]
+            },
+            "OverrideRequest": {
+                "type": "object",
+                "properties": {
+                    "student": {
+                        "type": "integer"
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "cutoff_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "reason": {
+                        "type": "string",
+                        "maxLength": 200
+                    }
+                },
+                "required": [
+                    "due_at",
+                    "student"
+                ]
+            },
+            "PatchedAnswersRequest": {
+                "type": "object",
+                "properties": {
+                    "answers": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    }
+                }
+            },
+            "PatchedAssessmentWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "$ref": "#/components/schemas/AssessmentTypeEnum"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "chapter_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "open_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "cutoff_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "points": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "weight_pct": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$"
+                    },
+                    "est_minutes": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64",
+                        "nullable": true
+                    },
+                    "discussion_replies_required": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "time_limit_minutes": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "max_attempts": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "published": {
+                        "type": "boolean"
+                    },
+                    "questions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/QuestionWriteRequest"
+                        }
+                    }
+                }
+            },
+            "PatchedChapterWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "order": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                    },
+                    "body_md": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/LinkRequest"
+                        }
+                    },
+                    "reading_minutes": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "objectives": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 200
+                        },
+                        "minItems": 1
+                    },
+                    "available_from": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
             "PatchedMeUpdateRequest": {
                 "type": "object",
                 "properties": {
@@ -378,6 +2518,49 @@
                         "$ref": "#/components/schemas/ProfileRequest"
                     }
                 }
+            },
+            "PatchedScoreRequest": {
+                "type": "object",
+                "properties": {
+                    "score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,4}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    }
+                }
+            },
+            "Policies": {
+                "type": "object",
+                "properties": {
+                    "late_work": {
+                        "type": "string"
+                    },
+                    "academic_integrity": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "academic_integrity",
+                    "late_work"
+                ]
+            },
+            "PostCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "body": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 5000
+                    },
+                    "parent": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "body"
+                ]
             },
             "Profile": {
                 "type": "object",
@@ -485,6 +2668,224 @@
                     }
                 }
             },
+            "QuestionPublic": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "order": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "type": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/QuestionTypeEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "prompt": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "options": {
+                        "readOnly": true
+                    },
+                    "points": {
+                        "type": "integer",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "id",
+                    "options",
+                    "order",
+                    "points",
+                    "prompt",
+                    "type"
+                ]
+            },
+            "QuestionResult": {
+                "type": "object",
+                "properties": {
+                    "question": {
+                        "type": "integer"
+                    },
+                    "correct_index": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "correct_index",
+                    "question"
+                ]
+            },
+            "QuestionTypeEnum": {
+                "enum": [
+                    "multiple_choice",
+                    "true_false"
+                ],
+                "type": "string",
+                "description": "* `multiple_choice` - Multiple Choice\n* `true_false` - True False"
+            },
+            "QuestionWrite": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "order": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/QuestionTypeEnum"
+                    },
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "options": {},
+                    "correct_index": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "points": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    }
+                },
+                "required": [
+                    "correct_index",
+                    "id",
+                    "options",
+                    "order",
+                    "prompt",
+                    "type"
+                ]
+            },
+            "QuestionWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "order": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/QuestionTypeEnum"
+                    },
+                    "prompt": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "options": {},
+                    "correct_index": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    },
+                    "points": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
+                    }
+                },
+                "required": [
+                    "correct_index",
+                    "options",
+                    "order",
+                    "prompt",
+                    "type"
+                ]
+            },
+            "QuizAttempt": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "assessment": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "attempt_no": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "started_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "deadline_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "submitted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "answers": {
+                        "readOnly": true
+                    },
+                    "score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,4}(?:\\.\\d{0,2})?$",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "auto_submitted": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "questions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/QuestionPublic"
+                        },
+                        "readOnly": true
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/QuestionResult"
+                        },
+                        "nullable": true,
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "answers",
+                    "assessment",
+                    "attempt_no",
+                    "auto_submitted",
+                    "deadline_at",
+                    "id",
+                    "questions",
+                    "results",
+                    "score",
+                    "started_at",
+                    "submitted_at"
+                ]
+            },
             "RoleEnum": {
                 "enum": [
                     "student",
@@ -494,6 +2895,61 @@
                 "type": "string",
                 "description": "* `student` - Student\n* `instructor` - Instructor\n* `admin` - Admin"
             },
+            "RosterRow": {
+                "type": "object",
+                "properties": {
+                    "student_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "effective_due_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "extended": {
+                        "type": "boolean"
+                    },
+                    "submission_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "submitted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,4}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "has_file": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "effective_due_at",
+                    "email",
+                    "extended",
+                    "has_file",
+                    "name",
+                    "score",
+                    "status",
+                    "student_id",
+                    "submission_id",
+                    "submitted_at"
+                ]
+            },
             "SessionMinutesEnum": {
                 "enum": [
                     25,
@@ -502,6 +2958,168 @@
                 ],
                 "type": "integer",
                 "description": "* `25` - Short\n* `50` - Medium\n* `90` - Long"
+            },
+            "Submission": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SubmissionStatusEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "text": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "file_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "submitted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "score": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,4}(?:\\.\\d{0,2})?$",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "attempt_no": {
+                        "type": "integer",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "attempt_no",
+                    "file_name",
+                    "id",
+                    "score",
+                    "status",
+                    "submitted_at",
+                    "text"
+                ]
+            },
+            "SubmissionCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "maxLength": 20000
+                    },
+                    "file": {
+                        "type": "string",
+                        "format": "binary"
+                    }
+                }
+            },
+            "SubmissionStatusEnum": {
+                "enum": [
+                    "not_started",
+                    "in_progress",
+                    "submitted",
+                    "late",
+                    "missed",
+                    "excused",
+                    "graded"
+                ],
+                "type": "string",
+                "description": "* `not_started` - Not Started\n* `in_progress` - In Progress\n* `submitted` - Submitted\n* `late` - Late\n* `missed` - Missed\n* `excused` - Excused\n* `graded` - Graded"
+            },
+            "Syllabus": {
+                "type": "object",
+                "properties": {
+                    "course_code": {
+                        "type": "string"
+                    },
+                    "course_title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "instructor_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "instructor_email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "office_hours": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "grading": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GradingItem"
+                        }
+                    },
+                    "policies": {
+                        "$ref": "#/components/schemas/Policies"
+                    },
+                    "weeks": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SyllabusWeek"
+                        }
+                    }
+                },
+                "required": [
+                    "course_code",
+                    "course_title",
+                    "description",
+                    "grading",
+                    "instructor_email",
+                    "instructor_name",
+                    "office_hours",
+                    "policies",
+                    "weeks"
+                ]
+            },
+            "SyllabusWeek": {
+                "type": "object",
+                "properties": {
+                    "week_number": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date",
+                        "readOnly": true
+                    },
+                    "topic": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "chapters": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ChapterRef"
+                        },
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "chapters",
+                    "start_date",
+                    "topic",
+                    "week_number"
+                ]
             }
         },
         "securitySchemes": {

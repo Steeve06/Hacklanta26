@@ -3,7 +3,12 @@
 from django.apps import apps
 from django.forms.models import model_to_dict
 
-EXPORTED: list[tuple[str, str, str]] = []
+EXPORTED = [
+    ("lms", "ChapterProgress", "student"),
+    ("lms", "Submission", "student"),
+    ("lms", "DiscussionPost", "author"),
+    ("lms", "QuizAttempt", "student"),
+]
 
 
 def _plain(row: dict) -> dict:

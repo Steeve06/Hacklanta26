@@ -18,7 +18,7 @@ export function RouteError() {
           to="/pulse"
           className="inline-flex min-h-11 items-center rounded-md bg-pine px-4 font-bold text-on-pine"
         >
-          Go to Today
+          Go to the start page
         </Link>
         {!notFound && (
           <button

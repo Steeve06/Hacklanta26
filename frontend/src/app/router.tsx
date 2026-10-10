@@ -1,8 +1,16 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import type { ComponentType } from "react";
+import { createBrowserRouter } from "react-router-dom";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { AppShell } from "./AppShell";
+import { HomeRedirect } from "./HomeRedirect";
 import { RequireAuth } from "./RequireAuth";
 import { RouteError } from "./RouteError";
+
+function page<M extends Record<string, unknown>>(load: () => Promise<M>, name: keyof M) {
+  return async () => ({ Component: (await load())[name] as ComponentType });
+}
+
+const lms = () => import("@/features/lms/pages");
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage />, errorElement: <RouteError /> },
@@ -12,7 +20,39 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <AppShell />,
-        children: [{ index: true, element: <Navigate to="/pulse" replace /> }],
+        errorElement: <RouteError />,
+        children: [
+          { index: true, element: <HomeRedirect /> },
+          { path: "lms", lazy: page(lms, "CourseListPage") },
+          {
+            path: "lms/courses/:courseId",
+            lazy: page(lms, "CourseLayout"),
+            children: [
+              { index: true, lazy: page(lms, "ContentTab") },
+              { path: "assignments", lazy: page(lms, "AssignmentsTab") },
+              { path: "syllabus", lazy: page(lms, "SyllabusTab") },
+            ],
+          },
+          { path: "lms/courses/:courseId/chapters/new", lazy: page(lms, "ChapterEditorPage") },
+          { path: "lms/courses/:courseId/chapters/:chapterId", lazy: page(lms, "ChapterPage") },
+          {
+            path: "lms/courses/:courseId/chapters/:chapterId/edit",
+            lazy: page(lms, "ChapterEditorPage"),
+          },
+          {
+            path: "lms/courses/:courseId/assignments/new",
+            lazy: page(lms, "AssessmentEditorPage"),
+          },
+          {
+            path: "lms/courses/:courseId/assignments/:assessmentId",
+            lazy: page(lms, "AssessmentPage"),
+          },
+          {
+            path: "lms/courses/:courseId/assignments/:assessmentId/edit",
+            lazy: page(lms, "AssessmentEditorPage"),
+          },
+          { path: "lms/courses/:courseId/attempts/:attemptId", lazy: page(lms, "AttemptPage") },
+        ],
       },
     ],
   },

@@ -125,6 +125,11 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    "ENUM_NAME_OVERRIDES": {
+        "AssessmentTypeEnum": "lms.models.Assessment.Type",
+        "QuestionTypeEnum": "lms.models.QuizQuestion.Type",
+        "SubmissionStatusEnum": "lms.models.Submission.Status",
+    },
 }
 
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:5173")

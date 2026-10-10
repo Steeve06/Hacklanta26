@@ -15,7 +15,7 @@ const DEMO_ACCOUNTS = [
 ];
 
 function safeNext(raw: string | null): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/pulse";
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/";
   return raw;
 }
 
