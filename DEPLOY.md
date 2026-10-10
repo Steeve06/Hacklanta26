@@ -47,6 +47,10 @@ Django admin is served by the backend: `https://pulse-api.onrender.com/admin/`.
 - **An external scheduler.** Set `CRON_TOKEN` and have it `POST /api/cron` with header `X-Cron-Token: <token>` every 10 minutes.
 - **API on its own domain without the Vercel rewrite.** Set `VITE_API_URL` to the API URL and `REFRESH_COOKIE_SAMESITE=None` on the backend.
 
+## Phones: install and push
+
+Vercel serves the frontend over HTTPS, which is all a phone needs to install Leon from its address (Chrome: Install app; Safari: Share > Add to Home Screen) and receive push. Make sure `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` are set on the Render web and worker services, and that `FRONTEND_URL` is the Vercel address (reminder emails and notification links use it). `frontend/vercel.json` keeps `/sw.js`, `/manifest.webmanifest` and `/icons/` out of the single-page rewrite and serves the manifest with its own content type.
+
 ## Production checklist
 
 - `DJANGO_SETTINGS_MODULE=config.settings.prod` (set by the Blueprint). The app refuses to start with a weak secret key.

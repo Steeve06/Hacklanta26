@@ -57,6 +57,10 @@ class PushUnsubscribeSerializer(serializers.Serializer):
     endpoint = serializers.URLField(max_length=600)
 
 
+class PushTestSerializer(serializers.Serializer):
+    sent = serializers.IntegerField(help_text="devices that accepted the test push")
+
+
 class PushConfigSerializer(serializers.Serializer):
     public_key = serializers.CharField(allow_blank=True)
     enabled = serializers.BooleanField()

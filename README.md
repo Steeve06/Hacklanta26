@@ -140,7 +140,7 @@ Without Docker (virtualenv active): `pip install -r backend/requirements-dev.txt
 
 ```sh
 # backend (from backend/, virtualenv active)
-pytest                                   # 290 tests, about 25 s
+pytest                                   # 297 tests, about 25 s
 pytest --cov --cov-report=term-missing   # coverage, 93% overall
 
 # frontend (from frontend/)
@@ -154,6 +154,25 @@ npx playwright test
 The E2E run uses `python` from your PATH; set `PYTHON=/path/to/.venv/bin/python` if that isn't the virtualenv. CI (`.github/workflows/ci.yml`) runs lint, type checks, unit tests on Postgres, and the E2E flows. It never deploys.
 
 After changing an API serializer or view, regenerate the TypeScript types with `make api-types`.
+
+## Use Leon on your phone
+
+Leon is a Progressive Web App: it installs to a phone's home screen, opens full screen like any app, shows push notifications for reminders, and still opens (with a "can't reach the server" page) when there's no connection. Phones only allow installing and push over HTTPS, so on your laptop give Leon a temporary HTTPS address:
+
+```sh
+docker compose up -d                          # Leon as usual
+docker compose --profile phone up tunnel      # prints https://<random-words>.trycloudflare.com
+```
+
+Open that address on the phone (any network; it's a free Cloudflare quick tunnel, no account). The address changes each time you start the tunnel. Press Ctrl+C to stop it.
+
+- **Android (Chrome):** sign in, then **Settings > Leon on this device > Install Leon** (or the browser menu's Install app). Turn on push in Settings, then **Send a test notification**.
+- **iPhone and iPad (iOS 16.4 or later):** in Safari, Share > **Add to Home Screen**. Open Leon from the Home Screen, sign in, and turn on push in Settings. Apple only allows web push for apps added to the Home Screen.
+- **Desktop Chrome or Edge:** the install icon in the address bar, or Settings > Install Leon. `http://localhost:5173` counts as secure, so install and push work without the tunnel.
+
+Push needs VAPID keys in `.env` (`init_env` creates them). If notifications don't arrive: check the site's notification permission in the browser, make sure the phone isn't in Do Not Disturb or focus mode, and use **Send a test notification**. Reminders wait up to 12 hours for a phone that's asleep or offline; code-red and missed-deadline reminders are sent as high priority.
+
+A deployed Leon (see [DEPLOY.md](DEPLOY.md)) is already on HTTPS, so phones can install it straight from its address.
 
 ## Turning on the AI
 

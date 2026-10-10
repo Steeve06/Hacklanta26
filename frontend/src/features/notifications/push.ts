@@ -16,6 +16,25 @@ function keyBytes(base64: string): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
+/** Subscribe this device (or reuse its subscription) and store it on the server. */
+async function subscribeAndSave(registration: ServiceWorkerRegistration, publicKey: string) {
+  const subscription =
+    (await registration.pushManager.getSubscription()) ??
+    (await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: keyBytes(publicKey),
+    }));
+  const json = subscription.toJSON();
+  unwrap(
+    await api.POST("/api/v1/push/subscribe", {
+      body: {
+        endpoint: json.endpoint ?? "",
+        keys: { p256dh: json.keys?.p256dh ?? "", auth: json.keys?.auth ?? "" },
+      },
+    }),
+  );
+}
+
 export async function pushState(): Promise<PushState> {
   if (!supported()) return "unsupported";
   if (Notification.permission === "denied") return "blocked";
@@ -34,22 +53,22 @@ export async function enablePush(): Promise<PushState> {
   if (permission !== "granted") return permission === "denied" ? "blocked" : "off";
   const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
   await navigator.serviceWorker.ready;
-  const subscription =
-    (await registration.pushManager.getSubscription()) ??
-    (await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: keyBytes(config.public_key),
-    }));
-  const json = subscription.toJSON();
-  unwrap(
-    await api.POST("/api/v1/push/subscribe", {
-      body: {
-        endpoint: json.endpoint ?? "",
-        keys: { p256dh: json.keys?.p256dh ?? "", auth: json.keys?.auth ?? "" },
-      },
-    }),
-  );
+  await subscribeAndSave(registration, config.public_key);
   return "on";
+}
+
+/** If this device already allowed notifications, make sure the server has its subscription
+ * (after a reinstall, a new browser profile or a reset database). Never asks for permission. */
+export async function syncPush(): Promise<void> {
+  if (!supported() || Notification.permission !== "granted") return;
+  const config = unwrap(await api.GET("/api/v1/push/subscribe"));
+  if (!config.enabled) return;
+  const registration = await navigator.serviceWorker.ready;
+  await subscribeAndSave(registration, config.public_key);
+}
+
+export async function sendTestPush(): Promise<number> {
+  return unwrap(await api.POST("/api/v1/push/test")).sent;
 }
 
 export async function disablePush(): Promise<PushState> {

@@ -62,6 +62,15 @@ services:
       - ./frontend/public:/app/public
     depends_on: [web]
 
+  # Optional: an HTTPS address for trying Leon on a phone (install, push). Start it with
+  #   docker compose --profile phone up tunnel
+  # and open the https://...trycloudflare.com address it prints. No account needed.
+  tunnel:
+    image: cloudflare/cloudflared:2024.12.2
+    command: tunnel --no-autoupdate --url http://frontend:5173
+    depends_on: [frontend]
+    profiles: [phone]
+
 volumes:
   pgdata:
   media:

@@ -147,7 +147,7 @@ export function AppShell() {
 
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         <ul className="flex">
           {items

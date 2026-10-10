@@ -949,6 +949,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/push/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Send a sample reminder to this user's devices, so they can see push works. */
+        post: operations["v1_push_test_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/streak": {
         parameters: {
             query?: never;
@@ -1781,6 +1798,10 @@ export interface components {
             /** Format: uri */
             endpoint: string;
             keys: components["schemas"]["PushKeysRequest"];
+        };
+        PushTest: {
+            /** @description devices that accepted the test push */
+            sent: number;
         };
         QuestionPublic: {
             readonly id: number;
@@ -3848,6 +3869,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    v1_push_test_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushTest"];
+                };
             };
         };
     };

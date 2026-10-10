@@ -5,19 +5,39 @@ import { defineConfig } from "vite";
 
 const backend = process.env.VITE_PROXY_TARGET ?? "http://localhost:8000";
 
+// Hosts allowed besides localhost: HTTPS tunnels for trying Leon on a phone, plus any listed in
+// VITE_ALLOWED_HOSTS (comma-separated).
+const allowedHosts = [
+  ".trycloudflare.com",
+  ".ngrok-free.app",
+  ...(process.env.VITE_ALLOWED_HOSTS ?? "").split(",").filter(Boolean),
+];
+
+/** Proxy to Django, telling it which host the browser used (for its same-origin checks). */
+const toBackend = {
+  target: backend,
+  changeOrigin: true,
+  configure: (proxy: { on: (event: "proxyReq", handler: ProxyReqHandler) => void }) => {
+    proxy.on("proxyReq", (proxyReq, req) => {
+      if (req.headers.host) proxyReq.setHeader("X-Forwarded-Host", req.headers.host);
+    });
+  },
+};
+type ProxyReqHandler = (
+  proxyReq: { setHeader: (name: string, value: string) => void },
+  req: { headers: { host?: string } },
+) => void;
+
 export default defineConfig({
   plugins: [react()],
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   server: {
     host: true,
     port: 5173,
+    allowedHosts,
     // Docker on Windows and macOS doesn't pass file-change events into the container.
     watch: process.env.VITE_POLL === "true" ? { usePolling: true, interval: 300 } : undefined,
-    proxy: {
-      "/api": { target: backend, changeOrigin: true },
-      "/admin": { target: backend, changeOrigin: true },
-      "/static": { target: backend, changeOrigin: true },
-    },
+    proxy: { "/api": toBackend, "/admin": toBackend, "/static": toBackend },
   },
   build: {
     target: "es2022",

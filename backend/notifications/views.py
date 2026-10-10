@@ -1,3 +1,5 @@
+import json
+
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -17,6 +19,7 @@ from .serializers import (
     NotificationSerializer,
     PushConfigSerializer,
     PushSubscribeSerializer,
+    PushTestSerializer,
     PushUnsubscribeSerializer,
 )
 from .services import inbox, take_action
@@ -75,6 +78,26 @@ class ActionView(APIView):
                 }
             ).data
         )
+
+
+class PushTestView(APIView):
+    """Send a sample reminder to this user's devices, so they can see push works."""
+
+    @extend_schema(request=None, responses=PushTestSerializer)
+    def post(self, request):
+        if not delivery.push_configured():
+            return Response({"detail": "Push isn't set up on this server."}, status=503)
+        if not PushSubscription.objects.filter(user=request.user).exists():
+            return Response({"detail": "Turn on push on this device first."}, status=409)
+        payload = json.dumps(
+            {
+                "title": "Leon · Test",
+                "body": "Push works. This is how your reminders will arrive.",
+                "url": "/pulse/today",
+            }
+        )
+        sent = delivery.send_to_devices(request.user, payload)
+        return Response({"sent": sent})
 
 
 class PushView(APIView):

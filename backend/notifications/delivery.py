@@ -29,6 +29,11 @@ def push_configured() -> bool:
     return bool(settings.VAPID_PUBLIC_KEY and settings.VAPID_PRIVATE_KEY)
 
 
+# How long a push service keeps a reminder for a phone that's asleep or offline.
+PUSH_TTL_SECONDS = 12 * 60 * 60
+URGENT_TIER = 4
+
+
 def push_payload(n: Notification) -> str:
     """What the lock screen sees: the reminder text and a link, never grades or scores."""
     return json.dumps(
@@ -37,6 +42,7 @@ def push_payload(n: Notification) -> str:
             "title": f"Leon · {TITLES.get(n.trigger, 'Reminder')}",
             "body": n.text,
             "url": n.link or "/pulse/inbox",
+            "urgent": n.tier >= URGENT_TIER,
             "actions": [
                 {"action": "open", "title": "Open"},
                 {"action": "snooze", "title": "Snooze 1 h"},
@@ -46,27 +52,35 @@ def push_payload(n: Notification) -> str:
     )
 
 
-def _send_push(n: Notification) -> bool:
+def send_to_devices(user, payload: str, *, urgent: bool = False) -> int:
+    """Send one push to each of the user's subscribed devices. Returns how many accepted it.
+    Expired subscriptions (404/410) are removed."""
     from pywebpush import WebPushException, webpush
 
-    delivered = False
-    for sub in PushSubscription.objects.filter(user=n.student):
+    delivered = 0
+    for sub in PushSubscription.objects.filter(user=user):
         try:
             webpush(
                 subscription_info={"endpoint": sub.endpoint, "keys": sub.keys},
-                data=push_payload(n),
+                data=payload,
                 vapid_private_key=settings.VAPID_PRIVATE_KEY,
                 vapid_claims={"sub": settings.VAPID_SUBJECT},
+                ttl=PUSH_TTL_SECONDS,
+                headers={"Urgency": "high" if urgent else "normal"},
                 timeout=10,
             )
-            delivered = True
+            delivered += 1
         except WebPushException as exc:
             status = getattr(exc.response, "status_code", None)
             if status in (404, 410):
                 sub.delete()
             else:
-                logger.warning("Push failed for notification %s (status %s)", n.id, status)
+                logger.warning("Push to user %s failed (status %s)", user.id, status)
     return delivered
+
+
+def _send_push(n: Notification) -> bool:
+    return send_to_devices(n.student, push_payload(n), urgent=n.tier >= URGENT_TIER) > 0
 
 
 def _send_email(n: Notification) -> None:
