@@ -1,6 +1,6 @@
 import { Icon } from "@/components/Icon";
 import { cx } from "@/lib/cx";
-import type { Rule } from "./passwordRules";
+import type { Rule } from "./passwordChecks";
 
 export function PasswordRules({ id, rules }: { id: string; rules: Rule[] }) {
   return (

@@ -4,7 +4,7 @@ import { Button, Card, toast } from "@/components/ui";
 import { useChangePassword, useMe } from "./hooks";
 import { PasswordInput } from "./PasswordInput";
 import { PasswordRules } from "./PasswordRules";
-import { passwordProblem, passwordRules } from "./passwordRules";
+import { passwordProblem, passwordRules } from "./passwordChecks";
 
 const EMPTY = { current_password: "", new_password: "", new_password_confirm: "" };
 

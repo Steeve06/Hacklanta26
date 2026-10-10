@@ -6,7 +6,7 @@ import { AuthLayout } from "./AuthLayout";
 import { useSignup } from "./hooks";
 import { PasswordInput } from "./PasswordInput";
 import { PasswordRules } from "./PasswordRules";
-import { passwordProblem, passwordRules } from "./passwordRules";
+import { passwordProblem, passwordRules } from "./passwordChecks";
 import { ONBOARDING } from "./redirects";
 
 const EMAIL = /^\S+@\S+\.\S+$/;

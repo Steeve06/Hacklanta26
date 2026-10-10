@@ -6,7 +6,7 @@ import { AuthLayout } from "./AuthLayout";
 import { useConfirmReset } from "./hooks";
 import { PasswordInput } from "./PasswordInput";
 import { PasswordRules } from "./PasswordRules";
-import { passwordProblem, passwordRules } from "./passwordRules";
+import { passwordProblem, passwordRules } from "./passwordChecks";
 
 export function ResetPasswordPage() {
   const [params] = useSearchParams();

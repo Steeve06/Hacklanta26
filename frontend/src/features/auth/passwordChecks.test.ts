@@ -1,4 +1,4 @@
-import { passwordProblem, passwordRules } from "./passwordRules";
+import { passwordProblem, passwordRules } from "./passwordChecks";
 
 const ok = (password: string, email = "nia@example.edu", names = ["Nia", "Okoro"]) =>
   Object.fromEntries(passwordRules(password, email, names).map((r) => [r.id, r.ok]));
