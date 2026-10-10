@@ -14,6 +14,7 @@ import {
 import { PushToggle } from "@/features/notifications/PushToggle";
 import { SupportiveBanner } from "@/features/notifications/SupportiveBanner";
 import { useLogout, useMe, useUpdateMe, type Me } from "@/features/auth/hooks";
+import { ChangePasswordCard } from "@/features/auth/ChangePasswordCard";
 import { useAuth } from "@/features/auth/store";
 import { downloadFile } from "@/lib/download";
 import {
@@ -53,10 +54,14 @@ export function SettingsPage() {
               </Card>
               <NotificationsSection me={data} />
               <RegenerateSection feedback={data.profile?.plan_feedback ?? ""} />
+              <ChangePasswordCard />
               <AccountSection />
             </>
           ) : (
-            <AccountSection />
+            <>
+              <ChangePasswordCard />
+              <AccountSection />
+            </>
           )
         }
       </QueryView>

@@ -20,7 +20,7 @@ describe("LoginPage", () => {
     globalThis.fetch = () => new Promise<Response>(() => undefined);
     renderRoute(<LoginPage />, "/login");
     await userEvent.type(screen.getByLabelText("Email"), "maya@pulse.test");
-    await userEvent.type(screen.getByLabelText("Password"), "pulse-demo");
+    await userEvent.type(screen.getByLabelText("Password", { selector: "input" }), "pulse-demo");
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
     expect(await screen.findByRole("button", { name: "Signing in…" })).toBeDisabled();
     expect(screen.getByLabelText("Email")).toBeDisabled();

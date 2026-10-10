@@ -3,7 +3,7 @@ import { signIn } from "./helpers";
 
 test("new student onboards, generates a schedule and lands on Today", async ({ page }) => {
   await signIn(page, "riley@pulse.test");
-  await expect(page).toHaveURL(/\/pulse\/onboarding/);
+  await expect(page).toHaveURL(/\/onboarding/);
   await expect(page.getByRole("heading", { name: "Let's build your study plan" })).toBeVisible();
 
   await page.getByRole("button", { name: "These are right" }).click();
@@ -23,7 +23,7 @@ test("new student onboards, generates a schedule and lands on Today", async ({ p
   });
   await page.getByRole("button", { name: "Accept schedule" }).click();
 
-  await expect(page).toHaveURL(/\/pulse$/);
+  await expect(page).toHaveURL(/\/pulse\/today$/);
   await expect(page.getByRole("heading", { name: /Today, Riley/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Your sessions" })).toBeVisible();
 });

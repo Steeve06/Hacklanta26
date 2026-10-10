@@ -30,7 +30,7 @@ export function OnboardingPage() {
   if (me.isPending || availability.isPending) return <Skeleton className="h-96 w-full" />;
   if (me.isError)
     return <ErrorState message={errorMessage(me.error)} onRetry={() => void me.refetch()} />;
-  if (me.data.profile?.onboarding_done) return <Navigate to="/pulse" replace />;
+  if (me.data.profile?.onboarding_done) return <Navigate to="/pulse/today" replace />;
   return <Wizard me={me.data} initialBlocks={availability.data?.blocks ?? []} />;
 }
 
@@ -223,7 +223,7 @@ function GenerateStep({ onEdit }: { onEdit: () => void }) {
       ),
     onSuccess: (me) => {
       client.setQueryData(meKey, me);
-      navigate("/pulse", { replace: true });
+      navigate("/pulse/today", { replace: true });
     },
     onError: (err) => toast.error(errorMessage(err)),
   });

@@ -6,25 +6,34 @@ import { useInbox } from "@/features/notifications/api";
 import { cx } from "@/lib/cx";
 import { ShellExtras } from "./ShellExtras";
 
-type NavItem = { to: string; label: string; icon: IconName; end?: boolean; mobile?: boolean };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: IconName;
+  end?: boolean;
+  mobile?: boolean;
+  external?: boolean;
+};
 
 const studentNav: NavItem[] = [
-  { to: "/pulse", label: "Today", icon: "today", end: true, mobile: true },
+  { to: "/pulse/today", label: "Today", icon: "today", mobile: true },
   { to: "/pulse/week", label: "Week", icon: "week", mobile: true },
   { to: "/pulse/overall", label: "Overall", icon: "overall" },
   { to: "/pulse/quiz", label: "Quiz", icon: "quiz", mobile: true },
   { to: "/lms", label: "Courses", icon: "courses", mobile: true },
-  { to: "/pulse/settings", label: "Settings", icon: "settings", mobile: true },
+  { to: "/settings", label: "Settings", icon: "settings", mobile: true },
 ];
 
 const instructorNav: NavItem[] = [
   { to: "/lms", label: "Courses", icon: "courses", mobile: true },
-  { to: "/pulse/settings", label: "Settings", icon: "settings", mobile: true },
+  { to: "/settings", label: "Settings", icon: "settings", mobile: true },
 ];
 
 const adminNav: NavItem[] = [
   { to: "/lms", label: "Courses", icon: "courses", mobile: true },
   { to: "/demo", label: "Demo controls", icon: "roster", mobile: true },
+  { to: "/admin/", label: "Django admin", icon: "external", mobile: true, external: true },
+  { to: "/settings", label: "Settings", icon: "settings", mobile: true },
 ];
 
 function navFor(role: string | undefined, demoMode: boolean): NavItem[] {
@@ -57,10 +66,9 @@ export function AppShell() {
           <ul className="flex flex-col gap-1">
             {items.map((item) => (
               <li key={item.to}>
-                <NavLink
-                  to={item.to}
-                  end={item.end}
-                  className={({ isActive }) =>
+                <NavEntry
+                  item={item}
+                  className={(isActive) =>
                     cx(
                       "flex min-h-11 items-center gap-3 rounded-md px-3 font-bold transition-colors",
                       isActive
@@ -68,10 +76,7 @@ export function AppShell() {
                         : "text-ink-soft hover:bg-sunken hover:text-ink",
                     )
                   }
-                >
-                  <Icon name={item.icon} />
-                  {item.label}
-                </NavLink>
+                />
               </li>
             ))}
           </ul>
@@ -107,25 +112,43 @@ export function AppShell() {
             .filter((item) => item.mobile)
             .map((item) => (
               <li key={item.to} className="flex-1">
-                <NavLink
-                  to={item.to}
-                  end={item.end}
-                  className={({ isActive }) =>
+                <NavEntry
+                  item={item}
+                  className={(isActive) =>
                     cx(
                       "flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-bold",
                       isActive ? "text-pine" : "text-ink-soft",
                     )
                   }
-                >
-                  <Icon name={item.icon} />
-                  {item.label}
-                </NavLink>
+                />
               </li>
             ))}
         </ul>
       </nav>
       {isStudent && <ShellExtras />}
     </div>
+  );
+}
+
+function NavEntry({
+  item,
+  className,
+}: {
+  item: NavItem;
+  className: (isActive: boolean) => string;
+}) {
+  if (item.external)
+    return (
+      <a href={item.to} className={className(false)}>
+        <Icon name={item.icon} />
+        {item.label}
+      </a>
+    );
+  return (
+    <NavLink to={item.to} end={item.end} className={({ isActive }) => className(isActive)}>
+      <Icon name={item.icon} />
+      {item.label}
+    </NavLink>
   );
 }
 

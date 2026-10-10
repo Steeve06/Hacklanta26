@@ -11,7 +11,7 @@ export function OverloadPanel({ report }: { report: OverloadReport }) {
       >
         <h2 className="text-lg font-bold">You have no study time set</h2>
         <p>Pulse can't place anything until you add at least one weekly block.</p>
-        <Link to="/pulse/settings#availability" className="self-start font-bold text-ink underline">
+        <Link to="/settings#availability" className="self-start font-bold text-ink underline">
           Add study time
         </Link>
       </section>
@@ -59,7 +59,7 @@ export function OverloadPanel({ report }: { report: OverloadReport }) {
         </div>
       )}
       <Link
-        to="/pulse/settings#availability"
+        to="/settings#availability"
         className="inline-flex min-h-11 items-center self-start rounded-md bg-ink px-4 font-bold text-paper"
       >
         Add study time
