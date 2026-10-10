@@ -68,9 +68,23 @@ DATABASES = {
 }
 
 AUTH_USER_MODEL = "accounts.User"
-AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
 ]
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 10},
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {"user_attributes": ["email", "first_name", "last_name"]},
+    },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+PASSWORD_RESET_TIMEOUT = 60 * 60
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -95,7 +109,7 @@ else:
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "accounts.auth.SessionJWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -104,7 +118,8 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_CLASSES": ["config.throttles.WriteThrottle"],
     "DEFAULT_THROTTLE_RATES": {
         "write": env("THROTTLE_WRITE", "120/min"),
-        "login": env("THROTTLE_LOGIN", "5/min"),
+        "auth": env("THROTTLE_AUTH", "5/min"),
+        "auth_email": env("THROTTLE_AUTH", "5/min"),
         "regenerate": env("THROTTLE_REGENERATE", "5/hour"),
     },
 }

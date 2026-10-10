@@ -44,7 +44,10 @@ export function LoginPage() {
     event.preventDefault();
     setTouched({ email: true, password: true });
     if (invalid) return;
-    login.mutate({ email, password }, { onSuccess: () => navigate(next, { replace: true }) });
+    login.mutate(
+      { email, password, remember: false },
+      { onSuccess: () => navigate(next, { replace: true }) },
+    );
   }
 
   return (

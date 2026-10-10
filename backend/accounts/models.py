@@ -1,3 +1,4 @@
+import uuid
 from datetime import time
 from zoneinfo import ZoneInfo, available_timezones
 
@@ -97,3 +98,19 @@ class StudentProfile(TimeStamped):
 
     def __str__(self) -> str:
         return f"Profile<{self.user_id}>"
+
+
+class AuthSession(TimeStamped):
+    """One signed-in browser. Every token carries its id, so revoking it ends that session's
+    access tokens too, in every tab."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="auth_sessions")
+    remember = models.BooleanField(default=False)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["user", "revoked_at"])]
+
+    def __str__(self) -> str:
+        return f"AuthSession<{self.user_id}:{self.id}>"

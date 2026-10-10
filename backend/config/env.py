@@ -17,8 +17,13 @@ def env_list(name: str, default: str = "") -> list[str]:
 
 
 def load_dotenv_file() -> None:
-    """Read the repo-root .env for commands run outside Docker. Real environment variables win."""
+    """Read the repo-root .env for commands run outside Docker. Real environment variables win.
+    Tests never read it, so a local .env can't point them at another database."""
+    import sys
     from pathlib import Path
+
+    if "pytest" in sys.modules:
+        return
 
     from dotenv import load_dotenv
 

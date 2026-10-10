@@ -13,6 +13,7 @@ export async function refreshAccess(): Promise<string | null> {
       const res = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
         method: "POST",
         credentials: "include",
+        headers: { "X-Requested-With": "pulse" },
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
       if (!res.ok) return null;
@@ -31,6 +32,7 @@ export async function refreshAccess(): Promise<string | null> {
 async function send(request: Request, token: string | null): Promise<Response> {
   const headers = new Headers(request.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
+  headers.set("X-Requested-With", "pulse");
   return fetch(new Request(request, { headers, credentials: "include" }), {
     signal: AbortSignal.any([request.signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]),
   });
