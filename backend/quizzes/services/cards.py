@@ -51,19 +51,22 @@ def pick(
         )
     }
     latest: dict[int, tuple[date, bool]] = {}
+    seen_at: dict[int, int] = {}
     reviews = (
         CardReview.objects.filter(deck__student=student, deck__day__lt=day, card_id__in=every)
-        .order_by("deck__day")
+        .order_by("deck__day", "id")
         .values_list("card_id", "deck__day", "knew")
     )
-    for card_id, seen_on, knew in reviews:
+    for position, (card_id, seen_on, knew) in enumerate(reviews):
         latest[card_id] = (seen_on, knew)
+        seen_at[card_id] = position
 
     chosen: list[int] = []
     for pool in pools:
-        pool = [c for c in pool if c in group and c not in chosen]
+        # Databases return ids in no fixed order; sort so the day's pick is the same every time.
+        pool = sorted(c for c in pool if c in group and c not in chosen)
         learning = sorted((c for c in pool if c in latest and not latest[c][1]),
-                          key=lambda c: latest[c][0])  # fmt: skip
+                          key=lambda c: seen_at[c])  # fmt: skip
         unseen = [c for c in pool if c not in latest]
         rng.shuffle(unseen)
         seen = sorted((c for c in pool if c in latest and latest[c][1]),
