@@ -7,18 +7,24 @@ User = settings.AUTH_USER_MODEL
 
 
 class Flashcard(TimeStamped):
-    """A general study or awareness card. Cards are not tied to any course."""
+    """A flashcard. Course cards are built from a chapter's text; general cards (no chapter) come
+    from the built-in library and fill decks when a student has no course material yet."""
 
     class Topic(models.TextChoices):
-        STUDY_SKILLS = "study_skills"
-        MEMORY = "memory"
-        FOCUS = "focus"
-        WELLBEING = "wellbeing"
-        MONEY = "money"
-        DIGITAL = "digital"
-        SCIENCE = "science"
-        WORLD = "world"
+        STUDY_SKILLS = "study_skills", "Study skills"
+        MEMORY = "memory", "Memory"
+        FOCUS = "focus", "Focus"
+        WELLBEING = "wellbeing", "Well-being"
+        MONEY = "money", "Money"
+        DIGITAL = "digital", "Digital life"
+        SCIENCE = "science", "Science"
+        WORLD = "world", "World"
+        COURSE = "course", "Course"
 
+    chapter = models.ForeignKey(
+        "lms.Chapter", null=True, blank=True, on_delete=models.CASCADE, related_name="flashcards"
+    )
+    content_hash = models.CharField(max_length=64, blank=True, help_text="chapter version")
     slug = models.SlugField(max_length=80, unique=True)
     topic = models.CharField(max_length=20, choices=Topic.choices)
     front = models.CharField(max_length=300)
@@ -27,13 +33,26 @@ class Flashcard(TimeStamped):
 
     class Meta:
         ordering = ["id"]
+        indexes = [models.Index(fields=["chapter", "active"])]
 
 
 class DailyDeck(TimeStamped):
     """One short deck per student per local day. Finishing it counts that day toward the streak."""
 
+    class Kind(models.TextChoices):
+        UPCOMING = "upcoming", "Prep for an upcoming deadline"
+        REVIEW = "review", "Review of course chapters"
+        GENERAL = "general", "General study cards"
+
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="daily_decks")
     day = models.DateField()
+    kind = models.CharField(max_length=10, choices=Kind.choices, default=Kind.GENERAL)
+    course = models.ForeignKey(
+        "lms.Course", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    assessment = models.ForeignKey(
+        "lms.Assessment", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
     cards = models.JSONField(default=list, help_text="flashcard ids in the order shown")
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)

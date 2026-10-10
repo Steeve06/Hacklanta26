@@ -2,9 +2,13 @@ from django.db import migrations
 
 
 def forwards(apps, schema_editor):
-    from quizzes.services.cards import sync_cards
+    from quizzes.cards import CARDS
 
-    sync_cards(apps.get_model("quizzes", "Flashcard"))
+    Flashcard = apps.get_model("quizzes", "Flashcard")
+    for slug, topic, front, back in CARDS:
+        Flashcard.objects.update_or_create(
+            slug=slug, defaults={"topic": topic, "front": front, "back": back, "active": True}
+        )
     # Streaks carried over from chapter quizzes become daily streaks that last ran on the day of
     # their latest event, so the first missed day after the switch is settled normally.
     Streak = apps.get_model("quizzes", "Streak")

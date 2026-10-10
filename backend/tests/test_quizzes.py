@@ -50,7 +50,9 @@ def at(day: date, hour: int, minute: int = 0) -> datetime:
 class TestLibrary:
     def test_cards_are_seeded_and_cover_every_topic(self):
         assert Flashcard.objects.filter(active=True).count() == len(CARDS)
-        assert {c.topic for c in Flashcard.objects.all()} == set(Flashcard.Topic.values)
+        assert {c.topic for c in Flashcard.objects.all()} == set(Flashcard.Topic.values) - {
+            "course"
+        }
         assert len({slug for slug, *_ in CARDS}) == len(CARDS)
 
     def test_sync_updates_in_place_and_retires_removed_cards(self, monkeypatch):
@@ -278,3 +280,133 @@ def test_deck_list_and_review_are_fast(student, django_assert_max_num_queries):
             f"/api/v1/decks/{deck['id']}/review",
             {"card_id": deck["cards"][0]["id"], "knew": True}, format="json",
         )  # fmt: skip
+
+
+HASHING = """## Hashing
+
+A **hash table** answers lookups in constant time on average.
+A **hash function** turns each key into an integer called its hash.
+Different keys can land in one bucket, which is called a **collision** between them.
+**Separate chaining** stores a small list in each bucket of the table.
+**Open addressing** looks for another free slot when a bucket is full.
+It is **fast** to compute.
+"""
+
+HEAPS = """## Heaps
+
+A **binary heap** is a complete binary tree stored in an array.
+The **heap property** says every parent is smaller than its children in a min-heap.
+Restoring order after an insert is called **sifting up** through the tree.
+"""
+
+
+@pytest.fixture
+def enrolled():
+    from .factories import ChapterFactory, CourseFactory, enroll
+
+    student = make_student()
+    course = CourseFactory(code="CS 201")
+    enroll(student, course)
+    hashing = ChapterFactory(course=course, body_md=HASHING, title="Hashing", order=5)
+    heaps = ChapterFactory(course=course, body_md=HEAPS, title="Heaps", order=7)
+    return student, course, hashing, heaps
+
+
+class TestCourseCards:
+    def test_key_terms_become_fill_in_the_blank_cards(self, enrolled):
+        from quizzes.services import chapter_cards
+
+        _, _, hashing, _ = enrolled
+        ids = chapter_cards.ensure(hashing)
+        cards = Flashcard.objects.filter(id__in=ids)
+        assert len(ids) == 5  # "fast" is emphasis, not a key term
+        card = cards.get(back__startswith="Hash function")
+        assert (
+            card.front
+            == "Fill in the blank: A _____ turns each key into an integer called its hash."
+        )
+        assert card.topic == "course" and card.chapter == hashing
+        assert chapter_cards.ensure(hashing) == ids
+
+    def test_editing_a_chapter_retires_its_old_cards(self, enrolled):
+        from quizzes.services import chapter_cards
+
+        _, _, hashing, _ = enrolled
+        old = chapter_cards.ensure(hashing)
+        hashing.body_md = (
+            HASHING + "\nA **load factor** is the number of entries divided by buckets.\n"
+        )
+        hashing.save()
+        new = chapter_cards.ensure(hashing)
+        assert len(new) == 6
+        assert not Flashcard.objects.filter(id__in=old, active=True).exclude(id__in=new).exists()
+
+
+class TestCourseFocus:
+    def test_upcoming_quiz_drives_the_deck(self, enrolled):
+        from .factories import AssessmentFactory
+
+        student, course, hashing, heaps = enrolled
+        quiz = AssessmentFactory(course=course, type="quiz", title="Quiz 2: Hashing",
+                                 due_at=timezone.now() + timedelta(days=2))  # fmt: skip
+        quiz.chapters.set([hashing])
+        deck = client_for(student).get("/api/v1/decks/today").data
+        assert deck["focus"]["kind"] == "upcoming"
+        assert deck["focus"]["assessment_title"] == "Quiz 2: Hashing"
+        assert deck["focus"]["course_code"] == "CS 201"
+        assert deck["focus"]["due_at"]
+        assert len(deck["cards"]) == DECK_SIZE
+        assert all(c["chapter_id"] == hashing.id for c in deck["cards"])
+        assert deck["cards"][0]["source"] == "CS 201 · Ch 5: Hashing"
+
+    def test_quiz_beats_sooner_homework_and_far_deadlines_are_ignored(self, enrolled):
+        from .factories import AssessmentFactory
+
+        student, course, hashing, heaps = enrolled
+        homework = AssessmentFactory(course=course, due_at=timezone.now() + timedelta(days=1))
+        homework.chapters.set([hashing])
+        quiz = AssessmentFactory(
+            course=course, type="quiz", due_at=timezone.now() + timedelta(days=4)
+        )
+        quiz.chapters.set([heaps])
+        later = AssessmentFactory(
+            course=course, type="quiz", due_at=timezone.now() + timedelta(days=20)
+        )
+        later.chapters.set([hashing])
+        deck = client_for(student).get("/api/v1/decks/today").data
+        assert deck["focus"]["assessment_id"] == quiz.id
+        heap_cards = [c for c in deck["cards"] if c["chapter_id"] == heaps.id]
+        assert len(heap_cards) == 3  # all of the quiz's cards, topped up from the course
+        assert {c["chapter_id"] for c in deck["cards"]} == {heaps.id, hashing.id}
+
+    def test_submitted_quiz_no_longer_drives_the_deck(self, enrolled):
+        from lms.models import Submission
+
+        from .factories import AssessmentFactory
+
+        student, course, hashing, _ = enrolled
+        quiz = AssessmentFactory(
+            course=course, type="quiz", due_at=timezone.now() + timedelta(days=2)
+        )
+        quiz.chapters.set([hashing])
+        Submission.objects.create(assessment=quiz, student=student, status="submitted",
+                                  submitted_at=timezone.now())  # fmt: skip
+        deck = client_for(student).get("/api/v1/decks/today").data
+        assert deck["focus"]["kind"] == "review"
+
+    def test_quiet_week_reviews_released_course_chapters(self, enrolled):
+        from .factories import ChapterFactory
+
+        student, course, hashing, heaps = enrolled
+        ChapterFactory(course=course, body_md=HEAPS.replace("binary heap", "treap"), order=9,
+                       available_from=timezone.now() + timedelta(days=10))  # fmt: skip
+        deck = client_for(student).get("/api/v1/decks/today").data
+        assert deck["focus"]["kind"] == "review"
+        assert deck["focus"]["assessment_id"] is None
+        assert {c["chapter_id"] for c in deck["cards"]} <= {hashing.id, heaps.id}
+        assert len({c["chapter_id"] for c in deck["cards"]}) == 2
+
+    def test_no_courses_falls_back_to_general_cards(self, student):
+        deck = client_for(student).get("/api/v1/decks/today").data
+        assert deck["focus"]["kind"] == "general"
+        assert all(c["chapter_id"] is None for c in deck["cards"])

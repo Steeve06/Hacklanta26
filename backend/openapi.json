@@ -3294,6 +3294,14 @@
                         "type": "integer",
                         "readOnly": true
                     },
+                    "focus": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/DeckFocus"
+                            }
+                        ],
+                        "readOnly": true
+                    },
                     "started_at": {
                         "type": "string",
                         "format": "date-time",
@@ -3320,6 +3328,7 @@
                     "completed_at",
                     "counted_for_streak",
                     "day",
+                    "focus",
                     "id",
                     "knew",
                     "started_at",
@@ -3344,6 +3353,14 @@
                     },
                     "card_count": {
                         "type": "integer",
+                        "readOnly": true
+                    },
+                    "focus": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/DeckFocus"
+                            }
+                        ],
                         "readOnly": true
                     },
                     "started_at": {
@@ -3389,6 +3406,7 @@
                     "completed_at",
                     "counted_for_streak",
                     "day",
+                    "focus",
                     "id",
                     "knew",
                     "milestone",
@@ -3456,6 +3474,18 @@
                     "topic": {
                         "$ref": "#/components/schemas/FlashcardTopicEnum"
                     },
+                    "source": {
+                        "type": "string",
+                        "description": "where the card comes from, e.g. CS 201 · Ch 5: Hashing"
+                    },
+                    "chapter_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "course_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
                     "front": {
                         "type": "string"
                     },
@@ -3470,11 +3500,60 @@
                 },
                 "required": [
                     "back",
+                    "chapter_id",
+                    "course_id",
                     "front",
                     "id",
                     "knew",
+                    "source",
                     "topic"
                 ]
+            },
+            "DeckFocus": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "$ref": "#/components/schemas/DeckFocusKindEnum"
+                    },
+                    "course_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "course_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "assessment_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "assessment_title": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "assessment_id",
+                    "assessment_title",
+                    "course_code",
+                    "course_id",
+                    "due_at",
+                    "kind"
+                ]
+            },
+            "DeckFocusKindEnum": {
+                "enum": [
+                    "upcoming",
+                    "review",
+                    "general"
+                ],
+                "type": "string",
+                "description": "* `upcoming` - Prep for an upcoming deadline\n* `review` - Review of course chapters\n* `general` - General study cards"
             },
             "DemoStudent": {
                 "type": "object",
@@ -3642,10 +3721,11 @@
                     "money",
                     "digital",
                     "science",
-                    "world"
+                    "world",
+                    "course"
                 ],
                 "type": "string",
-                "description": "* `study_skills` - Study Skills\n* `memory` - Memory\n* `focus` - Focus\n* `wellbeing` - Wellbeing\n* `money` - Money\n* `digital` - Digital\n* `science` - Science\n* `world` - World"
+                "description": "* `study_skills` - Study skills\n* `memory` - Memory\n* `focus` - Focus\n* `wellbeing` - Well-being\n* `money` - Money\n* `digital` - Digital life\n* `science` - Science\n* `world` - World\n* `course` - Course"
             },
             "GenerateRequest": {
                 "type": "object",

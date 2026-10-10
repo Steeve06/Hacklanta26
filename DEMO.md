@@ -39,7 +39,7 @@ Sign in as **sam@pulse.test**. Go to **Courses > CS 201 > Assignments > Problem 
 
 ## 6. Today's flashcards keep the streak going
 
-Sign in as **maya@pulse.test** (6-day streak). Open **Quiz**; the week strip shows the last six days done and today still open.
+Sign in as **maya@pulse.test** (6-day streak). Open **Quiz**; the week strip shows the last six days done and today still open, and today's deck says which upcoming deadline it's prepping for.
 
 - **Start today's flashcards**. For each of the five cards, **Show answer** (or tap the card), then **Got it** or **Still learning**.
 - The result reads "Counted for your streak: 7 days in a row. That's a 7-day milestone." with confetti. Opening the deck again doesn't count the day twice, and cards marked "Still learning" come back in the next decks.

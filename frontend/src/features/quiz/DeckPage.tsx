@@ -10,7 +10,8 @@ import { Button, ProgressBar, QueryView, Skeleton, toast } from "@/components/ui
 import { useNumericParam } from "@/features/lms/useIds";
 import { cx } from "@/lib/cx";
 import { useDeck, useReviewCard, useTodayDeck, type DeckCard, type DeckDetail } from "./api";
-import { formatDeckDay, TOPIC_LABELS } from "./topics";
+import { useTimezone } from "@/lib/time";
+import { focusLine, formatDeckDay } from "./topics";
 
 export function TodayDeckPage() {
   return <DeckView query={useTodayDeck()} />;
@@ -49,6 +50,7 @@ function deckTitle(deck: DeckDetail): string {
 }
 
 function Player({ deck }: { deck: DeckDetail }) {
+  const tz = useTimezone();
   const review = useReviewCard(deck.id);
   const card = deck.cards.find((c) => c.knew === null);
   const done = deck.cards.filter((c) => c.knew !== null).length;
@@ -63,6 +65,7 @@ function Player({ deck }: { deck: DeckDetail }) {
         <h1 id="deck-heading" className="text-2xl font-bold">
           {deckTitle(deck)}
         </h1>
+        <p className="font-bold text-pine">{focusLine(deck.focus, tz)}</p>
         <p className="text-ink-soft">
           {deck.state === "closed"
             ? "This day is over, so this deck is practice and won't change your streak."
@@ -172,10 +175,10 @@ function CardFace({
       }}
     >
       <span className="text-xs font-bold uppercase tracking-wide text-ink-soft">
-        {TOPIC_LABELS[card.topic]}
+        {card.source}
         {back ? " · Answer" : ""}
       </span>
-      <p className={cx("font-display", back ? "text-lg" : "text-xl font-bold")}>
+      <p className={cx("whitespace-pre-line font-display", back ? "text-lg" : "text-xl font-bold")}>
         {back ? card.back : card.front}
       </p>
       {!back && <span className="mt-auto text-sm text-ink-soft">Tap the card to flip it</span>}
@@ -226,8 +229,17 @@ function Summary({ deck }: { deck: DeckDetail }) {
               <span className="sr-only">{c.knew ? "Got it" : "Still learning"}</span>
             </span>
             <div className="flex flex-col gap-1">
+              <p className="text-xs font-bold uppercase tracking-wide text-ink-soft">{c.source}</p>
               <p className="font-bold">{c.front}</p>
-              <p className="text-sm text-ink-soft">{c.back}</p>
+              <p className="whitespace-pre-line text-sm text-ink-soft">{c.back}</p>
+              {c.chapter_id && c.course_id && (
+                <Link
+                  to={`/lms/courses/${c.course_id}/chapters/${c.chapter_id}`}
+                  className="self-start text-sm font-bold text-pine underline"
+                >
+                  Review this in the chapter
+                </Link>
+              )}
             </div>
           </li>
         ))}

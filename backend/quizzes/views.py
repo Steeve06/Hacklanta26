@@ -36,7 +36,9 @@ class DeckListView(APIView):
     @extend_schema(responses=DailyDeckSerializer(many=True))
     def get(self, request):
         require_student(request.user)
-        decks = DailyDeck.objects.filter(student=request.user).select_related("student")[:HISTORY]
+        decks = DailyDeck.objects.filter(student=request.user).select_related(
+            "student", "course", "assessment"
+        )[:HISTORY]
         context = {"now": clock_now(request.user)}
         return Response(DailyDeckSerializer(decks, many=True, context=context).data)
 

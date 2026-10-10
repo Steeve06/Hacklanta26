@@ -14,8 +14,9 @@ export function QuizHubPage() {
       <header>
         <h1 className="text-2xl font-bold">Daily flashcards</h1>
         <p className="text-ink-soft">
-          Five quick cards a day on study skills, memory, focus, well-being and the world around
-          you. Finish today&apos;s deck to keep your streak going.
+          Five quick flashcards a day from your courses. When a quiz or assignment is coming up, the
+          deck helps you prepare for it; in quiet weeks it mixes in review. Finish today&apos;s deck
+          to keep your streak going.
         </p>
       </header>
       <Card aria-labelledby="streak-heading">

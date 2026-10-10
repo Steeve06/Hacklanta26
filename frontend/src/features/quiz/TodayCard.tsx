@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/Icon";
 import { cx } from "@/lib/cx";
+import { useTimezone } from "@/lib/time";
 import type { DeckDetail } from "./api";
+import { focusLine } from "./topics";
 
 export function TodayCard({ deck }: { deck: DeckDetail }) {
+  const tz = useTimezone();
   const done = Boolean(deck.completed_at);
   const reviewed = deck.cards.filter((c) => c.knew !== null).length;
   return (
@@ -22,6 +25,7 @@ export function TodayCard({ deck }: { deck: DeckDetail }) {
               ? "Finish today's flashcards"
               : "Start today's flashcards"}
         </span>
+        <span className="text-sm font-bold text-pine">{focusLine(deck.focus, tz)}</span>
         <span className="text-sm text-ink-soft">
           {done
             ? `${deck.knew} of ${deck.card_count} known. See you tomorrow.`

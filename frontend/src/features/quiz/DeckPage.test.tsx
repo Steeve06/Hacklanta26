@@ -17,9 +17,35 @@ function makeDeck(): DeckDetail {
     counted_for_streak: false,
     milestone: null,
     streak: 2,
+    focus: {
+      kind: "upcoming",
+      course_id: 3,
+      course_code: "CS 201",
+      assessment_id: 9,
+      assessment_title: "Quiz 2: Hashing",
+      due_at: "2026-10-16T03:59:00Z",
+    },
     cards: [
-      { id: 1, topic: "memory", front: "What is chunking?", back: "Grouping items.", knew: null },
-      { id: 2, topic: "focus", front: "What is deep work?", back: "Focused time.", knew: null },
+      {
+        id: 1,
+        topic: "course",
+        source: "CS 201 · Ch 5: Hashing",
+        front: "What is chunking?",
+        back: "Grouping items.",
+        knew: null,
+        chapter_id: 5,
+        course_id: 3,
+      },
+      {
+        id: 2,
+        topic: "focus",
+        source: "Focus",
+        front: "What is deep work?",
+        back: "Focused time.",
+        knew: null,
+        chapter_id: null,
+        course_id: null,
+      },
     ],
   };
 }
@@ -69,6 +95,7 @@ describe("TodayDeckPage", () => {
   it("flips a card, rates it and moves on until the deck is done", async () => {
     renderRoute(<TodayDeckPage />, "/pulse/quiz/today");
     expect(await screen.findByText("What is chunking?")).toBeInTheDocument();
+    expect(screen.getByText(/Prep for Quiz 2: Hashing \(CS 201\), due/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Got it" })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Show answer" }));
@@ -81,6 +108,10 @@ describe("TodayDeckPage", () => {
 
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Counted for your streak: 3 days in a row. That's a 3-day milestone.",
+    );
+    expect(screen.getByRole("link", { name: "Review this in the chapter" })).toHaveAttribute(
+      "href",
+      "/lms/courses/3/chapters/5",
     );
     expect(reviews).toEqual([
       { card_id: 1, knew: true },

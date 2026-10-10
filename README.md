@@ -1,6 +1,6 @@
 # Pulse and Learning Hub
 
-Pulse is a study planner for students. It reads courses, chapters and deadlines from Learning Hub, a small LMS in the same app, and builds a personal study schedule around the student's free time. It sends reminders with an opinionated mascot, shows how the student is doing (good, medium or bad), and keeps a Duolingo-style daily streak: five quick flashcards a day on study skills, memory, focus, well-being and general knowledge, separate from coursework.
+Pulse is a study planner for students. It reads courses, chapters and deadlines from Learning Hub, a small LMS in the same app, and builds a personal study schedule around the student's free time. It sends reminders with an opinionated mascot, shows how the student is doing (good, medium or bad), and keeps a Duolingo-style daily streak: five quick flashcards a day built from the student's own courses, aimed at the next quiz or assignment coming up, with review decks in quiet weeks.
 
 - Backend: Python 3.12, Django 5.1, Django REST Framework, Celery and Redis, PostgreSQL (SQLite for quick local runs).
 - Frontend: React 18, TypeScript, Vite, TanStack Query, Tailwind, Framer Motion and Lottie.
@@ -147,7 +147,7 @@ backend/
   lms/            Learning Hub: courses, chapters, assessments, submissions
   pulse/          availability, planner and solver, sessions, status, demo controls
   notifications/  templates, triggers, delivery (in-app, push, email), guardrails
-  quizzes/        flashcard library, daily decks, streaks
+  quizzes/        course flashcards, daily decks, streaks
   ai/             provider client, prompts, schemas, cost log
   seed/           seed_demo command and course content
 frontend/

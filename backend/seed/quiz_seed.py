@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from quizzes.models import CardReview, DailyDeck, Flashcard, Streak, StreakEvent
 from quizzes.services.cards import pick, sync_cards
+from quizzes.services.focus import choose
 
 from .pulse_seed import AVAILABILITY
 
@@ -45,9 +46,11 @@ def seed_streaks(students: dict) -> None:
         for i in range(current, 0, -1):
             day = today - timedelta(days=i)
             finished = datetime.combine(day, time(20, rng.randrange(60)), tzinfo=tz)
+            focus = choose(student, finished)
             deck = DailyDeck.objects.create(
-                student=student, day=day, cards=pick(student, day), started_at=finished,
-                completed_at=finished, counted_for_streak=True,
+                student=student, day=day, kind=focus.kind, course_id=focus.course_id,
+                assessment_id=focus.assessment_id, cards=pick(student, day, focus.pools),
+                started_at=finished, completed_at=finished, counted_for_streak=True,
             )  # fmt: skip
             knew = [rng.random() < 0.75 for _ in deck.cards]
             CardReview.objects.bulk_create(

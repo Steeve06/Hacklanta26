@@ -1037,6 +1037,7 @@ export interface components {
             readonly day: string;
             readonly state: string;
             readonly card_count: number;
+            readonly focus: components["schemas"]["DeckFocus"];
             /** Format: date-time */
             readonly started_at: string | null;
             /** Format: date-time */
@@ -1050,6 +1051,7 @@ export interface components {
             readonly day: string;
             readonly state: string;
             readonly card_count: number;
+            readonly focus: components["schemas"]["DeckFocus"];
             /** Format: date-time */
             readonly started_at: string | null;
             /** Format: date-time */
@@ -1078,11 +1080,31 @@ export interface components {
         DeckCard: {
             id: number;
             topic: components["schemas"]["FlashcardTopicEnum"];
+            /** @description where the card comes from, e.g. CS 201 · Ch 5: Hashing */
+            source: string;
+            chapter_id: number | null;
+            course_id: number | null;
             front: string;
             back: string;
             /** @description null until the card is rated */
             knew: boolean | null;
         };
+        DeckFocus: {
+            kind: components["schemas"]["DeckFocusKindEnum"];
+            course_id: number | null;
+            course_code: string | null;
+            assessment_id: number | null;
+            assessment_title: string | null;
+            /** Format: date-time */
+            due_at: string | null;
+        };
+        /**
+         * @description * `upcoming` - Prep for an upcoming deadline
+         *     * `review` - Review of course chapters
+         *     * `general` - General study cards
+         * @enum {string}
+         */
+        DeckFocusKindEnum: "upcoming" | "review" | "general";
         DemoStudent: {
             id: number;
             /** Format: email */
@@ -1124,17 +1146,18 @@ export interface components {
             excused: boolean;
         };
         /**
-         * @description * `study_skills` - Study Skills
+         * @description * `study_skills` - Study skills
          *     * `memory` - Memory
          *     * `focus` - Focus
-         *     * `wellbeing` - Wellbeing
+         *     * `wellbeing` - Well-being
          *     * `money` - Money
-         *     * `digital` - Digital
+         *     * `digital` - Digital life
          *     * `science` - Science
          *     * `world` - World
+         *     * `course` - Course
          * @enum {string}
          */
-        FlashcardTopicEnum: "study_skills" | "memory" | "focus" | "wellbeing" | "money" | "digital" | "science" | "world";
+        FlashcardTopicEnum: "study_skills" | "memory" | "focus" | "wellbeing" | "money" | "digital" | "science" | "world" | "course";
         GenerateRequest: {
             feedback?: string;
         };

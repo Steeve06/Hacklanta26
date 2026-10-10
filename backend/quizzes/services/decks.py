@@ -10,6 +10,7 @@ from accounts.clock import now as clock_now
 
 from ..models import CardReview, DailyDeck, Flashcard
 from .cards import pick
+from .focus import choose
 from .streaks import GRACE, record_day
 
 
@@ -27,14 +28,24 @@ def day_end(student, day: date) -> datetime:
     return datetime.combine(day + timedelta(days=1), time(0), tzinfo=student.tz)
 
 
+def build_deck(student, day: date, now: datetime) -> DailyDeck:
+    focus = choose(student, now)
+    return DailyDeck.objects.create(
+        student=student, day=day, kind=focus.kind, course_id=focus.course_id,
+        assessment_id=focus.assessment_id, cards=pick(student, day, focus.pools),
+    )  # fmt: skip
+
+
 def today_deck(student, now: datetime | None = None) -> DailyDeck:
-    day = local_day(student, now or clock_now(student))
+    """Today's deck, built on first visit around whatever is coming up, then fixed for the day."""
+    now = now or clock_now(student)
+    day = local_day(student, now)
     deck = DailyDeck.objects.filter(student=student, day=day).first()
     if deck:
         return deck
     try:
         with transaction.atomic():
-            return DailyDeck.objects.create(student=student, day=day, cards=pick(student, day))
+            return build_deck(student, day, now)
     except IntegrityError:
         return DailyDeck.objects.get(student=student, day=day)
 
