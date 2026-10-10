@@ -62,11 +62,11 @@ export function AppShell() {
         Skip to content
       </a>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-surface md:flex">
-        <div className="flex items-center justify-between px-5 py-5">
+        <div className="flex shrink-0 items-center justify-between px-5 py-5">
           <span className="font-display text-2xl font-extrabold text-pine">Pulse</span>
           {isStudent && <InboxLink />}
         </div>
-        <nav aria-label="Main" className="flex-1 px-3">
+        <nav aria-label="Main" className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
           <ul className="flex flex-col gap-1">
             {items.map((item) => (
               <li key={item.to}>
@@ -96,7 +96,7 @@ export function AppShell() {
             </button>
           )}
         </nav>
-        <div className="border-t border-line p-3">
+        <div className="shrink-0 border-t border-line p-3">
           <p className="truncate px-3 pb-2 text-sm text-ink-soft">{me.data?.email}</p>
           <button
             type="button"
