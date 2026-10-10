@@ -22,7 +22,7 @@ const pulse = () => import("@/features/pulse/pages");
 const notifications = () => import("@/features/notifications/InboxPage");
 const quiz = () => import("@/features/quiz/pages");
 const demo = () => import("@/features/demo/DemoPage");
-const onboarding = () => import("@/features/pulse/OnboardingPage");
+const onboarding = () => import("@/features/onboarding/OnboardingPage");
 
 export const router = createBrowserRouter([
   {

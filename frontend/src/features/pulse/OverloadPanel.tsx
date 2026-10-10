@@ -2,7 +2,30 @@ import { Link } from "react-router-dom";
 import { DueTime } from "@/components/Time";
 import type { OverloadReport } from "./api";
 
-export function OverloadPanel({ report }: { report: OverloadReport }) {
+/** `onAddTime` replaces the link to Settings, e.g. to jump back to a step in onboarding. */
+export function OverloadPanel({
+  report,
+  onAddTime,
+}: {
+  report: OverloadReport;
+  onAddTime?: () => void;
+}) {
+  const addTime = onAddTime ? (
+    <button
+      type="button"
+      onClick={onAddTime}
+      className="inline-flex min-h-11 items-center self-start rounded-md bg-ink px-4 font-bold text-paper"
+    >
+      Add study time
+    </button>
+  ) : (
+    <Link
+      to="/settings#availability"
+      className="inline-flex min-h-11 items-center self-start rounded-md bg-ink px-4 font-bold text-paper"
+    >
+      Add study time
+    </Link>
+  );
   if (report.unresolvable && report.items.length === 0) {
     return (
       <section
@@ -11,9 +34,7 @@ export function OverloadPanel({ report }: { report: OverloadReport }) {
       >
         <h2 className="text-lg font-bold">You have no study time set</h2>
         <p>Pulse can't place anything until you add at least one weekly block.</p>
-        <Link to="/settings#availability" className="self-start font-bold text-ink underline">
-          Add study time
-        </Link>
+        {addTime}
       </section>
     );
   }
@@ -58,12 +79,7 @@ export function OverloadPanel({ report }: { report: OverloadReport }) {
           </ul>
         </div>
       )}
-      <Link
-        to="/settings#availability"
-        className="inline-flex min-h-11 items-center self-start rounded-md bg-ink px-4 font-bold text-paper"
-      >
-        Add study time
-      </Link>
+      {addTime}
     </section>
   );
 }

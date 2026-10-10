@@ -11,7 +11,7 @@ from rest_framework.test import APIClient
 from accounts.models import AuthSession, User
 from lms.models import Enrollment
 
-from .factories import CourseFactory, StudentFactory, TermFactory
+from .factories import AssessmentFactory, CourseFactory, StudentFactory, TermFactory
 
 pytestmark = pytest.mark.django_db
 CSRF = {"HTTP_X_REQUESTED_WITH": "pulse"}
@@ -156,6 +156,31 @@ class TestSignup:
         assert enrolled == {c.id for c in courses}
         assert bearer(response.data["access"]).get("/api/v1/me").status_code == 200
         assert settings.REFRESH_COOKIE_NAME in response.cookies
+
+    def test_work_that_closed_before_joining_is_excused_and_status_starts_fresh(self, api):
+        from lms.models import Submission
+
+        term = TermFactory(start_date=timezone.localdate() - timedelta(days=30))
+        course = CourseFactory(term=term)
+        past = AssessmentFactory(course=course, due_at=timezone.now() - timedelta(days=3))
+        late_open = AssessmentFactory(
+            course=course,
+            due_at=timezone.now() - timedelta(hours=5),
+            cutoff_at=timezone.now() + timedelta(days=1),
+        )
+        future = AssessmentFactory(course=course, due_at=timezone.now() + timedelta(days=3))
+        access = signup(api).data["access"]
+        user = User.objects.get(email="nia@example.edu")
+        excused = set(
+            Submission.objects.filter(student=user, status="excused").values_list(
+                "assessment_id", flat=True
+            )
+        )
+        assert excused == {past.id}
+        assert late_open.id not in excused and future.id not in excused
+        status = bearer(access).get("/api/v1/pulse/status")
+        assert status.status_code == 200
+        assert status.data["overall"]["state"] == "good"
 
     def test_existing_email_in_any_case_is_a_field_error(self, api, student):
         response = signup(api, email=student.email.upper())

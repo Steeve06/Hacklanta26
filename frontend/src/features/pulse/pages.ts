@@ -1,4 +1,3 @@
-export { OnboardingPage } from "./OnboardingPage";
 export { OverallPage } from "./OverallPage";
 export { PulseGate } from "./PulseGate";
 export { SettingsPage } from "./SettingsPage";
