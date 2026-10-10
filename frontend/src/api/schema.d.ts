@@ -1302,6 +1302,15 @@ export interface components {
             order: number;
             title: string;
         };
+        ClassTime: {
+            course: number;
+            course_code: string;
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            location: string;
+        };
         /** @description Also used for "no conversation yet", with a null id and no messages. */
         Conversation: {
             readonly id: number | null;
@@ -1315,13 +1324,14 @@ export interface components {
             readonly title: string;
             readonly color: string;
             readonly instructor_name: string;
+            readonly meetings: components["schemas"]["Meeting"][];
             readonly chapters_total: number;
             readonly chapters_completed: number;
             readonly next_due: components["schemas"]["NextDue"] | null;
         };
         /**
-         * @description The course schedule from Learning Hub for one week: due dates (with extensions applied)
-         *     and chapter releases. Separate from the study plan Pulse builds.
+         * @description The course schedule from Learning Hub for one week: class meetings, due dates (with
+         *     extensions applied) and chapter releases. Separate from the study plan Leon builds.
          */
         CourseCalendar: {
             /** Format: date-time */
@@ -1330,6 +1340,7 @@ export interface components {
             end: string;
             deadlines: components["schemas"]["Deadline"][];
             chapters: components["schemas"]["ChapterRelease"][];
+            classes: components["schemas"]["ClassTime"][];
             courses: components["schemas"]["CourseRef"][];
         };
         CourseRef: {
@@ -1466,6 +1477,17 @@ export interface components {
          * @enum {string}
          */
         MeRoleEnum: "student" | "instructor" | "admin";
+        /** @description A weekly class time in the campus time zone (`timezone`). */
+        Meeting: {
+            /** @description 0 = Monday */
+            readonly weekday: number;
+            /** Format: time */
+            readonly start_time: string;
+            /** Format: time */
+            readonly end_time: string;
+            readonly location: string;
+            readonly timezone: string;
+        };
         MissedDeadline: {
             assessment_id: number;
             course_id: number;
@@ -2074,6 +2096,7 @@ export interface components {
             readonly instructor_name: string;
             /** Format: email */
             instructor_email: string;
+            meetings: components["schemas"]["Meeting"][];
             readonly office_hours: string;
             grading: components["schemas"]["GradingItem"][];
             policies: components["schemas"]["Policies"];

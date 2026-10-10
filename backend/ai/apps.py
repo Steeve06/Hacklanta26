@@ -12,5 +12,5 @@ class AiConfig(AppConfig):
     def ready(self):
         if not (settings.AI_PROVIDER and settings.AI_API_KEY):
             logger.warning(
-                "AI_PROVIDER or AI_API_KEY is not set; Pulse will use deterministic fallbacks."
+                "AI_PROVIDER or AI_API_KEY is not set; Leon will use deterministic fallbacks."
             )

@@ -4,7 +4,7 @@ import { apiAs, signIn } from "./helpers";
 type Session = { start: string; end: string; kind: string; status: string; task_title: string };
 type Schedule = { sessions: Session[] };
 
-test("asking Pulse to skip the next session changes nothing until confirmed, then shows it", async ({
+test("asking Leon to skip the next session changes nothing until confirmed, then shows it", async ({
   page,
   request,
 }) => {
@@ -17,8 +17,8 @@ test("asking Pulse to skip the next session changes nothing until confirmed, the
   expect(next).toBeDefined();
 
   await signIn(page, "alex@pulse.test");
-  await page.getByRole("button", { name: "Ask Pulse" }).first().click();
-  const panel = page.getByRole("dialog", { name: "Ask Pulse" });
+  await page.getByRole("button", { name: "Ask Leon" }).first().click();
+  const panel = page.getByRole("dialog", { name: "Ask Leon" });
   await panel.getByLabel("Message").fill("Can you skip my next session?");
   await panel.getByRole("button", { name: "Send" }).click();
 

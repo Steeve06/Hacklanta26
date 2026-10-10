@@ -11,7 +11,7 @@ import { ScheduleStep } from "./steps/ScheduleStep";
 import { STEP_NAMES } from "./stepTypes";
 
 const MASCOT_LINES = [
-  "Hi, I'm Pip. I'll be keeping an eye on these courses for you. Closely.",
+  "Hi, I'm Leon. I'll be keeping an eye on these courses for you. Closely.",
   "When are you actually free? Be honest. I'll find out anyway.",
   "Sprints or marathons? No judgement. Mostly.",
   "How much attitude can you handle in your reminders?",

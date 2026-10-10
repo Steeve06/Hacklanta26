@@ -1,8 +1,8 @@
 # ruff: noqa: E501
 """Seeded notification copy: every trigger × sass level has six variants.
 
-Voice: Pip is disappointed in choices, never in the student. Jokes land on the situation or on
-Pip's own melodrama. Level 1 is plain and kind; level 4 is theatrical but never mean.
+Voice: Leon is disappointed in choices, never in the student. Jokes land on the situation or on
+Leon's own melodrama. Level 1 is plain and kind; level 4 is theatrical but never mean.
 Variables: {first_name} {title} {course} {hours_left} {weight} {streak_days} {streak_months} {late_hours}
 """
 
@@ -43,12 +43,12 @@ COPY: dict[str, dict[int, list[str]]] = {
     },
     "session_ignored": {
         1: [
-            "Your {course} session ended. If it didn't happen, mark it skipped and Pulse will re-plan.",
-            "Did {title} happen? Let Pulse know so your plan stays accurate.",
+            "Your {course} session ended. If it didn't happen, mark it skipped and Leon will re-plan.",
+            "Did {title} happen? Let Leon know so your plan stays accurate.",
             "No worries if you missed {title}. Mark it and we'll find another time.",
             "{title} wrapped up. Tap Done or Skip so your plan can adjust.",
             "Quick check on {title}: done, partly done or skipped?",
-            "Plans change. Update {title} and Pulse will move things around.",
+            "Plans change. Update {title} and Leon will move things around.",
         ],
         2: [
             "{title} ended a while ago. Did it happen, or is it a mystery?",
@@ -114,7 +114,7 @@ COPY: dict[str, dict[int, list[str]]] = {
             "{title} is due in 2 days and most of its sessions are still ahead. Today's a good day to start.",
             "You're a bit behind on {title}. One session today would help a lot.",
             "{title} needs some attention before it's due in 2 days.",
-            "Let's catch up on {title}. Pulse has a session ready for you.",
+            "Let's catch up on {title}. Leon has a session ready for you.",
             "{title} is due soon and has room to grow. Start small today.",
             "A little progress on {title} today will make the next two days calmer.",
         ],
@@ -148,7 +148,7 @@ COPY: dict[str, dict[int, list[str]]] = {
             "{title} is due in 24 hours. Your session is planned; you can do this.",
             "One day left for {title}. Focus on the next small step.",
             "{title} is due tomorrow. Even an hour of work makes a difference.",
-            "Final stretch for {title}. Pulse has saved time for it.",
+            "Final stretch for {title}. Leon has saved time for it.",
             "{title} is due in {hours_left} hours. Take it one part at a time.",
             "Almost there with {title}. Submitting on time is the goal tonight.",
         ],
@@ -217,7 +217,7 @@ COPY: dict[str, dict[int, list[str]]] = {
             "{title} wasn't submitted on time. There's still time to hand it in late.",
             "Missed deadlines happen. You can still submit {title} in the next {late_hours} hours.",
             "{title} is overdue. Submitting late is better than not at all.",
-            "{title} is past due. Pulse has moved it to the front of your plan.",
+            "{title} is past due. Leon has moved it to the front of your plan.",
             "It's not too late for {title}: the late window is open for {late_hours} more hours.",
         ],
         2: [
@@ -352,9 +352,9 @@ COPY: dict[str, dict[int, list[str]]] = {
 SUPPORTIVE: dict[str, list[str]] = {
     "session_starting": ["A session is starting soon: {title}. Even a short one counts."],
     "session_ignored": [
-        "If {title} didn't happen, that's okay. Mark it and Pulse will find a better time."
+        "If {title} didn't happen, that's okay. Mark it and Leon will find a better time."
     ],
-    "upcoming_due": ["{title} is coming up. Pulse has planned small steps for it."],
+    "upcoming_due": ["{title} is coming up. Leon has planned small steps for it."],
     "falling_behind": ["{title} needs some time soon. One short session is a good start."],
     "final_stretch": ["{title} is due tomorrow. Do what you can; partial work still counts."],
     "code_red": ["{title} is due soon. Submitting what you have is a good choice."],

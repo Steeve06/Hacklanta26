@@ -6,6 +6,7 @@ from .models import (
     Assessment,
     Chapter,
     Course,
+    CourseMeeting,
     DiscussionPost,
     DueDateOverride,
     QuizAttempt,
@@ -24,8 +25,25 @@ class NextDueSerializer(serializers.Serializer):
     due_at = serializers.DateTimeField()
 
 
+class MeetingSerializer(serializers.ModelSerializer):
+    """A weekly class time in the campus time zone (`timezone`)."""
+
+    timezone = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CourseMeeting
+        fields = ["weekday", "start_time", "end_time", "location", "timezone"]
+        read_only_fields = fields
+
+    def get_timezone(self, obj) -> str:
+        from django.conf import settings
+
+        return settings.CAMPUS_TIMEZONE
+
+
 class CourseSerializer(serializers.ModelSerializer):
     instructor_name = serializers.SerializerMethodField()
+    meetings = MeetingSerializer(many=True, read_only=True)
     chapters_total = serializers.IntegerField(read_only=True)
     chapters_completed = serializers.IntegerField(read_only=True)
     next_due = NextDueSerializer(read_only=True, allow_null=True)
@@ -33,7 +51,7 @@ class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = [
-            "id", "code", "title", "color", "instructor_name",
+            "id", "code", "title", "color", "instructor_name", "meetings",
             "chapters_total", "chapters_completed", "next_due",
         ]  # fmt: skip
         read_only_fields = fields
@@ -430,12 +448,13 @@ class SyllabusSerializer(serializers.ModelSerializer):
     instructor_email = serializers.EmailField(source="course.instructor.email")
     course_code = serializers.CharField(source="course.code")
     course_title = serializers.CharField(source="course.title")
+    meetings = MeetingSerializer(source="course.meetings", many=True)
 
     class Meta:
         model = Syllabus
         fields = [
             "course_code", "course_title", "description", "instructor_name", "instructor_email",
-            "office_hours", "grading", "policies", "weeks",
+            "meetings", "office_hours", "grading", "policies", "weeks",
         ]  # fmt: skip
         read_only_fields = fields
 

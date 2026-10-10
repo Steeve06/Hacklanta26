@@ -26,8 +26,8 @@ export function PreferencesFields({
 }) {
   const weekHint =
     freeHours === undefined
-      ? "Pulse never plans more than this in a week."
-      : `Pulse never plans more than this in a week. You marked ${freeHours.toFixed(1).replace(".0", "")} free hours.`;
+      ? "Leon never plans more than this in a week."
+      : `Leon never plans more than this in a week. You marked ${freeHours.toFixed(1).replace(".0", "")} free hours.`;
   const errors = preferenceErrors(value);
   const set = <K extends keyof Preferences>(key: K, v: Preferences[K]) =>
     onChange({ ...value, [key]: v });

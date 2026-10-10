@@ -1,4 +1,4 @@
-# Deploying Pulse
+# Deploying Leon
 
 Nothing here is deployed for you. These steps put the backend on Render and the frontend on Vercel when you're ready. Vercel can't run Celery workers or long AI jobs, so the backend goes to Render.
 

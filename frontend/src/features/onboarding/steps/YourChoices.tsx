@@ -55,7 +55,7 @@ export function YourChoices({
         Your choices
       </h2>
       <p className="mb-3 text-sm text-ink-soft">
-        Pulse can plan up to {formatHours(plannableHours(state))} hours a week. The cap right now is{" "}
+        Leon can plan up to {formatHours(plannableHours(state))} hours a week. The cap right now is{" "}
         {limitingChoice(state)}.
       </p>
       <dl className="flex flex-col divide-y divide-line">

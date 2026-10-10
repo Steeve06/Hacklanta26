@@ -304,7 +304,7 @@ function AssessmentForm({
         />
         <Input
           label="Estimated effort (minutes)"
-          hint="Leave empty to let Pulse estimate it."
+          hint="Leave empty to let Leon estimate it."
           type="number"
           min={5}
           value={form.est_minutes}

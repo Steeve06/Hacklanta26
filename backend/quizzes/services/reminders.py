@@ -32,7 +32,7 @@ def streak_candidates(student, now: datetime) -> list[Candidate]:
                     "course": first.course.code if first else "",
                     "streak_days": streak.current,
                 },
-                link=f"/pulse/quiz/{check.id}",
+                link=f"/pulse/checks/{check.id}",
                 due_at=check.closes_at,
             )
         )

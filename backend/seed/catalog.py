@@ -13,6 +13,10 @@ COURSES = [
         "color": "#3a63b8",
         "instructor": ("prof.okafor@pulse.test", "Ada", "Okafor"),
         "office_hours": "Tuesdays and Thursdays 14:00–15:30, Hartley Hall 312, or by appointment",
+        "meetings": [
+            (0, "10:00", "11:15", "Hartley Hall 120"),
+            (2, "10:00", "11:15", "Hartley Hall 120"),
+        ],
         "description": (
             "How to organize data so programs stay fast as inputs grow. We study arrays, linked "
             "lists, stacks, queues, hash tables, trees, heaps and graphs, analyze their costs with "
@@ -45,6 +49,10 @@ COURSES = [
         "color": "#b4572e",
         "instructor": ("dr.marsh@pulse.test", "Lena", "Marsh"),
         "office_hours": "Mondays 10:00–12:00, Behavioral Sciences 118, or on video by appointment",
+        "meetings": [
+            (1, "11:00", "12:15", "Behavioral Sciences Auditorium"),
+            (3, "11:00", "12:15", "Behavioral Sciences Auditorium"),
+        ],
         "description": (
             "A survey of psychology as a science: how psychologists study behavior, the brain, "
             "perception, learning, memory, motivation and social influence, with attention to how "
@@ -77,6 +85,10 @@ COURSES = [
         "color": "#2e7d5b",
         "instructor": ("prof.reyes@pulse.test", "Daniel", "Reyes"),
         "office_hours": "Wednesdays 13:00–15:00, Commerce Building 204",
+        "meetings": [
+            (1, "15:30", "16:45", "Commerce Building 110"),
+            (3, "15:30", "16:45", "Commerce Building 110"),
+        ],
         "description": (
             "Writing and speaking for the workplace: planning messages for real readers, "
             "email and digital etiquette, delivering bad news, persuasion, reports, presentations "

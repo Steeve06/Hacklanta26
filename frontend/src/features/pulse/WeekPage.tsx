@@ -43,7 +43,10 @@ export function WeekPage() {
           <h1 className="text-2xl font-bold">Week</h1>
           <p className="text-ink-soft">
             {keyLabel(monday, { month: "long", day: "numeric" })} –{" "}
-            {keyLabel(addDays(monday, 6), { month: "long", day: "numeric" })}
+            {keyLabel(addDays(monday, 6), { month: "long", day: "numeric" })} ·{" "}
+            <Link to="/pulse/overall" className="font-bold text-pine underline">
+              Term overview
+            </Link>
           </p>
         </div>
         <nav aria-label="Change week" className="flex gap-1">
@@ -87,8 +90,8 @@ export function WeekPage() {
         ) : (
           <>
             <p className="mb-3 text-sm text-ink-soft">
-              Due dates and new chapters from your courses. Your study sessions are under Study
-              plan.
+              Class times, due dates and new chapters from your courses. Your study sessions are
+              under Study plan.
             </p>
             <CourseCalendarView monday={monday} days={days} />
           </>

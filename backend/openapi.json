@@ -1,7 +1,7 @@
 {
     "openapi": "3.0.3",
     "info": {
-        "title": "Pulse API",
+        "title": "Leon API",
         "version": "1.0.0"
     },
     "paths": {
@@ -4093,6 +4093,35 @@
                     "title"
                 ]
             },
+            "ClassTime": {
+                "type": "object",
+                "properties": {
+                    "course": {
+                        "type": "integer"
+                    },
+                    "course_code": {
+                        "type": "string"
+                    },
+                    "start": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "end": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "location": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "course",
+                    "course_code",
+                    "end",
+                    "location",
+                    "start"
+                ]
+            },
             "Conversation": {
                 "type": "object",
                 "description": "Also used for \"no conversation yet\", with a null id and no messages.",
@@ -4144,6 +4173,13 @@
                         "type": "string",
                         "readOnly": true
                     },
+                    "meetings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Meeting"
+                        },
+                        "readOnly": true
+                    },
                     "chapters_total": {
                         "type": "integer",
                         "readOnly": true
@@ -4169,13 +4205,14 @@
                     "color",
                     "id",
                     "instructor_name",
+                    "meetings",
                     "next_due",
                     "title"
                 ]
             },
             "CourseCalendar": {
                 "type": "object",
-                "description": "The course schedule from Learning Hub for one week: due dates (with extensions applied)\nand chapter releases. Separate from the study plan Pulse builds.",
+                "description": "The course schedule from Learning Hub for one week: class meetings, due dates (with\nextensions applied) and chapter releases. Separate from the study plan Leon builds.",
                 "properties": {
                     "start": {
                         "type": "string",
@@ -4197,6 +4234,12 @@
                             "$ref": "#/components/schemas/ChapterRelease"
                         }
                     },
+                    "classes": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ClassTime"
+                        }
+                    },
                     "courses": {
                         "type": "array",
                         "items": {
@@ -4206,6 +4249,7 @@
                 },
                 "required": [
                     "chapters",
+                    "classes",
                     "courses",
                     "deadlines",
                     "end",
@@ -4710,6 +4754,42 @@
                 ],
                 "type": "string",
                 "description": "* `student` - Student\n* `instructor` - Instructor\n* `admin` - Admin"
+            },
+            "Meeting": {
+                "type": "object",
+                "description": "A weekly class time in the campus time zone (`timezone`).",
+                "properties": {
+                    "weekday": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "0 = Monday"
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "format": "time",
+                        "readOnly": true
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "format": "time",
+                        "readOnly": true
+                    },
+                    "location": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "end_time",
+                    "location",
+                    "start_time",
+                    "timezone",
+                    "weekday"
+                ]
             },
             "MissedDeadline": {
                 "type": "object",
@@ -6801,6 +6881,12 @@
                         "type": "string",
                         "format": "email"
                     },
+                    "meetings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Meeting"
+                        }
+                    },
                     "office_hours": {
                         "type": "string",
                         "readOnly": true
@@ -6828,6 +6914,7 @@
                     "grading",
                     "instructor_email",
                     "instructor_name",
+                    "meetings",
                     "office_hours",
                     "policies",
                     "weeks"

@@ -13,7 +13,7 @@ type Schedule = { sessions: Session[] };
 type Assessment = { id: number; type: string; title: string };
 type Status = { overall: { score: number } };
 
-test("submitting homework in Learning Hub frees its sessions in Pulse", async ({
+test("submitting homework in Learning Hub frees its sessions in Leon", async ({
   page,
   request,
 }) => {

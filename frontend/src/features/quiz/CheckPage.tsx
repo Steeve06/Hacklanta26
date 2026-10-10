@@ -36,7 +36,7 @@ export function CheckPage() {
     <div className="flex max-w-xl flex-col gap-4">
       <Breadcrumbs
         items={[
-          { label: "Quiz", to: "/pulse/quiz" },
+          { label: "Study checks", to: "/pulse/checks" },
           { label: query.data?.title ?? "Study check" },
         ]}
       />
@@ -450,7 +450,7 @@ function Result({ check }: { check: CheckDetail }) {
       )}
       <ChapterLinks check={check} label="Review this chapter" />
       <Link
-        to="/pulse/quiz"
+        to="/pulse/checks"
         className="inline-flex min-h-11 items-center self-start rounded-md bg-pine px-4 font-bold text-on-pine"
       >
         Back to your streak

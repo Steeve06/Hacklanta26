@@ -1,12 +1,12 @@
-# Pulse and Learning Hub
+# Leon and Learning Hub
 
-Pulse is a study planner for students. It reads courses, chapters and deadlines from Learning Hub, a small LMS in the same app, and builds a personal study schedule around the student's free time. It sends reminders with an opinionated mascot, shows how the student is doing (good, medium or bad), and keeps a streak of study checks: after the schedule gives a student a chapter, a 3-minute check of four cards on it (options, a short answer and a matching card) opens for that day and the next, three right answers keep the streak going, and every check earns XP for a weekly leaderboard among classmates. Students can also ask Pulse, a chat panel on every page, to change their schedule in plain words.
+Leon is a study planner for students. It reads courses, chapters and deadlines from Learning Hub, a small LMS in the same app, and builds a personal study schedule around the student's free time. It plans around each course's fixed class times, sends reminders in the voice of Leon, an opinionated chameleon, shows how the student is doing (good, medium or bad), and keeps a streak of study checks: after the schedule gives a student a chapter, a 3-minute check of four cards on it (options, a short answer and a matching card) opens for that day and the next, three right answers keep the streak going, and every check earns XP for a weekly leaderboard among classmates. Students can also ask Leon, a chat panel on every page, to change their schedule in plain words.
 
 - Backend: Python 3.12, Django 5.1, Django REST Framework, Celery and Redis, PostgreSQL (SQLite for quick local runs).
 - Frontend: React 18, TypeScript, Vite, TanStack Query, Tailwind, Framer Motion and Lottie.
 - AI: Anthropic or OpenAI through `backend/ai/client.py`. Every AI step has a deterministic fallback, so the app runs fully without an API key.
 
-Learning Hub lives under `/lms`, Pulse under `/pulse`. Both share one login.
+Learning Hub lives under `/lms`, Leon under `/pulse`. Both share one login.
 
 ## Run it with Docker (recommended)
 
@@ -107,9 +107,11 @@ The seeded term is 15 weeks and starts 4 weeks before today (set `TERM_START_DAT
 - **Passwords** need 10+ characters, can't be common, only numbers, or close to your name or email. They're hashed with Argon2.
 - **Forgot password** emails a link that works once for an hour. Locally, emails print to the backend log: `docker compose logs web` (or the `runserver` terminal). Copy the `/reset-password?...` link into the browser.
 - **Remember me** keeps you signed in for 30 days instead of 7. Signing out, or changing or resetting a password, ends the session in every tab (and, for password changes, on other devices).
-- **Weekly study hours** are the student's choice (2 to 40, default 10). Pulse never plans more than that in a week; if the work doesn't fit, the overload report names whichever is full: the weekly limit, the daily maximum, or the free time marked.
-- **Onboarding** is five steps (courses, study time, preferences, reminders, your schedule), saved each time you press Next. Close the tab or sign out and you pick up at the same step. Pulse pages stay locked until you press **Looks good** on step 5. Everything can be changed later in Settings.
-- **Ask Pulse** (the chat button in the sidebar, or the speech bubble at the top on a phone) takes requests like "skip tonight's session", "I'm working Friday evening" or "keep Sundays free". It answers with the change it would make, and nothing happens until the student presses **Confirm**. Each change is checked against the student's own schedule, hours and deadlines both when it's suggested and when it's confirmed.
+- **Weekly study hours** are the student's choice (2 to 40, default 10). Leon never plans more than that in a week; if the work doesn't fit, the overload report names whichever is full: the weekly limit, the daily maximum, or the free time marked.
+- **Onboarding** is five steps (courses, study time, preferences, reminders, your schedule), saved each time you press Next. Close the tab or sign out and you pick up at the same step. Leon pages stay locked until you press **Looks good** on step 5. Everything can be changed later in Settings.
+- **Navigation:** Today, Week (study plan, course calendar and a link to the term overview), Study checks, Leaderboard, Courses and Settings. Study checks are the short checks after scheduled chapters; course quizzes stay in Learning Hub. On a phone, Settings is the gear in the top bar.
+- **Class times** are fixed per course (in `CAMPUS_TIMEZONE`, New York by default), listed on course cards and the syllabus, shown on the course calendar, and never used for study sessions. Change them in Django admin under Courses.
+- **Ask Leon** (the chat button in the sidebar, or the speech bubble at the top on a phone) takes requests like "skip tonight's session", "I'm working Friday evening" or "keep Sundays free". It answers with the change it would make, and nothing happens until the student presses **Confirm**. Each change is checked against the student's own schedule, hours and deadlines both when it's suggested and when it's confirmed.
 - Ten wrong passwords for one email lock it for 15 minutes; sign-in, sign-up and reset are limited to 5 a minute per IP and per email.
 
 ## Updating an existing install
@@ -131,7 +133,7 @@ Without Docker (virtualenv active): `pip install -r backend/requirements-dev.txt
 4. **Redirects:** while signed in, open `/login` and you're sent home. As `prof.okafor@pulse.test`, open `/onboarding` and you're sent to Learning Hub.
 5. **Password reset:** on the sign-in page, choose **Forgot password?**, then copy the link from the backend log, set a new password, and sign in with it. The same link fails a second time.
 6. **Persistence check:** sign up and finish onboarding, then run `docker compose down` and `docker compose up`. Sign in again: your study time, preferences, reminder style and schedule are all still there.
-7. **Ask Pulse:** as `alex@pulse.test`, open **Ask Pulse** and send "Skip my next session". The reply lists the change; the session is still planned until you press **Confirm**, then it shows as skipped in Week.
+7. **Ask Leon:** as `alex@pulse.test`, open **Ask Leon** and send "Skip my next session". The reply lists the change; the session is still planned until you press **Confirm**, then it shows as skipped in Week.
 8. **Two tabs:** sign in, open a second tab, and sign out in the first. The second tab's next action sends it to the sign-in page.
 
 ## Tests
@@ -155,12 +157,12 @@ After changing an API serializer or view, regenerate the TypeScript types with `
 
 ## Turning on the AI
 
-Without a key, Pulse runs on built-in rules: the schedule is planned from heuristics, study-check cards come from each chapter's key terms, and Ask Pulse recognises common requests by keyword. With a key, the model:
+Without a key, Leon runs on built-in rules: the schedule is planned from heuristics, study-check cards come from each chapter's key terms, and Ask Leon recognises common requests by keyword. With a key, the model:
 
 - estimates each piece of work and splits it into study tasks in a sensible order (the solver still places them, so hours and deadlines are always respected),
 - writes session titles, the plan summary, and reads notes like "mornings are best",
 - writes the four study-check questions from the chapter text (each one checked against a quote from the chapter),
-- answers in Ask Pulse and proposes changes.
+- answers in Ask Leon and proposes changes.
 
 To turn it on, put your own key in `.env` (never commit it):
 
@@ -169,7 +171,7 @@ AI_PROVIDER=anthropic        # or openai
 AI_API_KEY=your-key-here
 ```
 
-Then run `docker compose up -d`. It recreates the containers that use `.env`; `docker compose restart` would keep the old settings. `GET /api/health` shows `"ai": "configured (anthropic)"` (or openai) when it's picked up. Every call, its tokens and cost are logged in Django admin under **AI call logs**. If the provider fails five times in a row, Pulse switches to the built-in rules for 10 minutes.
+Then run `docker compose up -d`. It recreates the containers that use `.env`; `docker compose restart` would keep the old settings. `GET /api/health` shows `"ai": "configured (anthropic)"` (or openai) when it's picked up. Every call, its tokens and cost are logged in Django admin under **AI call logs**. If the provider fails five times in a row, Leon switches to the built-in rules for 10 minutes.
 
 ## Environment variables
 
@@ -202,7 +204,7 @@ backend/
   pulse/          availability, planner and solver, sessions, status, demo controls
   notifications/  templates, triggers, delivery (in-app, push, email), guardrails
   quizzes/        study checks, question banks, streaks, weekly XP leaderboard
-  assistant/      the Ask Pulse chat: replies, proposed changes, keyword fallback
+  assistant/      the Ask Leon chat: replies, proposed changes, keyword fallback
   ai/             provider client, prompts, schemas, cost log
   seed/           seed_demo command and course content
 frontend/

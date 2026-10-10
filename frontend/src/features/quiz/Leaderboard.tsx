@@ -17,8 +17,8 @@ export function Leaderboard() {
       className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-4 md:p-5"
     >
       <header className="flex flex-col gap-1">
-        <h2 id="leaderboard-heading" className="font-display text-2xl font-extrabold">
-          Leaderboard
+        <h2 id="leaderboard-heading" className="font-display text-xl font-extrabold">
+          This week&apos;s standings
         </h2>
         <p className="text-sm text-ink-soft">
           {query.data

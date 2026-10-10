@@ -3,7 +3,6 @@ import { Card, QueryView, Skeleton } from "@/components/ui";
 import { formatExact, useTimezone } from "@/lib/time";
 import { useChecks, useStreak, type Check } from "./api";
 import { OpenCheckRow } from "./CheckRow";
-import { Leaderboard } from "./Leaderboard";
 import { MissedDeadlines } from "./MissedDeadlines";
 import { formatPlainDay } from "./plainDay";
 import { StreakBadge, WeekStrip } from "./StreakBadge";
@@ -20,9 +19,8 @@ export function QuizHubPage() {
         <h1 className="text-2xl font-bold">Study checks</h1>
         <p className="text-ink-soft">
           On each day your schedule gives you a chapter, a check opens: four timed cards on what you
-          studied. Get three right before the end of the next day to keep your streak; every check
-          also earns XP for this week&apos;s leaderboard. Miss and you get one more try with new
-          cards.
+          studied. Get three right before the end of the next day to keep your streak. Miss and you
+          get one more try with new cards.
         </p>
       </header>
       <Card aria-labelledby="streak-heading">
@@ -62,7 +60,6 @@ export function QuizHubPage() {
           )}
         </QueryView>
       </Card>
-      <Leaderboard />
       <section aria-labelledby="open-heading" className="flex flex-col gap-2">
         <h2 id="open-heading" className="text-lg font-bold">
           Open now
@@ -116,7 +113,7 @@ export function QuizHubPage() {
               {data.map((c) => (
                 <li key={c.id}>
                   <Link
-                    to={`/pulse/quiz/${c.id}`}
+                    to={`/pulse/checks/${c.id}`}
                     className="flex min-h-11 flex-wrap items-center justify-between gap-2 py-2 text-sm hover:underline"
                   >
                     <span className="font-bold">

@@ -10,7 +10,8 @@ from accounts.clock import now as clock_now
 from accounts.models import StudentProfile
 from config.throttles import RegenerateThrottle
 from lms.access import require_student
-from lms.selectors import student_snapshot
+from lms.meetings import class_times
+from lms.selectors import enrolled_courses, student_snapshot
 
 from .models import AvailabilityBlock, Blackout, PlanJob
 from .onboarding import replace_availability
@@ -191,11 +192,22 @@ class CourseCalendarView(StudentView):
             for ch in snapshot.chapters
             if start <= ch.available_from < end
         ]
+        classes = [
+            {
+                "course": c.course_id,
+                "course_code": c.course_code,
+                "start": c.start,
+                "end": c.end,
+                "location": c.location,
+            }
+            for c in class_times(enrolled_courses(user), start, end)
+        ]
         data = {
             "start": start,
             "end": end,
             "deadlines": sorted(deadlines, key=lambda d: d["due_at"]),
             "chapters": sorted(chapters, key=lambda c: c["available_from"]),
+            "classes": classes,
             "courses": [c.__dict__ for c in snapshot.courses],
         }
         return Response(CourseCalendarSerializer(data).data)

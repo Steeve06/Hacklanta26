@@ -12,7 +12,7 @@ test("a study check flips each card and settles the streak once", async ({ page,
   const before = await api.get<Streak>("/api/v1/streak");
 
   await signIn(page, "maya@pulse.test");
-  await page.goto("/pulse/quiz");
+  await page.goto("/pulse/checks");
   await page
     .getByRole("link", { name: /Study check:/ })
     .first()

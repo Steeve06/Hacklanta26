@@ -7,7 +7,7 @@ function toMinutes(t: string, isEnd = false): number {
   return isEnd && value === 0 ? 24 * 60 : value;
 }
 
-/** Hours Pulse can actually use in a week: free time inside the study window, at most the
+/** Hours Leon can actually use in a week: free time inside the study window, at most the
  * daily maximum per day, and at most the weekly limit overall. */
 export function plannableHours(state: OnboardingState): number {
   const { preferences: p, availability } = state;

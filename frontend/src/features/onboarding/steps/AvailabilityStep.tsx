@@ -14,14 +14,14 @@ export function AvailabilityStep({ state, saving, submit, goTo, error }: StepPro
   return (
     <section aria-label="Weekly study time" className="flex flex-col gap-4">
       <p className="text-ink-soft">
-        Mark the hours that are usually free each week. Pulse only schedules inside them.
+        Mark the hours that are usually free each week. Leon only schedules inside them.
       </p>
       <AvailabilityGrid value={blocks} onChange={setBlocks} />
       <p aria-live="polite" className="flex flex-wrap items-baseline gap-x-2 text-sm">
         <span className="font-bold">{formatHours(hours)} hours a week</span>
         {blocks.length > 0 && hours < LOW_WEEKLY_HOURS && (
           <span className="text-mustard-ink">
-            That's under {LOW_WEEKLY_HOURS} hours. Pulse will plan it, but deadlines may not fit.
+            That's under {LOW_WEEKLY_HOURS} hours. Leon will plan it, but deadlines may not fit.
           </span>
         )}
       </p>

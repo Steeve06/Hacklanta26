@@ -32,6 +32,26 @@ class Course(TimeStamped):
         return self.code
 
 
+class CourseMeeting(TimeStamped):
+    """A fixed weekly class time, in the campus time zone (CAMPUS_TIMEZONE)."""
+
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="meetings")
+    weekday = models.PositiveSmallIntegerField(help_text="0 = Monday")
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    location = models.CharField(max_length=80, blank=True)
+
+    class Meta:
+        ordering = ["weekday", "start_time"]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(weekday__lte=6), name="meeting_weekday_0_6"),
+            models.CheckConstraint(
+                condition=models.Q(end_time__gt=models.F("start_time")),
+                name="meeting_end_after_start",
+            ),
+        ]
+
+
 class Enrollment(TimeStamped):
     class Role(models.TextChoices):
         STUDENT = "student"

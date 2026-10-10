@@ -19,7 +19,7 @@ def reset_link(user: User) -> str:
 def send_reset_email(user: User) -> None:
     minutes = settings.PASSWORD_RESET_TIMEOUT // 60
     send_mail(
-        subject="Reset your Pulse password",
+        subject="Reset your Leon password",
         message=(
             f"Hi {user.first_name},\n\n"
             f"Use this link to choose a new password. It works once and expires in {minutes} "

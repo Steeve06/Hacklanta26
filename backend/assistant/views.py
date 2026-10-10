@@ -21,7 +21,7 @@ EMPTY = {"id": None, "created_at": None, "messages": []}
 def _student(request):
     require_student(request.user)
     if not request.user.profile.onboarding_done:
-        raise PermissionDenied("Finish setting up Pulse first.")
+        raise PermissionDenied("Finish setting up Leon first.")
     return request.user
 
 

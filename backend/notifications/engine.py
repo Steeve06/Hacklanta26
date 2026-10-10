@@ -272,7 +272,7 @@ def notify_streak_lost(student, check) -> None:
     profile, _ = StudentProfile.objects.get_or_create(user=student)
     candidate = Candidate(
         Trigger.STREAK_LOST, TIERS[Trigger.STREAK_LOST], "study_check", check.id, None,
-        {"title": check_title(check), "course": "", "streak_days": 0}, f"/pulse/quiz/{check.id}",
+        {"title": check_title(check), "course": "", "streak_days": 0}, f"/pulse/checks/{check.id}",
     )  # fmt: skip
     create(student, profile, candidate, clock_now(student))
 
@@ -286,6 +286,6 @@ def notify_streak_milestone(student, check, streak_days: int) -> None:
         check.id,
         None,
         {"streak_days": streak_days},
-        "/pulse/quiz",
+        "/pulse/checks",
     )
     create(student, profile, candidate, clock_now(student))
