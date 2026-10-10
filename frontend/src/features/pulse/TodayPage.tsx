@@ -9,6 +9,7 @@ import { DeadlineList } from "./DeadlineList";
 import { OverloadPanel } from "./OverloadPanel";
 import { SessionItem } from "./SessionItem";
 import { StatusPanel } from "./StatusPanel";
+import { QuizAside } from "@/features/quiz/QuizAside";
 import { SupportiveBanner } from "@/features/notifications/SupportiveBanner";
 
 export function TodayPage() {
@@ -70,6 +71,7 @@ export function TodayPage() {
         </QueryView>
       </div>
       <aside className="flex flex-col gap-4">
+        <QuizAside />
         <Card aria-labelledby="coming-up">
           <h2 id="coming-up" className="mb-1 text-lg font-bold">
             Coming up

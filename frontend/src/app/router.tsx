@@ -13,6 +13,7 @@ function page<M extends Record<string, unknown>>(load: () => Promise<M>, name: k
 const lms = () => import("@/features/lms/pages");
 const pulse = () => import("@/features/pulse/pages");
 const notifications = () => import("@/features/notifications/InboxPage");
+const quiz = () => import("@/features/quiz/pages");
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage />, errorElement: <RouteError /> },
@@ -35,6 +36,8 @@ export const router = createBrowserRouter([
               { path: "overall", lazy: page(pulse, "OverallPage") },
               { path: "settings", lazy: page(pulse, "SettingsPage") },
               { path: "inbox", lazy: page(notifications, "InboxPage") },
+              { path: "quiz", lazy: page(quiz, "QuizHubPage") },
+              { path: "quiz/:quizId", lazy: page(quiz, "QuizTakePage") },
             ],
           },
           { path: "lms", lazy: page(lms, "CourseListPage") },

@@ -1,11 +1,12 @@
 """Which reminders are true right now for one student."""
 
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 from lms.selectors import AssessmentInfo, StudentSnapshot
 from pulse.models import Schedule, Session
+from quizzes.services.reminders import quiz_still_open, streak_candidates
 
+from .candidates import Candidate
 from .models import Trigger
 from .templates_loader import TIERS
 
@@ -13,19 +14,6 @@ SESSION_STARTING_WINDOW = timedelta(minutes=10)
 IGNORED_AFTER = timedelta(minutes=30)
 IGNORED_LOOKBACK = timedelta(hours=6)
 MISSED_LOOKBACK = timedelta(days=2)
-
-
-@dataclass
-class Candidate:
-    trigger: str
-    tier: int
-    source_type: str
-    source_id: int
-    course_id: int | None
-    variables: dict = field(default_factory=dict)
-    link: str = ""
-    due_at: datetime | None = None
-    gentle: bool = False
 
 
 def _hours(delta: timedelta) -> int:
@@ -123,19 +111,24 @@ def evaluate(student, snapshot: StudentSnapshot, now: datetime) -> list[Candidat
     sessions = list(schedule.sessions.select_related("task")) if schedule else []
     candidates = [c for a in snapshot.assessments if (c := assessment_trigger(a, sessions, now))]
     candidates += session_triggers(sessions, snapshot, now)
+    candidates += streak_candidates(student, now)
     return candidates
 
 
 def still_true(notification, snapshot: StudentSnapshot, now: datetime) -> bool:
     """Re-check a queued reminder at send time."""
-    if notification.trigger in (Trigger.WIN, Trigger.DIGEST):
+    if notification.trigger in (Trigger.WIN, Trigger.DIGEST, Trigger.STREAK_LOST):
         return True
     if notification.source_type == "assessment":
         a = next((x for x in snapshot.assessments if x.id == notification.source_id), None)
         return bool(a and not a.done and a.status != "excused")
     if notification.source_type == "session":
-        session = Session.objects.filter(pk=notification.source_id).first()
+        session = (
+            Session.objects.filter(pk=notification.source_id).select_related("schedule").first()
+        )
         return bool(
             session and session.status == Session.Status.PLANNED and session.schedule.is_active
         )
+    if notification.source_type == "chapter_quiz":
+        return quiz_still_open(notification.source_id, now)
     return True

@@ -129,6 +129,9 @@ SPECTACULAR_SETTINGS = {
         "AssessmentTypeEnum": "lms.models.Assessment.Type",
         "QuestionTypeEnum": "lms.models.QuizQuestion.Type",
         "SubmissionStatusEnum": "lms.models.Submission.Status",
+        "SessionKindEnum": "pulse.models.Session.Kind",
+        "QuizKindEnum": "quizzes.models.ChapterQuiz.Kind",
+        "PlanJobKindEnum": "pulse.models.PlanJob.Kind",
     },
 }
 

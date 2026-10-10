@@ -13,11 +13,12 @@ from accounts.models import StudentProfile
 from lms.selectors import student_snapshot
 
 from . import delivery
+from .candidates import Candidate
 from .copy import DIGEST
 from .guardrails import is_safe, placeholders
 from .models import WIN_TIER, Notification, NotificationTemplate, PushSubscription, Trigger
-from .templates_loader import SUPPORTIVE_LEVEL
-from .triggers import Candidate, evaluate, still_true
+from .templates_loader import SUPPORTIVE_LEVEL, TIERS
+from .triggers import evaluate, still_true
 
 logger = logging.getLogger(__name__)
 
@@ -263,3 +264,28 @@ def dispatch_due(now: datetime | None = None, student=None) -> int:
         n.save(update_fields=["sent_at", "channels", "updated_at"])
         sent += 1
     return sent
+
+
+def notify_streak_lost(student, quiz) -> None:
+    from quizzes.services.reminders import quiz_title
+
+    profile, _ = StudentProfile.objects.get_or_create(user=student)
+    candidate = Candidate(
+        Trigger.STREAK_LOST, TIERS[Trigger.STREAK_LOST], "chapter_quiz", quiz.id, None,
+        {"title": quiz_title(quiz), "course": "", "streak_days": 0}, f"/pulse/quiz/{quiz.id}",
+    )  # fmt: skip
+    create(student, profile, candidate, clock_now(student))
+
+
+def notify_streak_milestone(student, quiz, streak_days: int) -> None:
+    profile, _ = StudentProfile.objects.get_or_create(user=student)
+    candidate = Candidate(
+        Trigger.WIN,
+        WIN_TIER,
+        "chapter_quiz",
+        quiz.id,
+        None,
+        {"streak_days": streak_days},
+        "/pulse/quiz",
+    )
+    create(student, profile, candidate, clock_now(student))

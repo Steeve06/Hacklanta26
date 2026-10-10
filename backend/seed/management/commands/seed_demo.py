@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from seed import lms_seed, pulse_seed
+from seed import lms_seed, pulse_seed, quiz_seed
 
 
 class Command(BaseCommand):
@@ -13,6 +13,8 @@ class Command(BaseCommand):
             demo = lms_seed.build_term()
             lms_seed.seed_history(demo)
             lms_seed.mark_profiles(demo)
+            quiz_seed.seed_banks()
+            quiz_seed.seed_streaks(demo.students)
             pulse_seed.seed_plans(demo.students)
         self.stdout.write(self.style.SUCCESS(f"Seeded {demo.term.name}, starting {demo.start}."))
         self.stdout.write("")

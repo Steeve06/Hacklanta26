@@ -2019,6 +2019,198 @@
                 }
             }
         },
+        "/api/v1/quizzes": {
+            "get": {
+                "operationId": "v1_quizzes_list",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "state",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "closed",
+                                "open",
+                                "upcoming"
+                            ]
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ChapterQuiz"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/quizzes/{quiz_id}": {
+            "get": {
+                "operationId": "v1_quizzes_retrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "quiz_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChapterQuizDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/quizzes/{quiz_id}/start": {
+            "post": {
+                "operationId": "v1_quizzes_start_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "quiz_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChapterQuizDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/quizzes/{quiz_id}/submit": {
+            "post": {
+                "operationId": "v1_quizzes_submit_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "quiz_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/QuizAnswersRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/QuizAnswersRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/QuizAnswersRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChapterQuizDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/streak": {
+            "get": {
+                "operationId": "v1_streak_retrieve",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Streak"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/submissions/{submission_id}/file": {
             "get": {
                 "operationId": "v1_submissions_file_retrieve",
@@ -2806,6 +2998,211 @@
                     "order",
                     "reading_minutes",
                     "title"
+                ]
+            },
+            "ChapterQuiz": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "kind": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/QuizKindEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "scheduled_date": {
+                        "type": "string",
+                        "format": "date",
+                        "readOnly": true
+                    },
+                    "opens_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "closes_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "state": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "chapters": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/QuizChapter"
+                        },
+                        "readOnly": true
+                    },
+                    "question_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "started_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "submitted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "score": {
+                        "type": "number",
+                        "format": "double",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "sharp": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "counted_for_streak": {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "chapters",
+                    "closes_at",
+                    "counted_for_streak",
+                    "id",
+                    "kind",
+                    "opens_at",
+                    "question_count",
+                    "scheduled_date",
+                    "score",
+                    "sharp",
+                    "started_at",
+                    "state",
+                    "submitted_at"
+                ]
+            },
+            "ChapterQuizDetail": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "kind": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/QuizKindEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "scheduled_date": {
+                        "type": "string",
+                        "format": "date",
+                        "readOnly": true
+                    },
+                    "opens_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "closes_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "state": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "chapters": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/QuizChapter"
+                        },
+                        "readOnly": true
+                    },
+                    "question_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "started_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "submitted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "score": {
+                        "type": "number",
+                        "format": "double",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "sharp": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "counted_for_streak": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "questions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/QuizQuestion"
+                        },
+                        "readOnly": true
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/QuizResult"
+                        },
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "milestone": {
+                        "type": "integer",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "streak": {
+                        "type": "integer",
+                        "nullable": true,
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "chapters",
+                    "closes_at",
+                    "counted_for_streak",
+                    "id",
+                    "kind",
+                    "milestone",
+                    "opens_at",
+                    "question_count",
+                    "questions",
+                    "results",
+                    "scheduled_date",
+                    "score",
+                    "sharp",
+                    "started_at",
+                    "state",
+                    "streak",
+                    "submitted_at"
                 ]
             },
             "ChapterRef": {
@@ -4138,6 +4535,21 @@
                     "type"
                 ]
             },
+            "QuizAnswersRequest": {
+                "type": "object",
+                "properties": {
+                    "answers": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    }
+                },
+                "required": [
+                    "answers"
+                ]
+            },
             "QuizAttempt": {
                 "type": "object",
                 "properties": {
@@ -4211,6 +4623,102 @@
                     "score",
                     "started_at",
                     "submitted_at"
+                ]
+            },
+            "QuizChapter": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "order": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "course_id": {
+                        "type": "integer"
+                    },
+                    "course_code": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "course_code",
+                    "course_id",
+                    "id",
+                    "order",
+                    "title"
+                ]
+            },
+            "QuizKindEnum": {
+                "enum": [
+                    "scheduled",
+                    "early"
+                ],
+                "type": "string",
+                "description": "* `scheduled` - Scheduled\n* `early` - Early"
+            },
+            "QuizQuestion": {
+                "type": "object",
+                "properties": {
+                    "position": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "options": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "options",
+                    "position",
+                    "prompt",
+                    "type"
+                ]
+            },
+            "QuizResult": {
+                "type": "object",
+                "properties": {
+                    "position": {
+                        "type": "integer"
+                    },
+                    "chosen": {
+                        "type": "integer"
+                    },
+                    "correct": {
+                        "type": "integer"
+                    },
+                    "is_correct": {
+                        "type": "boolean"
+                    },
+                    "explanation": {
+                        "type": "string"
+                    },
+                    "chapter_id": {
+                        "type": "integer"
+                    },
+                    "course_id": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "chapter_id",
+                    "chosen",
+                    "correct",
+                    "course_id",
+                    "explanation",
+                    "is_correct",
+                    "position"
                 ]
             },
             "RoleEnum": {
@@ -4565,6 +5073,61 @@
                 ],
                 "type": "string",
                 "description": "* `good` - good\n* `medium` - medium\n* `bad` - bad"
+            },
+            "Streak": {
+                "type": "object",
+                "properties": {
+                    "current": {
+                        "type": "integer"
+                    },
+                    "longest": {
+                        "type": "integer"
+                    },
+                    "freezes": {
+                        "type": "integer"
+                    },
+                    "toward_next_freeze": {
+                        "type": "integer"
+                    },
+                    "next_milestone": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "recent": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StreakEvent"
+                        }
+                    }
+                },
+                "required": [
+                    "current",
+                    "freezes",
+                    "longest",
+                    "next_milestone",
+                    "recent",
+                    "toward_next_freeze"
+                ]
+            },
+            "StreakEvent": {
+                "type": "object",
+                "properties": {
+                    "result": {
+                        "type": "string"
+                    },
+                    "streak_after": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "result",
+                    "streak_after"
+                ]
             },
             "Submission": {
                 "type": "object",

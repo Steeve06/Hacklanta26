@@ -139,8 +139,9 @@ def _chapters(snapshot: StudentSnapshot, course_id, now) -> tuple[float, list[Re
 
 
 def _streak_component(student, now) -> tuple[float, list[Reason]]:
-    """No chapter quizzes exist yet, so nothing can be at risk or broken."""
-    return 1.0, []
+    from quizzes.services.streaks import streak_component
+
+    return streak_component(student, now)
 
 
 def _course_status(student, snapshot, sessions, course_id, code, now, overload, previous):

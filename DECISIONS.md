@@ -65,3 +65,15 @@ Choices made where the build prompt left room, with the reason for each.
 - **Push actions from the lock screen open the app** with `?notification=…&action=…`, because the service worker has no access token; the app performs the action.
 - **AI rewording of reminders is off by default** (`NOTIFICATION_AI_VARIATION=true` to enable). When on, a rewrite that fails the guardrails is dropped and the template text is sent.
 - **Unsubscribe uses `DELETE /push/subscribe?endpoint=…`** because OpenAPI tooling drops bodies on DELETE.
+
+## Quizzes and streaks
+
+- **Windows are rebuilt, not edited.** After every re-plan, unopened and unsubmitted quiz windows are deleted and recreated from the new schedule. Windows that have already opened are never touched, so a later re-plan or time zone change can't shorten them.
+- **Only today and later.** Windows are created for chapters studied (or completed) today or later. Chapters finished before the quiz system knew about them don't create past windows that would immediately count as missed.
+- **Early completion groups by day.** Chapters completed early on the same day share one quiz that opens at the first completion and closes at the end of the next day.
+- **Combined quizzes split 10 questions evenly** (5 each for two chapters, 3 each for three).
+- **"Answering all questions" is required to submit.** The server refuses partial submissions and anything sent within 20 seconds of starting; both can simply be retried.
+- **Cloze fallback uses the chapter's bold key terms.** Fill-in-the-blank and true/false questions come from sentences containing bolded terms, with distractors from the other terms; objective-matching questions top up small banks. Banks are built at seed time and whenever a chapter's text changes.
+- **The grace period is 15 minutes after close** for quizzes started inside the window; the streak sweep waits for it before recording a miss.
+- **Freezes: 1 per 5 on-time quizzes, 2 max**, spent automatically by the sweep.
+- **Milestones are 3, 7, 14, 30, 50 and 100**, the union of the quiz milestones and the win-notification list.

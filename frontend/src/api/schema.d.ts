@@ -628,6 +628,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/quizzes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_quizzes_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quizzes/{quiz_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_quizzes_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quizzes/{quiz_id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_quizzes_start_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quizzes/{quiz_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_quizzes_submit_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/streak": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_streak_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/submissions/{submission_id}/file": {
         parameters: {
             query?: never;
@@ -853,6 +933,52 @@ export interface components {
             readonly locked: boolean;
             readonly completed_at: string | null;
             readonly opened_at: string | null;
+        };
+        ChapterQuiz: {
+            readonly id: number;
+            readonly kind: components["schemas"]["QuizKindEnum"];
+            /** Format: date */
+            readonly scheduled_date: string;
+            /** Format: date-time */
+            readonly opens_at: string;
+            /** Format: date-time */
+            readonly closes_at: string;
+            readonly state: string;
+            readonly chapters: components["schemas"]["QuizChapter"][];
+            readonly question_count: number;
+            /** Format: date-time */
+            readonly started_at: string | null;
+            /** Format: date-time */
+            readonly submitted_at: string | null;
+            /** Format: double */
+            readonly score: number | null;
+            readonly sharp: boolean;
+            readonly counted_for_streak: boolean;
+        };
+        ChapterQuizDetail: {
+            readonly id: number;
+            readonly kind: components["schemas"]["QuizKindEnum"];
+            /** Format: date */
+            readonly scheduled_date: string;
+            /** Format: date-time */
+            readonly opens_at: string;
+            /** Format: date-time */
+            readonly closes_at: string;
+            readonly state: string;
+            readonly chapters: components["schemas"]["QuizChapter"][];
+            readonly question_count: number;
+            /** Format: date-time */
+            readonly started_at: string | null;
+            /** Format: date-time */
+            readonly submitted_at: string | null;
+            /** Format: double */
+            readonly score: number | null;
+            readonly sharp: boolean;
+            readonly counted_for_streak: boolean;
+            readonly questions: components["schemas"]["QuizQuestion"][];
+            readonly results: components["schemas"]["QuizResult"][] | null;
+            readonly milestone: number | null;
+            readonly streak: number | null;
         };
         ChapterRef: {
             id: number;
@@ -1220,6 +1346,11 @@ export interface components {
             /** Format: int64 */
             points?: number;
         };
+        QuizAnswersRequest: {
+            answers: {
+                [key: string]: number;
+            };
+        };
         QuizAttempt: {
             readonly id: number;
             readonly assessment: number;
@@ -1236,6 +1367,34 @@ export interface components {
             readonly auto_submitted: boolean;
             readonly questions: components["schemas"]["QuestionPublic"][];
             readonly results: components["schemas"]["QuestionResult"][] | null;
+        };
+        QuizChapter: {
+            id: number;
+            order: number;
+            title: string;
+            course_id: number;
+            course_code: string;
+        };
+        /**
+         * @description * `scheduled` - Scheduled
+         *     * `early` - Early
+         * @enum {string}
+         */
+        QuizKindEnum: "scheduled" | "early";
+        QuizQuestion: {
+            position: number;
+            type: string;
+            prompt: string;
+            options: string[];
+        };
+        QuizResult: {
+            position: number;
+            chosen: number;
+            correct: number;
+            is_correct: boolean;
+            explanation: string;
+            chapter_id: number;
+            course_id: number;
         };
         /**
          * @description * `student` - Student
@@ -1353,6 +1512,20 @@ export interface components {
          * @enum {string}
          */
         StatusEntryStateEnum: "good" | "medium" | "bad";
+        Streak: {
+            current: number;
+            longest: number;
+            freezes: number;
+            toward_next_freeze: number;
+            next_milestone: number | null;
+            recent: components["schemas"]["StreakEvent"][];
+        };
+        StreakEvent: {
+            result: string;
+            streak_after: number;
+            /** Format: date-time */
+            created_at: string;
+        };
         Submission: {
             readonly id: number;
             readonly status: components["schemas"]["SubmissionStatusEnum"];
@@ -2648,6 +2821,115 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    v1_quizzes_list: {
+        parameters: {
+            query?: {
+                state?: "closed" | "open" | "upcoming";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChapterQuiz"][];
+                };
+            };
+        };
+    };
+    v1_quizzes_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quiz_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChapterQuizDetail"];
+                };
+            };
+        };
+    };
+    v1_quizzes_start_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quiz_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChapterQuizDetail"];
+                };
+            };
+        };
+    };
+    v1_quizzes_submit_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quiz_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuizAnswersRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["QuizAnswersRequest"];
+                "multipart/form-data": components["schemas"]["QuizAnswersRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChapterQuizDetail"];
+                };
+            };
+        };
+    };
+    v1_streak_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Streak"];
+                };
             };
         };
     };
