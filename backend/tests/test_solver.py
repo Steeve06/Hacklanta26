@@ -251,3 +251,31 @@ def test_overload_suggests_more_free_time_only_when_it_is_used_up():
     c = constraints(max_minutes_per_day=600)
     kinds = suggestions_for([task(f"t{i}", 180, 3) for i in range(4)], c, days=3)
     assert kinds and set(kinds) == {"add_availability"}
+
+
+def test_work_done_out_of_order_is_not_a_violation_but_new_placements_are():
+    from pulse.planning.types import Placement, SolveResult
+
+    c = constraints()
+    read, draft = task("read", 50, 5), task("draft", 50, 5, deps=["read"])
+    tasks = [read, draft]
+    free = free_time(evenings(7), (), tz=c.tz, start=c.now - timedelta(days=2),
+                     end=c.horizon_end, earliest=time(6), latest=time(23, 59))  # fmt: skip
+
+    def at(day, hour, key, pinned):
+        start = datetime.combine(NOW.date() + timedelta(days=day), time(hour), tzinfo=NY)
+        return Placement(key, start, start + timedelta(minutes=50), start.date(), 1,
+                         "assignment", pinned=pinned)  # fmt: skip
+
+    def problems(draft_pinned):
+        placements = [at(1, 18, "draft", draft_pinned), at(2, 18, "read", False)]
+        return [
+            p
+            for p in check_hard_constraints(
+                SolveResult(placements, [], set(), 0, 0, 0), tasks, free, c
+            )  # fmt: skip
+            if "finishes" in p
+        ]
+
+    assert problems(draft_pinned=True) == []
+    assert problems(draft_pinned=False) == ["draft starts before read finishes"]

@@ -369,6 +369,7 @@ def check_hard_constraints(
                     if (
                         other.task_key == dep
                         and other.kind != "chapter_quiz"
+                        and not p.pinned
                         and other.end + task.lag_after_deps > p.start
                     ):
                         problems.append(f"{p.task_key} starts before {dep} finishes")

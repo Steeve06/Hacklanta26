@@ -120,7 +120,7 @@ def _openai(
         headers={"Authorization": f"Bearer {settings.AI_API_KEY}"},
         json={
             "model": model,
-            "max_tokens": max_tokens,
+            "max_completion_tokens": max_tokens,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             "response_format": {
                 "type": "json_schema",

@@ -16,12 +16,12 @@ from lms.selectors import student_snapshot
 
 from ..models import AvailabilityBlock, Blackout, Schedule, Session, StudyTask
 from ..planning.decompose import TaskDraft
-from ..planning.feedback import parse_feedback
 from ..planning.inventory import Inventory, WorkItem, build_inventory
 from ..planning.slots import free_time
 from ..planning.solver import Solver, check_hard_constraints
 from ..planning.types import Constraints, Interval, Placement, Preferences, SolveResult, TaskSpec
 from .decomposition import decompose
+from .feedback import preferences_from_feedback
 from .overload import build_overload_report
 from .pace import measured_pace, productive_hours
 from .polish import polish
@@ -259,7 +259,7 @@ def _free_time(ctx: PlanContext, history: list[Session]) -> dict:
 
 
 def _preferences(student, profile: StudentProfile) -> Preferences:
-    day_factor, hours = parse_feedback(profile.plan_feedback)
+    day_factor, hours = preferences_from_feedback(profile.plan_feedback)
     return Preferences(
         day_factor=day_factor, preferred_hours=hours, productive_hours=productive_hours(student)
     )

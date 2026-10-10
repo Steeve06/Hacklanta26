@@ -30,3 +30,14 @@ class Polish(BaseModel):
 
 class Rewrite(BaseModel):
     text: str = Field(min_length=10, max_length=240)
+
+
+class DayPreference(BaseModel):
+    weekday: int = Field(ge=0, le=6)
+    factor: float = Field(ge=0, le=1)
+
+
+class FeedbackPrefs(BaseModel):
+    days: list[DayPreference] = Field(default_factory=list, max_length=7)
+    preferred_hours: list[int] | None = Field(default=None, min_length=2, max_length=2)
+    understood: bool = True
