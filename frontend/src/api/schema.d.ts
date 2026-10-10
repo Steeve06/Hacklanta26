@@ -372,6 +372,166 @@ export interface paths {
         patch: operations["v1_me_profile_partial_update"];
         trace?: never;
     };
+    "/api/v1/pulse/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_pulse_availability_retrieve"];
+        put: operations["v1_pulse_availability_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pulse/blackouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_pulse_blackouts_list"];
+        put?: never;
+        post: operations["v1_pulse_blackouts_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pulse/blackouts/{blackout_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["v1_pulse_blackouts_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pulse/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_pulse_jobs_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pulse/jobs/{job_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_pulse_jobs_cancel_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pulse/jobs/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_pulse_jobs_latest_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pulse/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_pulse_schedule_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pulse/schedules/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_pulse_schedules_generate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pulse/sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["v1_pulse_sessions_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/pulse/sessions/{session_id}/reschedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1_pulse_sessions_reschedule_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/submissions/{submission_id}/file": {
         parameters: {
             query?: never;
@@ -505,6 +665,49 @@ export interface components {
             published?: boolean;
             questions?: components["schemas"]["QuestionWriteRequest"][];
         };
+        Availability: {
+            blocks: components["schemas"]["AvailabilityBlock"][];
+        };
+        AvailabilityBlock: {
+            /**
+             * Format: int64
+             * @description 0 = Monday
+             */
+            weekday: number;
+            /** Format: time */
+            start_time: string;
+            /** Format: time */
+            end_time: string;
+        };
+        AvailabilityBlockRequest: {
+            /**
+             * Format: int64
+             * @description 0 = Monday
+             */
+            weekday: number;
+            /** Format: time */
+            start_time: string;
+            /** Format: time */
+            end_time: string;
+        };
+        AvailabilityRequest: {
+            blocks: components["schemas"]["AvailabilityBlockRequest"][];
+        };
+        Blackout: {
+            readonly id: number;
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            label?: string;
+        };
+        BlackoutRequest: {
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            label?: string;
+        };
         ChapterDetail: {
             readonly id: number;
             readonly order: number;
@@ -560,6 +763,25 @@ export interface components {
             readonly chapters_completed: number;
             readonly next_due: components["schemas"]["NextDue"] | null;
         };
+        CourseRef: {
+            id: number;
+            code: string;
+            title: string;
+            color: string;
+        };
+        Deadline: {
+            id: number;
+            course: number;
+            course_code: string;
+            title: string;
+            type: string;
+            /** Format: date-time */
+            due_at: string;
+            status: string;
+            /** Format: double */
+            weight_pct: number;
+            extended: boolean;
+        };
         Discussion: {
             posts: components["schemas"]["DiscussionPost"][];
             progress: components["schemas"]["DiscussionProgress"] | null;
@@ -578,9 +800,17 @@ export interface components {
             replies_made: number;
             replies_required: number;
         };
+        Excluded: {
+            course_code: string;
+            title: string;
+            reason: string;
+        };
         ExcuseRequest: {
             student: number;
             excused: boolean;
+        };
+        GenerateRequest: {
+            feedback?: string;
         };
         GradingItem: {
             label: string;
@@ -606,10 +836,10 @@ export interface components {
             readonly id: number;
             /** Format: email */
             readonly email: string;
-            first_name: string;
-            last_name?: string;
+            readonly first_name: string;
+            readonly last_name: string;
             readonly role: components["schemas"]["RoleEnum"];
-            timezone?: string;
+            readonly timezone: string;
             readonly profile: components["schemas"]["Profile"];
         };
         NextDue: {
@@ -618,6 +848,25 @@ export interface components {
             type: string;
             /** Format: date-time */
             due_at: string;
+        };
+        OverloadItem: {
+            source_type: string;
+            source_id: number;
+            course_code: string;
+            title: string;
+            /** Format: date-time */
+            due_at: string;
+            minutes_short: number;
+            needs_longer_block: boolean;
+        };
+        OverloadReport: {
+            items: components["schemas"]["OverloadItem"][];
+            /** Format: double */
+            extra_hours_needed: number;
+            at_risk: string[];
+            suggestions: components["schemas"]["Suggestion"][];
+            unresolvable: boolean;
+            excluded: components["schemas"]["Excluded"][];
         };
         Override: {
             readonly id: number;
@@ -682,12 +931,33 @@ export interface components {
         PatchedMeUpdateRequest: {
             first_name?: string;
             timezone?: string;
-            profile?: components["schemas"]["ProfileRequest"];
+            profile?: components["schemas"]["ProfileUpdateRequest"];
         };
         PatchedScoreRequest: {
             /** Format: decimal */
             score?: string | null;
         };
+        PatchedSessionUpdateRequest: {
+            status?: components["schemas"]["SessionUpdateStatusEnum"];
+            completed_minutes?: number;
+        };
+        PlanJob: {
+            readonly id: number;
+            readonly kind: components["schemas"]["PlanJobKindEnum"];
+            readonly state: components["schemas"]["StateEnum"];
+            readonly progress: number;
+            readonly stage: string;
+            readonly stage_label: string;
+            readonly error: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description * `generate` - Generate
+         *     * `replan` - Replan
+         * @enum {string}
+         */
+        PlanJobKindEnum: "generate" | "replan";
         Policies: {
             late_work: string;
             academic_integrity: string;
@@ -697,25 +967,25 @@ export interface components {
             parent?: number | null;
         };
         Profile: {
-            /** Format: int64 */
-            sass_level?: number;
+            readonly sass_level: number;
             /** Format: decimal */
-            max_hours_per_day?: string;
-            session_minutes?: components["schemas"]["SessionMinutesEnum"];
+            readonly max_hours_per_day: string;
+            readonly session_minutes: components["schemas"]["SessionMinutesEnum"];
             /** Format: time */
-            earliest_time?: string;
+            readonly earliest_time: string;
             /** Format: time */
-            latest_time?: string;
+            readonly latest_time: string;
             /** Format: time */
-            quiet_start?: string;
+            readonly quiet_start: string;
             /** Format: time */
-            quiet_end?: string;
-            quiet_hours_override_for_deadlines?: boolean;
-            supportive_mode?: boolean;
-            onboarding_done?: boolean;
-            push_prompt_seen?: boolean;
+            readonly quiet_end: string;
+            readonly quiet_hours_override_for_deadlines: boolean;
+            readonly supportive_mode: boolean;
+            readonly onboarding_done: boolean;
+            readonly push_prompt_seen: boolean;
+            readonly plan_feedback: string;
         };
-        ProfileRequest: {
+        ProfileUpdateRequest: {
             /** Format: int64 */
             sass_level?: number;
             /** Format: decimal */
@@ -733,6 +1003,7 @@ export interface components {
             supportive_mode?: boolean;
             onboarding_done?: boolean;
             push_prompt_seen?: boolean;
+            plan_feedback?: string;
         };
         QuestionPublic: {
             readonly id: number;
@@ -815,6 +1086,49 @@ export interface components {
             score: string | null;
             has_file: boolean;
         };
+        Schedule: {
+            readonly id: number;
+            readonly version: number;
+            /** Format: date-time */
+            readonly generated_at: string;
+            /** Format: date-time */
+            readonly horizon_end: string;
+            readonly summary: string;
+            overload_report: components["schemas"]["OverloadReport"] | null;
+            sessions: components["schemas"]["Session"][];
+            deadlines: components["schemas"]["Deadline"][];
+            upcoming: components["schemas"]["Deadline"][];
+            courses: components["schemas"]["CourseRef"][];
+            /** Format: date */
+            term_start: string | null;
+            /** Format: date */
+            term_end: string | null;
+        };
+        Session: {
+            readonly id: number;
+            /** Format: date-time */
+            readonly start: string;
+            /** Format: date-time */
+            readonly end: string;
+            readonly course: number;
+            readonly task_title: string;
+            readonly source_type: string;
+            readonly source_id: number;
+            readonly kind: components["schemas"]["SessionKindEnum"];
+            readonly status: components["schemas"]["SessionStatusEnum"];
+            readonly completed_minutes: number;
+            readonly minutes: number;
+            readonly at_risk: boolean;
+        };
+        /**
+         * @description * `study` - Study
+         *     * `assignment` - Assignment
+         *     * `discussion` - Discussion
+         *     * `quiz` - Quiz
+         *     * `chapter_quiz` - Chapter Quiz
+         * @enum {string}
+         */
+        SessionKindEnum: "study" | "assignment" | "discussion" | "quiz" | "chapter_quiz";
         /**
          * @description * `25` - Short
          *     * `50` - Medium
@@ -822,6 +1136,32 @@ export interface components {
          * @enum {integer}
          */
         SessionMinutesEnum: 25 | 50 | 90;
+        /**
+         * @description * `planned` - Planned
+         *     * `done` - Done
+         *     * `partial` - Partial
+         *     * `skipped` - Skipped
+         *     * `rescheduled` - Rescheduled
+         * @enum {string}
+         */
+        SessionStatusEnum: "planned" | "done" | "partial" | "skipped" | "rescheduled";
+        /**
+         * @description * `done` - done
+         *     * `partial` - partial
+         *     * `skipped` - skipped
+         *     * `planned` - planned
+         * @enum {string}
+         */
+        SessionUpdateStatusEnum: "done" | "partial" | "skipped" | "planned";
+        /**
+         * @description * `queued` - Queued
+         *     * `running` - Running
+         *     * `done` - Done
+         *     * `failed` - Failed
+         *     * `cancelled` - Cancelled
+         * @enum {string}
+         */
+        StateEnum: "queued" | "running" | "done" | "failed" | "cancelled";
         Submission: {
             readonly id: number;
             readonly status: components["schemas"]["SubmissionStatusEnum"];
@@ -849,6 +1189,12 @@ export interface components {
          * @enum {string}
          */
         SubmissionStatusEnum: "not_started" | "in_progress" | "submitted" | "late" | "missed" | "excused" | "graded";
+        Suggestion: {
+            type: string;
+            text: string;
+            weekday?: number;
+            assessment_id?: number;
+        };
         Syllabus: {
             course_code: string;
             course_title: string;
@@ -1663,6 +2009,271 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    v1_pulse_availability_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Availability"];
+                };
+            };
+        };
+    };
+    v1_pulse_availability_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvailabilityRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AvailabilityRequest"];
+                "multipart/form-data": components["schemas"]["AvailabilityRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Availability"];
+                };
+            };
+        };
+    };
+    v1_pulse_blackouts_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Blackout"][];
+                };
+            };
+        };
+    };
+    v1_pulse_blackouts_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlackoutRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BlackoutRequest"];
+                "multipart/form-data": components["schemas"]["BlackoutRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Blackout"];
+                };
+            };
+        };
+    };
+    v1_pulse_blackouts_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                blackout_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_pulse_jobs_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanJob"];
+                };
+            };
+        };
+    };
+    v1_pulse_jobs_cancel_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanJob"];
+                };
+            };
+        };
+    };
+    v1_pulse_jobs_latest_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanJob"];
+                };
+            };
+        };
+    };
+    v1_pulse_schedule_retrieve: {
+        parameters: {
+            query?: {
+                /** @description Local date YYYY-MM-DD */
+                from?: string;
+                view?: "overall" | "today" | "week";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Schedule"];
+                };
+            };
+        };
+    };
+    v1_pulse_schedules_generate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GenerateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["GenerateRequest"];
+                "multipart/form-data": components["schemas"]["GenerateRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanJob"];
+                };
+            };
+        };
+    };
+    v1_pulse_sessions_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSessionUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSessionUpdateRequest"];
+                "multipart/form-data": components["schemas"]["PatchedSessionUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Session"];
+                };
+            };
+        };
+    };
+    v1_pulse_sessions_reschedule_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Session"];
                 };
             };
         };

@@ -11,6 +11,7 @@ function page<M extends Record<string, unknown>>(load: () => Promise<M>, name: k
 }
 
 const lms = () => import("@/features/lms/pages");
+const pulse = () => import("@/features/pulse/pages");
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage />, errorElement: <RouteError /> },
@@ -23,6 +24,17 @@ export const router = createBrowserRouter([
         errorElement: <RouteError />,
         children: [
           { index: true, element: <HomeRedirect /> },
+          {
+            path: "pulse",
+            lazy: page(pulse, "PulseGate"),
+            children: [
+              { index: true, lazy: page(pulse, "TodayPage") },
+              { path: "onboarding", lazy: page(pulse, "OnboardingPage") },
+              { path: "week", lazy: page(pulse, "WeekPage") },
+              { path: "overall", lazy: page(pulse, "OverallPage") },
+              { path: "settings", lazy: page(pulse, "SettingsPage") },
+            ],
+          },
           { path: "lms", lazy: page(lms, "CourseListPage") },
           {
             path: "lms/courses/:courseId",

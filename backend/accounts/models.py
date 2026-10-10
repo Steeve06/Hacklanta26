@@ -88,6 +88,7 @@ class StudentProfile(TimeStamped):
     tone_down_streak = models.PositiveSmallIntegerField(default=0)
     onboarding_done = models.BooleanField(default=False)
     push_prompt_seen = models.BooleanField(default=False)
+    plan_feedback = models.CharField(max_length=300, blank=True)
     clock_offset_minutes = models.IntegerField(default=0)
 
     def effective_sass(self) -> int:

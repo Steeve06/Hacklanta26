@@ -19,7 +19,7 @@ from .serializers import (
     LoginSerializer,
     MeSerializer,
     MeUpdateSerializer,
-    ProfileSerializer,
+    ProfileUpdateSerializer,
 )
 
 
@@ -108,7 +108,7 @@ class MeView(APIView):
             user.save()
             if "profile" in data and user.is_student:
                 profile, _ = StudentProfile.objects.get_or_create(user=user)
-                profile_serializer = ProfileSerializer(
+                profile_serializer = ProfileUpdateSerializer(
                     profile, data=request.data["profile"], partial=True
                 )
                 profile_serializer.is_valid(raise_exception=True)

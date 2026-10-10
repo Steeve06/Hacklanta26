@@ -87,3 +87,30 @@ export function fromLocalInputValue(value: string, timeZone: string): string {
   const offsetMs = new Date(`${asLocal}:00Z`).getTime() - guess.getTime();
   return new Date(guess.getTime() - offsetMs).toISOString();
 }
+
+export function localMinutes(iso: string, timeZone: string): number {
+  const parts = Object.fromEntries(
+    formatter(timeZone, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+      .formatToParts(new Date(iso))
+      .map((p) => [p.type, p.value]),
+  );
+  return Number(parts.hour) * 60 + Number(parts.minute);
+}
+
+export function addDays(key: string, days: number): string {
+  const [y, m, d] = key.split("-").map(Number);
+  const date = new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, (d ?? 1) + days));
+  return date.toISOString().slice(0, 10);
+}
+
+export function mondayOf(key: string): string {
+  const [y, m, d] = key.split("-").map(Number);
+  const weekday = (new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1)).getUTCDay() + 6) % 7;
+  return addDays(key, -weekday);
+}
+
+export function keyLabel(key: string, options: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat(undefined, { ...options, timeZone: "UTC" }).format(
+    new Date(`${key}T12:00:00Z`),
+  );
+}

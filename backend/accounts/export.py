@@ -8,6 +8,9 @@ EXPORTED = [
     ("lms", "Submission", "student"),
     ("lms", "DiscussionPost", "author"),
     ("lms", "QuizAttempt", "student"),
+    ("pulse", "AvailabilityBlock", "student"),
+    ("pulse", "Blackout", "student"),
+    ("pulse", "Schedule", "student"),
 ]
 
 

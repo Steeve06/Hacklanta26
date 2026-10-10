@@ -20,22 +20,33 @@ class AccessTokenSerializer(serializers.Serializer):
     access = serializers.CharField()
 
 
+PROFILE_FIELDS = [
+    "sass_level",
+    "max_hours_per_day",
+    "session_minutes",
+    "earliest_time",
+    "latest_time",
+    "quiet_start",
+    "quiet_end",
+    "quiet_hours_override_for_deadlines",
+    "supportive_mode",
+    "onboarding_done",
+    "push_prompt_seen",
+    "plan_feedback",
+]
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
-        fields = [
-            "sass_level",
-            "max_hours_per_day",
-            "session_minutes",
-            "earliest_time",
-            "latest_time",
-            "quiet_start",
-            "quiet_end",
-            "quiet_hours_override_for_deadlines",
-            "supportive_mode",
-            "onboarding_done",
-            "push_prompt_seen",
-        ]
+        fields = PROFILE_FIELDS
+        read_only_fields = PROFILE_FIELDS
+
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentProfile
+        fields = PROFILE_FIELDS
 
     def validate_sass_level(self, value):
         if not 1 <= value <= 4:
@@ -65,10 +76,10 @@ class MeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "email", "first_name", "last_name", "role", "timezone", "profile"]
-        read_only_fields = ["id", "email", "role"]
+        read_only_fields = fields
 
 
 class MeUpdateSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=80, required=False)
     timezone = serializers.CharField(max_length=64, required=False, validators=[validate_timezone])
-    profile = ProfileSerializer(required=False)
+    profile = ProfileUpdateSerializer(required=False)

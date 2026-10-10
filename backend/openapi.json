@@ -1332,6 +1332,448 @@
                 }
             }
         },
+        "/api/v1/pulse/availability": {
+            "get": {
+                "operationId": "v1_pulse_availability_retrieve",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Availability"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1_pulse_availability_update",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AvailabilityRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AvailabilityRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AvailabilityRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Availability"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/pulse/blackouts": {
+            "get": {
+                "operationId": "v1_pulse_blackouts_list",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Blackout"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_pulse_blackouts_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BlackoutRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BlackoutRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BlackoutRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Blackout"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/pulse/blackouts/{blackout_id}": {
+            "delete": {
+                "operationId": "v1_pulse_blackouts_destroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "blackout_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/pulse/jobs/{job_id}": {
+            "get": {
+                "operationId": "v1_pulse_jobs_retrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "job_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlanJob"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/pulse/jobs/{job_id}/cancel": {
+            "post": {
+                "operationId": "v1_pulse_jobs_cancel_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "job_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlanJob"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/pulse/jobs/latest": {
+            "get": {
+                "operationId": "v1_pulse_jobs_latest_retrieve",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlanJob"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/pulse/schedule": {
+            "get": {
+                "operationId": "v1_pulse_schedule_retrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "from",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Local date YYYY-MM-DD"
+                    },
+                    {
+                        "in": "query",
+                        "name": "view",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "overall",
+                                "today",
+                                "week"
+                            ]
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Schedule"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/pulse/schedules/generate": {
+            "post": {
+                "operationId": "v1_pulse_schedules_generate_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GenerateRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GenerateRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GenerateRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlanJob"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/pulse/sessions/{session_id}": {
+            "patch": {
+                "operationId": "v1_pulse_sessions_partial_update",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "session_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSessionUpdateRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSessionUpdateRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSessionUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Session"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/pulse/sessions/{session_id}/reschedule": {
+            "post": {
+                "operationId": "v1_pulse_sessions_reschedule_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "session_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Session"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/submissions/{submission_id}/file": {
             "get": {
                 "operationId": "v1_submissions_file_retrieve",
@@ -1814,6 +2256,131 @@
                     "type"
                 ]
             },
+            "Availability": {
+                "type": "object",
+                "properties": {
+                    "blocks": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AvailabilityBlock"
+                        }
+                    }
+                },
+                "required": [
+                    "blocks"
+                ]
+            },
+            "AvailabilityBlock": {
+                "type": "object",
+                "properties": {
+                    "weekday": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64",
+                        "description": "0 = Monday"
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "format": "time"
+                    }
+                },
+                "required": [
+                    "end_time",
+                    "start_time",
+                    "weekday"
+                ]
+            },
+            "AvailabilityBlockRequest": {
+                "type": "object",
+                "properties": {
+                    "weekday": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64",
+                        "description": "0 = Monday"
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "format": "time"
+                    }
+                },
+                "required": [
+                    "end_time",
+                    "start_time",
+                    "weekday"
+                ]
+            },
+            "AvailabilityRequest": {
+                "type": "object",
+                "properties": {
+                    "blocks": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AvailabilityBlockRequest"
+                        }
+                    }
+                },
+                "required": [
+                    "blocks"
+                ]
+            },
+            "Blackout": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "start": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "end": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "label": {
+                        "type": "string",
+                        "maxLength": 80
+                    }
+                },
+                "required": [
+                    "end",
+                    "id",
+                    "start"
+                ]
+            },
+            "BlackoutRequest": {
+                "type": "object",
+                "properties": {
+                    "start": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "end": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "label": {
+                        "type": "string",
+                        "maxLength": 80
+                    }
+                },
+                "required": [
+                    "end",
+                    "start"
+                ]
+            },
             "ChapterDetail": {
                 "type": "object",
                 "properties": {
@@ -2071,6 +2638,74 @@
                     "title"
                 ]
             },
+            "CourseRef": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "color": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "code",
+                    "color",
+                    "id",
+                    "title"
+                ]
+            },
+            "Deadline": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "course": {
+                        "type": "integer"
+                    },
+                    "course_code": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "weight_pct": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "extended": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "course",
+                    "course_code",
+                    "due_at",
+                    "extended",
+                    "id",
+                    "status",
+                    "title",
+                    "type",
+                    "weight_pct"
+                ]
+            },
             "Discussion": {
                 "type": "object",
                 "properties": {
@@ -2149,6 +2784,25 @@
                     "replies_required"
                 ]
             },
+            "Excluded": {
+                "type": "object",
+                "properties": {
+                    "course_code": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "course_code",
+                    "reason",
+                    "title"
+                ]
+            },
             "ExcuseRequest": {
                 "type": "object",
                 "properties": {
@@ -2163,6 +2817,15 @@
                     "excused",
                     "student"
                 ]
+            },
+            "GenerateRequest": {
+                "type": "object",
+                "properties": {
+                    "feedback": {
+                        "type": "string",
+                        "maxLength": 300
+                    }
+                }
             },
             "GradingItem": {
                 "type": "object",
@@ -2249,11 +2912,11 @@
                     },
                     "first_name": {
                         "type": "string",
-                        "maxLength": 80
+                        "readOnly": true
                     },
                     "last_name": {
                         "type": "string",
-                        "maxLength": 80
+                        "readOnly": true
                     },
                     "role": {
                         "allOf": [
@@ -2265,7 +2928,7 @@
                     },
                     "timezone": {
                         "type": "string",
-                        "maxLength": 64
+                        "readOnly": true
                     },
                     "profile": {
                         "allOf": [
@@ -2280,8 +2943,10 @@
                     "email",
                     "first_name",
                     "id",
+                    "last_name",
                     "profile",
-                    "role"
+                    "role",
+                    "timezone"
                 ]
             },
             "NextDue": {
@@ -2306,6 +2971,86 @@
                     "id",
                     "title",
                     "type"
+                ]
+            },
+            "OverloadItem": {
+                "type": "object",
+                "properties": {
+                    "source_type": {
+                        "type": "string"
+                    },
+                    "source_id": {
+                        "type": "integer"
+                    },
+                    "course_code": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "due_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "minutes_short": {
+                        "type": "integer"
+                    },
+                    "needs_longer_block": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "course_code",
+                    "due_at",
+                    "minutes_short",
+                    "needs_longer_block",
+                    "source_id",
+                    "source_type",
+                    "title"
+                ]
+            },
+            "OverloadReport": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OverloadItem"
+                        }
+                    },
+                    "extra_hours_needed": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "at_risk": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "suggestions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Suggestion"
+                        }
+                    },
+                    "unresolvable": {
+                        "type": "boolean"
+                    },
+                    "excluded": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Excluded"
+                        }
+                    }
+                },
+                "required": [
+                    "at_risk",
+                    "excluded",
+                    "extra_hours_needed",
+                    "items",
+                    "suggestions",
+                    "unresolvable"
                 ]
             },
             "Override": {
@@ -2515,7 +3260,7 @@
                         "maxLength": 64
                     },
                     "profile": {
-                        "$ref": "#/components/schemas/ProfileRequest"
+                        "$ref": "#/components/schemas/ProfileUpdateRequest"
                     }
                 }
             },
@@ -2529,6 +3274,82 @@
                         "nullable": true
                     }
                 }
+            },
+            "PatchedSessionUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "$ref": "#/components/schemas/SessionUpdateStatusEnum"
+                    },
+                    "completed_minutes": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                }
+            },
+            "PlanJob": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "kind": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/PlanJobKindEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "state": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StateEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "progress": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "stage": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "stage_label": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "error": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "error",
+                    "id",
+                    "kind",
+                    "progress",
+                    "stage",
+                    "stage_label",
+                    "state"
+                ]
+            },
+            "PlanJobKindEnum": {
+                "enum": [
+                    "generate",
+                    "replan"
+                ],
+                "type": "string",
+                "description": "* `generate` - Generate\n* `replan` - Replan"
             },
             "Policies": {
                 "type": "object",
@@ -2567,14 +3388,13 @@
                 "properties": {
                     "sass_level": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "readOnly": true
                     },
                     "max_hours_per_day": {
                         "type": "string",
                         "format": "decimal",
-                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$"
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,1})?$",
+                        "readOnly": true
                     },
                     "session_minutes": {
                         "allOf": [
@@ -2582,40 +3402,65 @@
                                 "$ref": "#/components/schemas/SessionMinutesEnum"
                             }
                         ],
-                        "minimum": 0,
-                        "maximum": 9223372036854775807
+                        "readOnly": true
                     },
                     "earliest_time": {
                         "type": "string",
-                        "format": "time"
+                        "format": "time",
+                        "readOnly": true
                     },
                     "latest_time": {
                         "type": "string",
-                        "format": "time"
+                        "format": "time",
+                        "readOnly": true
                     },
                     "quiet_start": {
                         "type": "string",
-                        "format": "time"
+                        "format": "time",
+                        "readOnly": true
                     },
                     "quiet_end": {
                         "type": "string",
-                        "format": "time"
+                        "format": "time",
+                        "readOnly": true
                     },
                     "quiet_hours_override_for_deadlines": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "readOnly": true
                     },
                     "supportive_mode": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "readOnly": true
                     },
                     "onboarding_done": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "readOnly": true
                     },
                     "push_prompt_seen": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "plan_feedback": {
+                        "type": "string",
+                        "readOnly": true
                     }
-                }
+                },
+                "required": [
+                    "earliest_time",
+                    "latest_time",
+                    "max_hours_per_day",
+                    "onboarding_done",
+                    "plan_feedback",
+                    "push_prompt_seen",
+                    "quiet_end",
+                    "quiet_hours_override_for_deadlines",
+                    "quiet_start",
+                    "sass_level",
+                    "session_minutes",
+                    "supportive_mode"
+                ]
             },
-            "ProfileRequest": {
+            "ProfileUpdateRequest": {
                 "type": "object",
                 "properties": {
                     "sass_level": {
@@ -2665,6 +3510,10 @@
                     },
                     "push_prompt_seen": {
                         "type": "boolean"
+                    },
+                    "plan_feedback": {
+                        "type": "string",
+                        "maxLength": 300
                     }
                 }
             },
@@ -2950,6 +3799,177 @@
                     "submitted_at"
                 ]
             },
+            "Schedule": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "version": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "generated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "horizon_end": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "summary": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "overload_report": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/OverloadReport"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "sessions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Session"
+                        }
+                    },
+                    "deadlines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Deadline"
+                        }
+                    },
+                    "upcoming": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Deadline"
+                        }
+                    },
+                    "courses": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CourseRef"
+                        }
+                    },
+                    "term_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "term_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "courses",
+                    "deadlines",
+                    "generated_at",
+                    "horizon_end",
+                    "id",
+                    "overload_report",
+                    "sessions",
+                    "summary",
+                    "term_end",
+                    "term_start",
+                    "upcoming",
+                    "version"
+                ]
+            },
+            "Session": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "start": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "end": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "course": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "task_title": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "source_type": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "source_id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "kind": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SessionKindEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SessionStatusEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "completed_minutes": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "minutes": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "at_risk": {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "at_risk",
+                    "completed_minutes",
+                    "course",
+                    "end",
+                    "id",
+                    "kind",
+                    "minutes",
+                    "source_id",
+                    "source_type",
+                    "start",
+                    "status",
+                    "task_title"
+                ]
+            },
+            "SessionKindEnum": {
+                "enum": [
+                    "study",
+                    "assignment",
+                    "discussion",
+                    "quiz",
+                    "chapter_quiz"
+                ],
+                "type": "string",
+                "description": "* `study` - Study\n* `assignment` - Assignment\n* `discussion` - Discussion\n* `quiz` - Quiz\n* `chapter_quiz` - Chapter Quiz"
+            },
             "SessionMinutesEnum": {
                 "enum": [
                     25,
@@ -2958,6 +3978,38 @@
                 ],
                 "type": "integer",
                 "description": "* `25` - Short\n* `50` - Medium\n* `90` - Long"
+            },
+            "SessionStatusEnum": {
+                "enum": [
+                    "planned",
+                    "done",
+                    "partial",
+                    "skipped",
+                    "rescheduled"
+                ],
+                "type": "string",
+                "description": "* `planned` - Planned\n* `done` - Done\n* `partial` - Partial\n* `skipped` - Skipped\n* `rescheduled` - Rescheduled"
+            },
+            "SessionUpdateStatusEnum": {
+                "enum": [
+                    "done",
+                    "partial",
+                    "skipped",
+                    "planned"
+                ],
+                "type": "string",
+                "description": "* `done` - done\n* `partial` - partial\n* `skipped` - skipped\n* `planned` - planned"
+            },
+            "StateEnum": {
+                "enum": [
+                    "queued",
+                    "running",
+                    "done",
+                    "failed",
+                    "cancelled"
+                ],
+                "type": "string",
+                "description": "* `queued` - Queued\n* `running` - Running\n* `done` - Done\n* `failed` - Failed\n* `cancelled` - Cancelled"
             },
             "Submission": {
                 "type": "object",
@@ -3036,6 +4088,27 @@
                 ],
                 "type": "string",
                 "description": "* `not_started` - Not Started\n* `in_progress` - In Progress\n* `submitted` - Submitted\n* `late` - Late\n* `missed` - Missed\n* `excused` - Excused\n* `graded` - Graded"
+            },
+            "Suggestion": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "weekday": {
+                        "type": "integer"
+                    },
+                    "assessment_id": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "text",
+                    "type"
+                ]
             },
             "Syllabus": {
                 "type": "object",
