@@ -1,6 +1,6 @@
 # Pulse and Learning Hub
 
-Pulse is a study planner for students. It reads courses, chapters and deadlines from Learning Hub, a small LMS in the same app, and builds a personal study schedule around the student's free time. It sends reminders with an opinionated mascot, shows how the student is doing (good, medium or bad), and keeps a streak of short chapter quizzes that open on the day the schedule assigns each chapter.
+Pulse is a study planner for students. It reads courses, chapters and deadlines from Learning Hub, a small LMS in the same app, and builds a personal study schedule around the student's free time. It sends reminders with an opinionated mascot, shows how the student is doing (good, medium or bad), and keeps a Duolingo-style daily streak: five quick flashcards a day built from the student's own courses, aimed at the next quiz or assignment coming up, with review decks in quiet weeks.
 
 - Backend: Python 3.12, Django 5.1, Django REST Framework, Celery and Redis, PostgreSQL (SQLite for quick local runs).
 - Frontend: React 18, TypeScript, Vite, TanStack Query, Tailwind, Framer Motion and Lottie.
@@ -73,7 +73,7 @@ npm ci
 npm run dev
 ```
 
-Without a worker, the 10-minute periodic jobs (reminder scan, quiz-window sweep, nightly roll-forward) don't run on their own. Use the buttons on the Demo controls page, or run `python manage.py run_periodic`.
+Without a worker, the 10-minute periodic jobs (reminder scan, streak sweep, nightly roll-forward) don't run on their own. Use the buttons on the Demo controls page, or run `python manage.py run_periodic`.
 
 To run the full stack natively, start Postgres and Redis, set `DATABASE_URL` and `REDIS_URL` in `.env`, and add two more processes from `backend/`:
 
@@ -88,7 +88,7 @@ All passwords are `pulse-demo`.
 
 | Account | Who |
 | --- | --- |
-| maya@pulse.test | Student, on track, 6-quiz streak and a quiz open now |
+| maya@pulse.test | Student, on track, 6-day flashcard streak with today's deck still to do |
 | sam@pulse.test | Student, slightly behind |
 | jordan@pulse.test | Student, badly behind, not enough study time |
 | alex@pulse.test | Student with an extension in CS 201, Central time |
@@ -161,7 +161,7 @@ Every variable is documented in [.env.example](.env.example). The ones you're mo
 | `DATABASE_URL` | SQLite file | Postgres URL in Docker and production. |
 | `REDIS_URL` | empty | Celery broker and cache. Empty runs jobs inline. |
 | `AI_PROVIDER`, `AI_API_KEY` | `anthropic`, empty | Empty key = deterministic fallbacks only. |
-| `AI_MODEL_PLANNER`, `AI_MODEL_LIGHT` | Sonnet / Haiku | Models for decomposition and quiz questions / titles and copy. |
+| `AI_MODEL_PLANNER`, `AI_MODEL_LIGHT` | Sonnet / Haiku | Models for decomposition / titles and copy. |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | empty | Web Push keys. `init_env` fills them in. |
 | `EMAIL_*` | console backend | Email fallback for urgent reminders. |
 | `USE_CELERY_BEAT` | `true` | `false` when periodic jobs run from cron instead. |
@@ -181,7 +181,7 @@ backend/
   lms/            Learning Hub: courses, chapters, assessments, submissions
   pulse/          availability, planner and solver, sessions, status, demo controls
   notifications/  templates, triggers, delivery (in-app, push, email), guardrails
-  quizzes/        question banks, quiz windows, attempts, streaks
+  quizzes/        course flashcards, daily decks, streaks
   ai/             provider client, prompts, schemas, cost log
   seed/           seed_demo command and course content
 frontend/

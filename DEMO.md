@@ -39,13 +39,13 @@ Sign in as **sam@pulse.test**. Go to **Courses > CS 201 > Assignments > Problem 
 
 - Open **Today**: confetti and the celebrate animation play once, and the sessions planned for Problem Set 2 are gone from Today and Week.
 
-## 6. A chapter quiz inside its window
+## 6. Today's flashcards keep the streak going
 
-Sign in as **maya@pulse.test** (6-quiz streak). Open **Quiz**; one quiz is open now, covering the chapters she finished today.
+Sign in as **maya@pulse.test** (6-day streak). Open **Quiz**; the week strip shows the last six days done and today still open, and today's deck says which upcoming deadline it's prepping for.
 
-- **Start quiz**, answer every question, wait at least 20 seconds (faster submissions don't count), then **Submit answers**.
-- The result reads "Counted for your streak: 7 in a row. That's a 7-quiz milestone." with confetti. Reloading or submitting again doesn't count it twice.
-- To show a window closing: in Demo controls, click **+1 day** twice on Maya's row. Her open quiz moves to Past quizzes. (If you skipped the quiz, her saved freeze is used and the streak survives.) Click **Back to now** afterwards.
+- **Start today's flashcards**. For each of the five cards, **Show answer** (or tap the card), then **Got it** or **Still learning**.
+- The result reads "Counted for your streak: 7 days in a row. That's a 7-day milestone." with confetti. Opening the deck again doesn't count the day twice, and cards marked "Still learning" come back in the next decks.
+- To show a missed day: in Demo controls, click **+1 day** twice on Maya's row without doing the deck. The first missed day spends her saved freeze; the second resets the streak and sends a "streak reset" reminder. Click **Back to now** afterwards.
 
 ## 7. An instructor extension
 

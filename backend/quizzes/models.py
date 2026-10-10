@@ -6,65 +6,71 @@ from config.models import TimeStamped
 User = settings.AUTH_USER_MODEL
 
 
-class BankQuestion(TimeStamped):
-    class Type(models.TextChoices):
-        MULTIPLE_CHOICE = "multiple_choice"
-        TRUE_FALSE = "true_false"
+class Flashcard(TimeStamped):
+    """A flashcard. Course cards are built from a chapter's text; general cards (no chapter) come
+    from the built-in library and fill decks when a student has no course material yet."""
 
-    class Origin(models.TextChoices):
-        AI = "ai"
-        CLOZE = "cloze"
+    class Topic(models.TextChoices):
+        STUDY_SKILLS = "study_skills", "Study skills"
+        MEMORY = "memory", "Memory"
+        FOCUS = "focus", "Focus"
+        WELLBEING = "wellbeing", "Well-being"
+        MONEY = "money", "Money"
+        DIGITAL = "digital", "Digital life"
+        SCIENCE = "science", "Science"
+        WORLD = "world", "World"
+        COURSE = "course", "Course"
 
-    chapter = models.ForeignKey("lms.Chapter", on_delete=models.CASCADE, related_name="bank")
-    type = models.CharField(max_length=20, choices=Type.choices)
-    prompt = models.TextField()
-    options = models.JSONField()
-    correct_index = models.PositiveSmallIntegerField()
-    explanation = models.TextField()
-    source_excerpt = models.TextField()
-    content_hash = models.CharField(max_length=64, db_index=True)
-    origin = models.CharField(max_length=10, choices=Origin.choices)
-    retired = models.BooleanField(default=False)
+    chapter = models.ForeignKey(
+        "lms.Chapter", null=True, blank=True, on_delete=models.CASCADE, related_name="flashcards"
+    )
+    content_hash = models.CharField(max_length=64, blank=True, help_text="chapter version")
+    slug = models.SlugField(max_length=80, unique=True)
+    topic = models.CharField(max_length=20, choices=Topic.choices)
+    front = models.CharField(max_length=300)
+    back = models.TextField()
+    active = models.BooleanField(default=True)
 
     class Meta:
-        indexes = [models.Index(fields=["chapter", "retired"])]
+        ordering = ["id"]
+        indexes = [models.Index(fields=["chapter", "active"])]
 
 
-class ChapterQuiz(TimeStamped):
+class DailyDeck(TimeStamped):
+    """One short deck per student per local day. Finishing it counts that day toward the streak."""
+
     class Kind(models.TextChoices):
-        SCHEDULED = "scheduled"
-        EARLY = "early"
+        UPCOMING = "upcoming", "Prep for an upcoming deadline"
+        REVIEW = "review", "Review of course chapters"
+        GENERAL = "general", "General study cards"
 
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="chapter_quizzes")
-    chapters = models.ManyToManyField("lms.Chapter", related_name="chapter_quizzes")
-    kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.SCHEDULED)
-    scheduled_date = models.DateField()
-    opens_at = models.DateTimeField(db_index=True)
-    closes_at = models.DateTimeField(db_index=True)
-    timezone = models.CharField(max_length=64)
-    questions = models.JSONField(default=list, help_text="[{bank_id, order: [option indexes]}]")
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="daily_decks")
+    day = models.DateField()
+    kind = models.CharField(max_length=10, choices=Kind.choices, default=Kind.GENERAL)
+    course = models.ForeignKey(
+        "lms.Course", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    assessment = models.ForeignKey(
+        "lms.Assessment", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    cards = models.JSONField(default=list, help_text="flashcard ids in the order shown")
     started_at = models.DateTimeField(null=True, blank=True)
-    submitted_at = models.DateTimeField(null=True, blank=True)
-    score = models.FloatField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    knew = models.PositiveSmallIntegerField(default=0)
     counted_for_streak = models.BooleanField(default=False)
-    sharp = models.BooleanField(default=False)
-    resolved = models.BooleanField(default=False, help_text="streak outcome recorded")
 
     class Meta:
-        ordering = ["opens_at"]
-        indexes = [models.Index(fields=["student", "closes_at"])]
+        ordering = ["-day"]
+        constraints = [models.UniqueConstraint(fields=["student", "day"], name="uniq_daily_deck")]
 
 
-class ChapterQuizAnswer(TimeStamped):
-    quiz = models.ForeignKey(ChapterQuiz, on_delete=models.CASCADE, related_name="answers")
-    question = models.ForeignKey(BankQuestion, on_delete=models.CASCADE, related_name="answers")
-    chosen_index = models.PositiveSmallIntegerField(help_text="index in the original options")
-    correct = models.BooleanField()
+class CardReview(TimeStamped):
+    deck = models.ForeignKey(DailyDeck, on_delete=models.CASCADE, related_name="reviews")
+    card = models.ForeignKey(Flashcard, on_delete=models.CASCADE, related_name="reviews")
+    knew = models.BooleanField()
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["quiz", "question"], name="uniq_quiz_answer")
-        ]
+        constraints = [models.UniqueConstraint(fields=["deck", "card"], name="uniq_card_review")]
 
 
 class Streak(TimeStamped):
@@ -73,6 +79,9 @@ class Streak(TimeStamped):
     longest = models.PositiveIntegerField(default=0)
     freezes = models.PositiveSmallIntegerField(default=0)
     on_time_toward_freeze = models.PositiveSmallIntegerField(default=0)
+    last_day = models.DateField(
+        null=True, blank=True, help_text="last local day the streak covered (done or frozen)"
+    )
 
 
 class StreakEvent(TimeStamped):
@@ -82,7 +91,8 @@ class StreakEvent(TimeStamped):
         MISSED = "missed"
 
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="streak_events")
-    quiz = models.OneToOneField(ChapterQuiz, null=True, blank=True, on_delete=models.SET_NULL)
+    deck = models.OneToOneField(DailyDeck, null=True, blank=True, on_delete=models.SET_NULL)
+    day = models.DateField(null=True, blank=True)
     result = models.CharField(max_length=10, choices=Result.choices)
     streak_after = models.PositiveIntegerField(default=0)
 

@@ -1,5 +1,5 @@
 # Render Blueprint for the backend. Not deployed by default: see DEPLOY.md.
-# The worker runs background jobs (schedule generation, quiz banks, notification batches);
+# The worker runs background jobs (schedule generation, notification batches);
 # the cron job runs the periodic scans every 10 minutes, so Celery Beat is off.
 envVarGroups:
   - name: pulse-shared

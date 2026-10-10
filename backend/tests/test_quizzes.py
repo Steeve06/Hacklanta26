@@ -1,4 +1,4 @@
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -6,41 +6,23 @@ import time_machine
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from ai.schemas import QuestionOut
-from lms.models import ChapterProgress
 from notifications.engine import scan_student
 from notifications.models import Notification
-from pulse.models import Session
-from pulse.services.planner import plan
-from quizzes.models import BankQuestion, ChapterQuiz, Streak, StreakEvent
-from quizzes.services import bank as bank_service
-from quizzes.services.streaks import sweep_student
-from quizzes.services.windows import sync_windows, window_for
+from quizzes.cards import CARDS
+from quizzes.models import CardReview, DailyDeck, Flashcard, Streak, StreakEvent
+from quizzes.services.cards import DECK_SIZE, pick, sync_cards
+from quizzes.services.streaks import settle, streak_component
 
-from .factories import ChapterFactory, CourseFactory, enroll
 from .test_pulse import make_student
 
 pytestmark = pytest.mark.django_db
 NY = ZoneInfo("America/New_York")
-
-BODY = """## Testing
-
-**Spaced practice** spreads study over several sessions and beats cramming for long-term memory.
-**Retrieval practice** means recalling material from memory rather than rereading it.
-**Interleaving** mixes problem types so learners must choose the right method each time.
-**Elaboration** connects new ideas to things the learner already knows well.
-**Dual coding** pairs words with pictures so each supports the other in memory.
-**Concrete examples** make abstract ideas easier to understand and remember later.
-"""
+NOON = datetime(2026, 10, 14, 12, 0, tzinfo=NY)
 
 
 @pytest.fixture
-def setup():
-    student = make_student(blocks=[(d, time(9), time(21)) for d in range(7)])
-    course = CourseFactory(code="PSY 101")
-    enroll(student, course)
-    chapter = ChapterFactory(course=course, body_md=BODY, title="Learning Strategies")
-    return student, course, chapter
+def student():
+    return make_student()
 
 
 def client_for(user):
@@ -49,275 +31,382 @@ def client_for(user):
     return client
 
 
-def make_quiz(student, chapters, opens, closes):
-    quiz = ChapterQuiz.objects.create(
-        student=student,
-        scheduled_date=opens.date(),
-        opens_at=opens,
-        closes_at=closes,
-        timezone="America/New_York",
-    )
-    quiz.chapters.set(chapters)
-    from quizzes.services.windows import assemble
-
-    assemble(quiz)
-    return quiz
+def finish_today(client, *, knew=True):
+    deck = client.get("/api/v1/decks/today").data
+    response = None
+    for card in deck["cards"]:
+        response = client.post(
+            f"/api/v1/decks/{deck['id']}/review",
+            {"card_id": card["id"], "knew": knew},
+            format="json",
+        )
+    return response
 
 
-def take(client, quiz, *, wait=25, correct=True):
-    started = client.post(f"/api/v1/quizzes/{quiz.id}/start").data
-    assert all("correct" not in q for q in started["questions"])
-    with time_machine.travel(timezone.now() + timedelta(seconds=wait)):
-        answers = {}
-        for item in quiz.questions:
-            q = BankQuestion.objects.get(pk=item["bank_id"])
-            shown = item["order"].index(q.correct_index)
-            answers[str(quiz.questions.index(item))] = (
-                shown if correct else (shown + 1) % len(item["order"])
+def at(day: date, hour: int, minute: int = 0) -> datetime:
+    return datetime(day.year, day.month, day.day, hour, minute, tzinfo=NY)
+
+
+class TestLibrary:
+    def test_cards_are_seeded_and_cover_every_topic(self):
+        assert Flashcard.objects.filter(active=True).count() == len(CARDS)
+        assert {c.topic for c in Flashcard.objects.all()} == set(Flashcard.Topic.values) - {
+            "course"
+        }
+        assert len({slug for slug, *_ in CARDS}) == len(CARDS)
+
+    def test_sync_updates_in_place_and_retires_removed_cards(self, monkeypatch):
+        extra = Flashcard.objects.create(slug="gone", topic="world", front="?", back="!")
+        from quizzes.services import cards as cards_service
+
+        slug, topic, front, _ = CARDS[0]
+        monkeypatch.setattr(
+            cards_service, "CARDS", [(slug, topic, front, "New answer."), *CARDS[1:]]
+        )
+        sync_cards()
+        assert Flashcard.objects.get(slug=slug).back == "New answer."
+        extra.refresh_from_db()
+        assert extra.active is False
+
+
+class TestPicking:
+    def test_deck_is_stable_for_a_day_and_spreads_topics(self, student):
+        day = date(2026, 10, 14)
+        first = pick(student, day)
+        assert first == pick(student, day)
+        assert len(first) == DECK_SIZE
+        topics = [Flashcard.objects.get(pk=c).topic for c in first]
+        assert len(set(topics)) == DECK_SIZE
+        assert pick(student, day + timedelta(days=1)) != first
+
+    def test_still_learning_cards_come_back_and_known_ones_wait(self, student):
+        day = date(2026, 10, 14)
+        cards = pick(student, day)
+        deck = DailyDeck.objects.create(student=student, day=day, cards=cards)
+        for i, card_id in enumerate(cards):
+            CardReview.objects.create(deck=deck, card_id=card_id, knew=i >= 2)
+        tomorrow = pick(student, day + timedelta(days=1))
+        assert tomorrow[:2] == cards[:2]
+        assert not set(tomorrow[2:]) & set(cards)
+
+    def test_runs_out_of_new_cards_gracefully(self, student):
+        day = date(2026, 1, 1)
+        for i in range(len(CARDS) // DECK_SIZE + 2):
+            d = day + timedelta(days=i)
+            deck = DailyDeck.objects.create(student=student, day=d, cards=pick(student, d))
+            CardReview.objects.bulk_create(
+                CardReview(deck=deck, card_id=c, knew=True) for c in deck.cards
             )
-        return client.post(f"/api/v1/quizzes/{quiz.id}/submit", {"answers": answers}, format="json")
+        later = pick(student, day + timedelta(days=60))
+        assert len(set(later)) == DECK_SIZE
 
 
-class TestBank:
-    def test_cloze_fallback_builds_valid_questions(self, setup):
-        _, _, chapter = setup
-        assert bank_service.rebuild_bank(chapter) >= 5
-        for q in BankQuestion.objects.filter(chapter=chapter):
-            assert len(set(q.options)) == len(q.options)
-            assert q.correct_index < len(q.options)
-
-    def test_grounding_rejects_invented_excerpts(self):
-        corpus = bank_service.normalize(BODY)
-        good = QuestionOut(question="What spreads study over sessions?", type="multiple_choice",
-                           options=["Spaced practice", "Cramming", "Rereading", "Highlighting"], correct_index=0,
-                           explanation="The chapter says so.", source_excerpt="spreads study over several sessions")  # fmt: skip
-        bad = good.model_copy(update={"source_excerpt": "Spaced practice was invented in 1932."})
-        dupes = good.model_copy(update={"options": ["A", "A", "B", "C"]})
-        assert bank_service.grounded(good, corpus) and bank_service.valid(good)
-        assert not bank_service.grounded(bad, corpus)
-        assert not bank_service.valid(dupes)
-
-    def test_ai_questions_are_filtered_and_kept(self, setup, settings, monkeypatch):
-        _, _, chapter = setup
-        settings.AI_PROVIDER, settings.AI_API_KEY = "anthropic", "k"
-        from ai import client as ai_client
-
-        def fake(model, system, user, schema, max_tokens):
-            base = {"type": "multiple_choice", "options": ["Spaced practice", "Cramming", "Rereading", "Napping"],
-                    "correct_index": 0, "explanation": "Stated in the chapter."}  # fmt: skip
-            return {"questions": [
-                {**base, "question": f"Which spreads study out? ({i})", "source_excerpt": "spreads study over several sessions"}
-                for i in range(6)
-            ] + [{**base, "question": "Invented?", "source_excerpt": "This sentence is not in the chapter at all."}]}, 10, 10  # fmt: skip
-
-        monkeypatch.setitem(ai_client.PROVIDERS, "anthropic", fake)
-        bank_service.rebuild_bank(chapter)
-        kept = BankQuestion.objects.filter(chapter=chapter)
-        assert kept.count() == 6
-        assert all(q.origin == "ai" for q in kept)
-
-    def test_edit_retires_old_questions(self, setup):
-        _, _, chapter = setup
-        bank_service.rebuild_bank(chapter)
-        old_ids = set(BankQuestion.objects.values_list("id", flat=True))
-        chapter.body_md = (
-            BODY
-            + "\n**Self-explanation** asks learners to explain each step in their own words to themselves."
-        )
-        chapter.save()
-        bank_service.rebuild_bank(chapter)
-        assert BankQuestion.objects.filter(id__in=old_ids, retired=False).count() == 0
-        assert bank_service.usable(chapter).count() >= 5
-
-
-class TestWindows:
-    def test_window_follows_last_study_day(self, setup):
-        student, _, chapter = setup
-        schedule = plan(student, reason="test")
-        sync_windows(student)
-        last = max(
-            s.start for s in schedule.sessions.filter(task__source_type="chapter", kind="study")
-        )
-        quiz = ChapterQuiz.objects.get(student=student)
-        day = last.astimezone(NY).date()
-        assert quiz.scheduled_date == day
-        assert (quiz.opens_at, quiz.closes_at) == window_for(day, NY)
-        assert quiz.closes_at.astimezone(NY).time() == time(23, 59, 59)
-
-    def test_chapters_on_same_day_share_one_quiz(self, setup):
-        student, course, first = setup
-        second = ChapterFactory(course=course, body_md=BODY, title="Memory")
-        plan(student, reason="test")
-        sync_windows(student)
-        quizzes = list(ChapterQuiz.objects.filter(student=student))
-        days = {q.scheduled_date for q in quizzes}
-        assert len(quizzes) == len(days)
-        combined = [q for q in quizzes if q.chapters.count() == 2]
-        if combined:
-            assert len(combined[0].questions) <= 10
-        assert {c.id for q in quizzes for c in q.chapters.all()} == {first.id, second.id}
-
-    def test_early_completion_opens_immediately(self, setup):
-        student, _, chapter = setup
-        plan(student, reason="test")
-        client_for(student).post(f"/api/v1/chapters/{chapter.id}/complete")
-        sync_windows(student)
-        quiz = ChapterQuiz.objects.get(student=student, chapters=chapter)
-        assert quiz.kind == "early"
-        assert quiz.opens_at <= timezone.now()
-        assert quiz.closes_at.astimezone(NY).date() == timezone.localtime(
-            timezone.now(), NY
-        ).date() + timedelta(days=1)
-
-    @time_machine.travel(datetime(2026, 10, 14, 22, 0, tzinfo=NY))
-    def test_replan_moves_unopened_window_but_not_open_one(self, setup):
-        student, _, chapter = setup
-        schedule = plan(student, reason="test")
-        sync_windows(student)
-        assert ChapterQuiz.objects.get(student=student).opens_at > timezone.now()
-        Session.objects.filter(schedule=schedule, task__source_type="chapter").update(
-            start=timezone.now() + timedelta(days=4),
-            end=timezone.now() + timedelta(days=4, minutes=20),
-        )
-        moved = sync_windows(student)
-        assert moved[0].scheduled_date == (timezone.now() + timedelta(days=4)).astimezone(NY).date()
-        with time_machine.travel(moved[0].opens_at + timedelta(hours=1)):
-            Session.objects.filter(schedule=schedule, task__source_type="chapter").update(
-                start=timezone.now() + timedelta(days=6),
-                end=timezone.now() + timedelta(days=6, minutes=20),
-            )
-            sync_windows(student)
-            assert ChapterQuiz.objects.get(student=student).id == moved[0].id
-
-    def test_timezone_change_does_not_move_open_window(self, setup):
-        student, _, chapter = setup
-        now = timezone.now()
-        quiz = make_quiz(student, [chapter], now - timedelta(hours=1), now + timedelta(hours=5))
-        student.timezone = "Asia/Tokyo"
-        student.save()
-        sync_windows(student)
-        quiz.refresh_from_db()
-        assert quiz.closes_at == now + timedelta(hours=5)
-        assert quiz.timezone == "America/New_York"
-
-
-class TestTakingQuizzes:
-    def test_on_time_extends_streak_and_double_submit_is_idempotent(self, setup):
-        student, _, chapter = setup
-        now = timezone.now()
-        quiz = make_quiz(student, [chapter], now - timedelta(hours=1), now + timedelta(hours=10))
+class TestTakingDecks:
+    @time_machine.travel(NOON, tick=False)
+    def test_today_is_one_deck_and_finishing_counts_once(self, student):
         client = client_for(student)
-        first = take(client, quiz)
-        assert first.status_code == 200
-        assert first.data["counted_for_streak"] is True
-        assert first.data["sharp"] is True
-        assert first.data["results"][0]["explanation"]
-        again = client.post(f"/api/v1/quizzes/{quiz.id}/submit", {"answers": {}}, format="json")
-        assert again.data["submitted_at"] == first.data["submitted_at"]
-        assert Streak.objects.get(student=student).current == 1
+        deck = client.get("/api/v1/decks/today").data
+        assert client.get("/api/v1/decks/today").data["id"] == deck["id"]
+        assert deck["state"] == "open"
+        assert all(c["knew"] is None and c["back"] for c in deck["cards"])
+        done = finish_today(client)
+        assert done.status_code == 200
+        assert done.data["state"] == "done"
+        assert done.data["counted_for_streak"] is True
+        assert done.data["knew"] == DECK_SIZE
+        again = client.post(
+            f"/api/v1/decks/{deck['id']}/review",
+            {"card_id": deck["cards"][0]["id"], "knew": False},
+            format="json",
+        )
+        assert again.data["completed_at"] == done.data["completed_at"]
+        streak = Streak.objects.get(student=student)
+        assert (streak.current, streak.last_day) == (1, NOON.date())
         assert StreakEvent.objects.filter(student=student).count() == 1
 
-    def test_too_fast_submission_is_rejected(self, setup):
-        student, _, chapter = setup
-        now = timezone.now()
-        quiz = make_quiz(student, [chapter], now - timedelta(hours=1), now + timedelta(hours=10))
-        response = take(client_for(student), quiz, wait=5)
+    @time_machine.travel(NOON, tick=False)
+    def test_still_learning_cards_still_finish_the_deck(self, student):
+        response = finish_today(client_for(student), knew=False)
+        assert response.data["counted_for_streak"] is True
+        assert response.data["knew"] == 0
+        assert response.data["streak"] == 1
+
+    @time_machine.travel(NOON, tick=False)
+    def test_card_not_in_deck_is_rejected(self, student):
+        client = client_for(student)
+        deck = client.get("/api/v1/decks/today").data
+        stranger = Flashcard.objects.exclude(id__in=[c["id"] for c in deck["cards"]]).first()
+        response = client.post(
+            f"/api/v1/decks/{deck['id']}/review", {"card_id": stranger.id, "knew": True},
+            format="json",
+        )  # fmt: skip
         assert response.status_code == 400
 
-    def test_started_before_close_and_submitted_within_grace_counts(self, setup):
-        student, _, chapter = setup
-        now = timezone.now()
-        quiz = make_quiz(student, [chapter], now - timedelta(hours=5), now + timedelta(seconds=10))
+    def test_started_before_midnight_and_finished_in_grace_counts(self, student):
+        day = NOON.date()
         client = client_for(student)
-        client.post(f"/api/v1/quizzes/{quiz.id}/start")
-        with time_machine.travel(now + timedelta(minutes=10)):
-            response = take(client, quiz, wait=1)
-        assert response.data["counted_for_streak"] is True
+        with time_machine.travel(at(day, 23, 55), tick=False):
+            deck = client.get("/api/v1/decks/today").data
+            client.post(
+                f"/api/v1/decks/{deck['id']}/review",
+                {"card_id": deck["cards"][0]["id"], "knew": True}, format="json",
+            )  # fmt: skip
+        with time_machine.travel(at(day, 23, 55) + timedelta(minutes=10), tick=False):
+            for card in deck["cards"][1:]:
+                last = client.post(
+                    f"/api/v1/decks/{deck['id']}/review",
+                    {"card_id": card["id"], "knew": True}, format="json",
+                )  # fmt: skip
+        assert last.data["counted_for_streak"] is True
+        assert Streak.objects.get(student=student).last_day == day
 
-    def test_after_window_it_is_practice(self, setup):
-        student, _, chapter = setup
-        now = timezone.now()
-        quiz = make_quiz(student, [chapter], now - timedelta(days=2), now - timedelta(hours=1))
-        response = take(client_for(student), quiz)
-        assert response.data["counted_for_streak"] is False
+    def test_old_deck_finished_late_is_practice(self, student):
+        day = NOON.date()
+        client = client_for(student)
+        with time_machine.travel(at(day, 10), tick=False):
+            deck = client.get("/api/v1/decks/today").data
+        with time_machine.travel(at(day, 10) + timedelta(days=1), tick=False):
+            for card in deck["cards"]:
+                last = client.post(
+                    f"/api/v1/decks/{deck['id']}/review",
+                    {"card_id": card["id"], "knew": True}, format="json",
+                )  # fmt: skip
+        assert last.data["state"] == "done"
+        assert last.data["counted_for_streak"] is False
         assert Streak.objects.get_or_create(student=student)[0].current == 0
 
-    def test_missed_window_breaks_streak_unless_frozen(self, setup):
-        student, _, chapter = setup
-        Streak.objects.create(student=student, current=4, longest=4, freezes=1)
-        now = timezone.now()
-        make_quiz(student, [chapter], now - timedelta(days=2), now - timedelta(hours=1))
-        sweep_student(student)
-        streak = Streak.objects.get(student=student)
-        assert (streak.current, streak.freezes) == (4, 0)
-        make_quiz(student, [chapter], now - timedelta(days=2), now - timedelta(hours=1))
-        sweep_student(student)
-        assert Streak.objects.get(student=student).current == 0
+    def test_other_students_cannot_open_a_deck(self, student):
+        deck = client_for(student).get("/api/v1/decks/today").data
+        other = make_student()
+        assert client_for(other).get(f"/api/v1/decks/{deck['id']}").status_code == 404
 
-    def test_freezes_earned_every_five_and_capped(self, setup):
-        student, _, chapter = setup
+
+class TestStreaks:
+    def test_consecutive_days_grow_streak_and_earn_capped_freezes(self, student):
         client = client_for(student)
-        now = timezone.now()
-        for _ in range(12):
-            take(
-                client,
-                make_quiz(student, [chapter], now - timedelta(hours=1), now + timedelta(hours=10)),
-            )
+        for i in range(12):
+            with time_machine.travel(NOON + timedelta(days=i), tick=False):
+                finish_today(client)
         streak = Streak.objects.get(student=student)
-        assert streak.current == 12
-        assert streak.freezes == 2
+        assert (streak.current, streak.longest, streak.freezes) == (12, 12, 2)
 
-    def test_milestone_sends_win(self, setup):
-        student, _, chapter = setup
-        Streak.objects.create(student=student, current=2, longest=2)
-        now = timezone.now()
-        response = take(
-            client_for(student),
-            make_quiz(student, [chapter], now - timedelta(hours=1), now + timedelta(hours=9)),
+    def test_two_decks_same_day_is_impossible_and_day_counts_once(self, student):
+        client = client_for(student)
+        with time_machine.travel(NOON, tick=False):
+            finish_today(client)
+        with time_machine.travel(NOON + timedelta(hours=6), tick=False):
+            finish_today(client)
+        assert DailyDeck.objects.filter(student=student).count() == 1
+        assert Streak.objects.get(student=student).current == 1
+
+    def test_missed_day_spends_a_freeze_then_resets(self, student):
+        Streak.objects.create(
+            student=student, current=4, longest=4, freezes=1, last_day=date(2026, 10, 10)
         )
+        events = settle(student, at(date(2026, 10, 12), 9))
+        assert [e.result for e in events] == ["frozen"]
+        streak = Streak.objects.get(student=student)
+        assert (streak.current, streak.freezes, streak.last_day) == (4, 0, date(2026, 10, 11))
+        events = settle(student, at(date(2026, 10, 13), 9))
+        assert [e.result for e in events] == ["missed"]
+        assert Streak.objects.get(student=student).current == 0
+        assert settle(student, at(date(2026, 10, 20), 9)) == []
+
+    def test_settle_waits_for_today_and_the_grace_period(self, student):
+        Streak.objects.create(student=student, current=3, longest=3, last_day=date(2026, 10, 13))
+        assert settle(student, at(date(2026, 10, 14), 23)) == []
+        assert settle(student, at(date(2026, 10, 15), 0, 10)) == []
+        assert [e.result for e in settle(student, at(date(2026, 10, 15), 0, 20))] == ["missed"]
+
+    def test_finishing_after_a_gap_restarts_at_one(self, student):
+        Streak.objects.create(student=student, current=5, longest=5, last_day=date(2026, 10, 1))
+        with time_machine.travel(NOON, tick=False):
+            response = finish_today(client_for(student))
+        assert response.data["streak"] == 1
+        streak = Streak.objects.get(student=student)
+        assert (streak.current, streak.longest) == (1, 5)
+        assert StreakEvent.objects.filter(student=student, result="missed").count() == 1
+
+    def test_milestone_sends_win(self, student):
+        Streak.objects.create(
+            student=student, current=2, longest=2, last_day=NOON.date() - timedelta(days=1)
+        )
+        with time_machine.travel(NOON, tick=False):
+            response = finish_today(client_for(student))
         assert response.data["milestone"] == 3
         assert Notification.objects.filter(
-            student=student, trigger="win", source_type="chapter_quiz"
+            student=student, trigger="win", source_type="daily_deck"
         ).exists()
 
-    def test_streak_at_risk_and_lost_notifications(self, setup):
-        student, _, chapter = setup
-        Streak.objects.create(student=student, current=5, longest=5)
-        now = timezone.now()
-        quiz = make_quiz(student, [chapter], now - timedelta(hours=20), now + timedelta(hours=3))
-        assert "streak_at_risk" in [n.trigger for n in scan_student(student)]
-        with time_machine.travel(quiz.closes_at + timedelta(hours=1)):
-            from quizzes.tasks import sweep_windows
+    def test_at_risk_in_the_evening_and_lost_after_midnight(self, student):
+        Streak.objects.create(
+            student=student, current=5, longest=5, last_day=NOON.date() - timedelta(days=1)
+        )
+        with time_machine.travel(NOON, tick=False):
+            assert "streak_at_risk" not in [n.trigger for n in scan_student(student)]
+        with time_machine.travel(at(NOON.date(), 21), tick=False):
+            assert "streak_at_risk" in [n.trigger for n in scan_student(student)]
+            assert streak_component(student, timezone.now())[0] == 0.5
+        with time_machine.travel(at(NOON.date(), 21) + timedelta(hours=4), tick=False):
+            from quizzes.tasks import sweep_streaks
 
-            sweep_windows()
+            assert sweep_streaks() == 1
+            assert streak_component(student, timezone.now())[0] == 0.0
         assert Notification.objects.filter(student=student, trigger="streak_lost").exists()
 
-    def test_days_without_quiz_are_neutral(self, setup):
-        student, _, _ = setup
-        Streak.objects.create(student=student, current=3, longest=3)
-        sweep_student(student, timezone.now() + timedelta(days=10))
-        assert Streak.objects.get(student=student).current == 3
-
-    def test_other_students_cannot_open_quiz(self, setup):
-        student, _, chapter = setup
-        now = timezone.now()
-        quiz = make_quiz(student, [chapter], now - timedelta(hours=1), now + timedelta(hours=10))
-        other = make_student()
-        assert client_for(other).get(f"/api/v1/quizzes/{quiz.id}").status_code == 404
-
-    def test_quiz_list_and_open_is_fast(self, setup, django_assert_max_num_queries):
-        student, _, chapter = setup
-        now = timezone.now()
-        quiz = make_quiz(student, [chapter], now - timedelta(hours=1), now + timedelta(hours=10))
+    def test_streak_endpoint_shows_the_week(self, student):
         client = client_for(student)
-        assert [q["id"] for q in client.get("/api/v1/quizzes?state=open").data] == [quiz.id]
-        with django_assert_max_num_queries(12):
-            client.post(f"/api/v1/quizzes/{quiz.id}/start")
+        with time_machine.travel(NOON - timedelta(days=2), tick=False):
+            finish_today(client)
+        with time_machine.travel(NOON, tick=False):
+            data = client.get("/api/v1/streak").data
+        assert [d["result"] for d in data["week"]][-3:] == ["done", "missed", "open"]
+        assert data["current"] == 0
+        assert data["done_today"] is False
+        assert data["next_milestone"] == 3
+
+    def test_no_streak_is_neutral_for_status(self, student):
+        assert streak_component(student, NOON)[0] == 1.0
+        assert settle(student, NOON) == []
 
 
-def test_progress_marks_and_quiz_streak_status_component(setup):
-    student, _, chapter = setup
-    ChapterProgress.objects.create(student=student, chapter=chapter, completed_at=timezone.now())
-    from quizzes.services.streaks import streak_component
+@time_machine.travel(NOON, tick=False)
+def test_deck_list_and_review_are_fast(student, django_assert_max_num_queries):
+    client = client_for(student)
+    deck = client.get("/api/v1/decks/today").data
+    assert [d["id"] for d in client.get("/api/v1/decks").data] == [deck["id"]]
+    with django_assert_max_num_queries(16):
+        client.post(
+            f"/api/v1/decks/{deck['id']}/review",
+            {"card_id": deck["cards"][0]["id"], "knew": True}, format="json",
+        )  # fmt: skip
 
-    assert streak_component(student, datetime.now(tz=NY))[0] == 1.0
+
+HASHING = """## Hashing
+
+A **hash table** answers lookups in constant time on average.
+A **hash function** turns each key into an integer called its hash.
+Different keys can land in one bucket, which is called a **collision** between them.
+**Separate chaining** stores a small list in each bucket of the table.
+**Open addressing** looks for another free slot when a bucket is full.
+It is **fast** to compute.
+"""
+
+HEAPS = """## Heaps
+
+A **binary heap** is a complete binary tree stored in an array.
+The **heap property** says every parent is smaller than its children in a min-heap.
+Restoring order after an insert is called **sifting up** through the tree.
+"""
+
+
+@pytest.fixture
+def enrolled():
+    from .factories import ChapterFactory, CourseFactory, enroll
+
+    student = make_student()
+    course = CourseFactory(code="CS 201")
+    enroll(student, course)
+    hashing = ChapterFactory(course=course, body_md=HASHING, title="Hashing", order=5)
+    heaps = ChapterFactory(course=course, body_md=HEAPS, title="Heaps", order=7)
+    return student, course, hashing, heaps
+
+
+class TestCourseCards:
+    def test_key_terms_become_fill_in_the_blank_cards(self, enrolled):
+        from quizzes.services import chapter_cards
+
+        _, _, hashing, _ = enrolled
+        ids = chapter_cards.ensure(hashing)
+        cards = Flashcard.objects.filter(id__in=ids)
+        assert len(ids) == 5  # "fast" is emphasis, not a key term
+        card = cards.get(back__startswith="Hash function")
+        assert (
+            card.front
+            == "Fill in the blank: A _____ turns each key into an integer called its hash."
+        )
+        assert card.topic == "course" and card.chapter == hashing
+        assert chapter_cards.ensure(hashing) == ids
+
+    def test_editing_a_chapter_retires_its_old_cards(self, enrolled):
+        from quizzes.services import chapter_cards
+
+        _, _, hashing, _ = enrolled
+        old = chapter_cards.ensure(hashing)
+        hashing.body_md = (
+            HASHING + "\nA **load factor** is the number of entries divided by buckets.\n"
+        )
+        hashing.save()
+        new = chapter_cards.ensure(hashing)
+        assert len(new) == 6
+        assert not Flashcard.objects.filter(id__in=old, active=True).exclude(id__in=new).exists()
+
+
+class TestCourseFocus:
+    def test_upcoming_quiz_drives_the_deck(self, enrolled):
+        from .factories import AssessmentFactory
+
+        student, course, hashing, heaps = enrolled
+        quiz = AssessmentFactory(course=course, type="quiz", title="Quiz 2: Hashing",
+                                 due_at=timezone.now() + timedelta(days=2))  # fmt: skip
+        quiz.chapters.set([hashing])
+        deck = client_for(student).get("/api/v1/decks/today").data
+        assert deck["focus"]["kind"] == "upcoming"
+        assert deck["focus"]["assessment_title"] == "Quiz 2: Hashing"
+        assert deck["focus"]["course_code"] == "CS 201"
+        assert deck["focus"]["due_at"]
+        assert len(deck["cards"]) == DECK_SIZE
+        assert all(c["chapter_id"] == hashing.id for c in deck["cards"])
+        assert deck["cards"][0]["source"] == "CS 201 · Ch 5: Hashing"
+
+    def test_quiz_beats_sooner_homework_and_far_deadlines_are_ignored(self, enrolled):
+        from .factories import AssessmentFactory
+
+        student, course, hashing, heaps = enrolled
+        homework = AssessmentFactory(course=course, due_at=timezone.now() + timedelta(days=1))
+        homework.chapters.set([hashing])
+        quiz = AssessmentFactory(
+            course=course, type="quiz", due_at=timezone.now() + timedelta(days=4)
+        )
+        quiz.chapters.set([heaps])
+        later = AssessmentFactory(
+            course=course, type="quiz", due_at=timezone.now() + timedelta(days=20)
+        )
+        later.chapters.set([hashing])
+        deck = client_for(student).get("/api/v1/decks/today").data
+        assert deck["focus"]["assessment_id"] == quiz.id
+        heap_cards = [c for c in deck["cards"] if c["chapter_id"] == heaps.id]
+        assert len(heap_cards) == 3  # all of the quiz's cards, topped up from the course
+        assert {c["chapter_id"] for c in deck["cards"]} == {heaps.id, hashing.id}
+
+    def test_submitted_quiz_no_longer_drives_the_deck(self, enrolled):
+        from lms.models import Submission
+
+        from .factories import AssessmentFactory
+
+        student, course, hashing, _ = enrolled
+        quiz = AssessmentFactory(
+            course=course, type="quiz", due_at=timezone.now() + timedelta(days=2)
+        )
+        quiz.chapters.set([hashing])
+        Submission.objects.create(assessment=quiz, student=student, status="submitted",
+                                  submitted_at=timezone.now())  # fmt: skip
+        deck = client_for(student).get("/api/v1/decks/today").data
+        assert deck["focus"]["kind"] == "review"
+
+    def test_quiet_week_reviews_released_course_chapters(self, enrolled):
+        from .factories import ChapterFactory
+
+        student, course, hashing, heaps = enrolled
+        ChapterFactory(course=course, body_md=HEAPS.replace("binary heap", "treap"), order=9,
+                       available_from=timezone.now() + timedelta(days=10))  # fmt: skip
+        deck = client_for(student).get("/api/v1/decks/today").data
+        assert deck["focus"]["kind"] == "review"
+        assert deck["focus"]["assessment_id"] is None
+        assert {c["chapter_id"] for c in deck["cards"]} <= {hashing.id, heaps.id}
+        assert len({c["chapter_id"] for c in deck["cards"]}) == 2
+
+    def test_no_courses_falls_back_to_general_cards(self, student):
+        deck = client_for(student).get("/api/v1/decks/today").data
+        assert deck["focus"]["kind"] == "general"
+        assert all(c["chapter_id"] is None for c in deck["cards"])

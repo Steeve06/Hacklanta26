@@ -13,7 +13,6 @@ from .types import Constraints, Interval, Placement, Preferences, Shortfall, Sol
 
 MAX_ITERATIONS = 500
 MAX_SECONDS = 2.0
-QUIZ_MINUTES = 10
 
 
 def buffer_for(task: TaskSpec, now: datetime) -> timedelta:
@@ -187,52 +186,6 @@ class Solver:
             self.place(task)
             pending.discard(task.key)
 
-    def place_chapter_quizzes(self) -> list[tuple[date, list[str]]]:
-        """One 10-minute quiz per local day on which chapters finish their study sessions."""
-        last_day: dict[str, date] = {}
-        for p in self.placements:
-            task = self.tasks.get(p.task_key)
-            if task and task.chapter_id is not None and p.kind == "study":
-                last_day[p.task_key] = max(last_day.get(p.task_key, p.day), p.day)
-        by_day: dict[date, list[str]] = defaultdict(list)
-        for key, day in last_day.items():
-            if self.remaining.get(key, 0) <= 0:
-                by_day[day].append(key)
-        quiz_days = []
-        for day in sorted(by_day):
-            keys = sorted(by_day[day], key=lambda k: (self.tasks[k].course_code, k))
-            after = max(p.end for p in self.placements if p.task_key in keys and p.day == day)
-            if self._place_quiz(keys, day, after):
-                quiz_days.append((day, keys))
-        return quiz_days
-
-    def _place_quiz(self, keys: list[str], day: date, after: datetime) -> bool:
-        first = self.tasks[keys[0]]
-        for candidate_day in (day, day + timedelta(days=1)):
-            for iv in self.free.get(candidate_day, []):
-                start = max(iv.start, after + timedelta(minutes=self.c.break_minutes))
-                end = start + timedelta(minutes=QUIZ_MINUTES)
-                if end > iv.end or end > self.c.horizon_end:
-                    continue
-                if (
-                    self.day_minutes[candidate_day] + QUIZ_MINUTES > self.c.max_minutes_per_day
-                    or self.week_left(candidate_day) < QUIZ_MINUTES
-                ):
-                    break
-                self._commit(
-                    Placement(
-                        task_key=first.key,
-                        start=start,
-                        end=end,
-                        day=candidate_day,
-                        course_id=first.course_id,
-                        kind="chapter_quiz",
-                        quiz_keys=tuple(keys),
-                    )  # fmt: skip
-                )
-                return True
-        return False
-
     def penalty(self, placements: list[Placement] | None = None) -> float:
         placements = placements if placements is not None else self.placements
         total = 0.0
@@ -369,7 +322,6 @@ class Solver:
         self.run_greedy()
         iterations, penalty = self.improve() if local_search else (0, self.penalty())
         self._rebuild_free()
-        self.place_chapter_quizzes()
         self.placements.sort(key=lambda p: p.start)
         for p in self.placements:
             if p.task_key in self.at_risk:

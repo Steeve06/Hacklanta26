@@ -266,24 +266,22 @@ def dispatch_due(now: datetime | None = None, student=None) -> int:
     return sent
 
 
-def notify_streak_lost(student, quiz) -> None:
-    from quizzes.services.reminders import quiz_title
-
+def notify_streak_lost(student, event) -> None:
     profile, _ = StudentProfile.objects.get_or_create(user=student)
     candidate = Candidate(
-        Trigger.STREAK_LOST, TIERS[Trigger.STREAK_LOST], "chapter_quiz", quiz.id, None,
-        {"title": quiz_title(quiz), "course": "", "streak_days": 0}, f"/pulse/quiz/{quiz.id}",
+        Trigger.STREAK_LOST, TIERS[Trigger.STREAK_LOST], "streak_event", event.id, None,
+        {"title": "Daily flashcards", "course": "", "streak_days": 0}, "/pulse/quiz",
     )  # fmt: skip
     create(student, profile, candidate, clock_now(student))
 
 
-def notify_streak_milestone(student, quiz, streak_days: int) -> None:
+def notify_streak_milestone(student, deck, streak_days: int) -> None:
     profile, _ = StudentProfile.objects.get_or_create(user=student)
     candidate = Candidate(
         Trigger.WIN,
         WIN_TIER,
-        "chapter_quiz",
-        quiz.id,
+        "daily_deck",
+        deck.id,
         None,
         {"streak_days": streak_days},
         "/pulse/quiz",
