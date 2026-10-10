@@ -66,7 +66,7 @@ class AssistantAction(BaseModel):
 
     type: Literal[
         "skip_session", "mark_done", "reschedule_session", "move_session", "block_time",
-        "set_day_availability", "set_limits", "schedule_note",
+        "set_day_availability", "set_limits", "schedule_note", "rebuild_schedule",
     ]  # fmt: skip
     session_id: int | None = None
     start: str | None = Field(default=None, max_length=25, description="local, YYYY-MM-DDTHH:MM")

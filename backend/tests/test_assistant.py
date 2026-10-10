@@ -278,3 +278,29 @@ class TestFallback:
     def test_unknown_requests_get_help(self, student):
         result = fallback.answer(student, "hello there")
         assert result.actions == [] and "skip or move a session" in result.text
+
+
+class TestFallbackLimits:
+    def test_total_hours_becomes_the_weekly_limit(self, student):
+        text = "regenerate my schedule for a total of 15 study hours"
+        result = fallback.answer(student, text)
+        assert result.actions == [{"type": "set_limits", "max_hours_per_week": 15.0}]
+        assert "weekly limit 15 hours" in actions.check(student, result.actions[0]).text
+
+    def test_hours_a_day_and_session_length(self, student):
+        result = fallback.answer(student, "3 hours a day with 50 minute sessions")
+        assert result.actions == [
+            {"type": "set_limits", "max_hours_per_day": 3.0, "session_minutes": 50}
+        ]
+
+    def test_busy_hours_are_not_a_limit(self, student):
+        result = fallback.answer(student, "I'm working 8 hours on Friday")
+        assert [a["type"] for a in result.actions] == ["block_time"]
+
+    def test_plain_rebuild(self, student, django_capture_on_commit_callbacks):
+        result = fallback.answer(student, "Can you regenerate my schedule?")
+        assert result.actions == [{"type": "rebuild_schedule"}]
+        before = Schedule.objects.get(student=student, is_active=True).version
+        with django_capture_on_commit_callbacks(execute=True):
+            actions.apply_all(student, [actions.check(student, result.actions[0]).data])
+        assert Schedule.objects.get(student=student, is_active=True).version > before

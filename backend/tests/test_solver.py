@@ -279,3 +279,26 @@ def test_work_done_out_of_order_is_not_a_violation_but_new_placements_are():
 
     assert problems(draft_pinned=True) == []
     assert problems(draft_pinned=False) == ["draft starts before read finishes"]
+
+
+def test_free_time_advice_only_names_days_before_the_deadline():
+    from pulse.services.overload import _availability_suggestions
+
+    c = constraints()
+    _, _, free = solve([], evenings(7), c)
+    texts = [s["text"] for s in _availability_suggestions(free, c, NOW + timedelta(hours=8))]
+    assert texts == ["Add study time today."]
+    two_days = _availability_suggestions(free, c, NOW + timedelta(days=2))
+    assert all("on Mon" not in s["text"] and "Mondays" not in s["text"] for s in two_days)
+
+
+def test_work_due_within_a_day_gets_its_own_advice():
+    from pulse.services.overload import _urgent_suggestion
+
+    c = constraints()
+    entry = {"title": "Linked lists", "minutes_short": 23,
+             "due_at": (NOW + timedelta(hours=8)).isoformat()}  # fmt: skip
+    [advice] = _urgent_suggestion(entry, c)
+    assert advice["text"].startswith("Find 25 more minutes for “Linked lists” before")
+    later = {**entry, "due_at": (NOW + timedelta(days=3)).isoformat()}
+    assert _urgent_suggestion(later, c) == []

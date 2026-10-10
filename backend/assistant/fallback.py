@@ -93,9 +93,59 @@ def _busy(student, text: str, now: datetime) -> Reply | None:
     return Reply("I can keep that time free and move any study planned then.", [action])
 
 
+HOURS = re.compile(r"(\d+(?:\.\d+)?)\s*(?:study\s+)?(?:hours?|hrs?|h)\b")
+SESSION = re.compile(r"\b(25|50|90)[\s-]*(?:minutes?|mins?|m)\b")
+PER_DAY = (
+    "a day",
+    "per day",
+    "each day",
+    "every day",
+    "daily",
+    "in one day",
+    "a night",
+    "per night",
+)
+NOT_LIMITS = ("busy", "working", "shift", "away", "trip", "appointment", "skip", "move",
+              "reschedule", "postpone", "done", "finished")  # fmt: skip
+REBUILD = (
+    "regenerate",
+    "rebuild",
+    "replan",
+    "re-plan",
+    "redo",
+    "refresh",
+    "remake",
+    "new schedule",
+)
+
+
+def _limits(text: str) -> Reply | None:
+    """'15 hours a week', 'a total of 15 study hours', '3 hours a day', '50-minute sessions'."""
+    if _has(text, *NOT_LIMITS):
+        return None
+    change: dict = {}
+    hours = HOURS.search(text)
+    if hours:
+        field = "max_hours_per_day" if any(p in text for p in PER_DAY) else "max_hours_per_week"
+        change[field] = float(hours.group(1))
+    session = SESSION.search(text)
+    if session and _has(text, "session", "sessions", "block", "blocks"):
+        change["session_minutes"] = int(session.group(1))
+    if not change:
+        return None
+    return Reply(
+        "I can change that, and your schedule is rebuilt with it.",
+        [{"type": "set_limits", **change}],
+    )
+
+
 def answer(student, text: str) -> Reply:
     now = clock_now(student).astimezone(student.tz)
     lowered = text.lower().replace("’", "'")
+
+    limits = _limits(lowered)
+    if limits:
+        return limits
 
     if _has(lowered, "skip", "can't make", "cannot make", "won't make", "not going to make"):
         session = _target_session(student, lowered, now)
@@ -140,6 +190,8 @@ def answer(student, text: str) -> Reply:
             "I can rebuild your schedule around that.",
             [{"type": "schedule_note", "note": text.strip()[:300]}],
         )
+    if any(word in lowered for word in REBUILD):
+        return Reply("I can rebuild your schedule from now.", [{"type": "rebuild_schedule"}])
     if _has(lowered, "next", "today", "what", "when", "schedule"):
         session = _upcoming(student, now).first()
         if session is None:

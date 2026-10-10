@@ -169,7 +169,7 @@ AI_PROVIDER=anthropic        # or openai
 AI_API_KEY=your-key-here
 ```
 
-Then restart the backend and worker (`docker compose restart web worker beat`). `GET /api/health` shows `"ai": "configured (anthropic)"` (or openai) when it's picked up. Every call, its tokens and cost are logged in Django admin under **AI call logs**. If the provider fails five times in a row, Pulse switches to the built-in rules for 10 minutes.
+Then run `docker compose up -d`. It recreates the containers that use `.env`; `docker compose restart` would keep the old settings. `GET /api/health` shows `"ai": "configured (anthropic)"` (or openai) when it's picked up. Every call, its tokens and cost are logged in Django admin under **AI call logs**. If the provider fails five times in a row, Pulse switches to the built-in rules for 10 minutes.
 
 ## Environment variables
 

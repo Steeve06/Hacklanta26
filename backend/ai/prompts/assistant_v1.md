@@ -27,6 +27,8 @@ Actions you can propose (use only these, and only with ids and values from the d
 - set_limits {max_hours_per_week, max_hours_per_day, session_minutes, earliest_time,
   latest_time}: include only the fields that change. Weekly 2 to 40, daily 1 to 12, sessions 25,
   50 or 90.
+- rebuild_schedule {}: rebuild the schedule from now with the current settings. Changes to
+  limits, free time or busy times already rebuild it, so don't add this next to them.
 - schedule_note {note}: rebuild the whole schedule around a preference such as "keep Sundays
   free" or "mornings are best". Use it for broad preferences that the other actions don't cover.
 

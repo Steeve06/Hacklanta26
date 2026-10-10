@@ -157,6 +157,8 @@ def check(student, raw: dict) -> Checked:
         return Checked({"type": kind, "weekday": action.weekday, "blocks": ranges}, text)
     if kind == "set_limits":
         return _check_limits(student, action)
+    if kind == "rebuild_schedule":
+        return Checked({"type": kind}, "Rebuild your schedule from now with your current settings.")
     note = (action.note or "").strip()
     if not note:
         raise Rejected("What should the schedule change?")
@@ -268,6 +270,9 @@ def _apply(student, data: dict) -> None:
             profile.latest_time = parse_clock(data["latest_time"])
         profile.save()
         request_replan(student, "preferences")
+        return
+    if kind == "rebuild_schedule":
+        transaction.on_commit(lambda: start_generate_job(student, student.profile.plan_feedback))
         return
     profile = student.profile
     profile.plan_feedback = data["note"]
