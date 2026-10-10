@@ -157,20 +157,23 @@ After changing an API serializer or view, regenerate the TypeScript types with `
 
 ## Use Leon on your phone
 
-Leon is a Progressive Web App: it installs to a phone's home screen, opens full screen like any app, shows push notifications for reminders, and still opens (with a "can't reach the server" page) when there's no connection. Phones only allow installing and push over HTTPS, so on your laptop give Leon a temporary HTTPS address:
+Leon is a Progressive Web App: it installs to a phone's home screen, opens full screen like any app, shows push notifications for reminders, and still opens (with a "can't reach the server" page) when there's no connection. Phones only allow installing and push over HTTPS, so give your laptop's Leon a temporary HTTPS address:
 
 ```sh
-docker compose up -d                          # Leon as usual
-docker compose --profile phone up tunnel      # prints https://<random-words>.trycloudflare.com
+docker compose up -d                                   # Leon as usual
+docker compose --profile phone up -d --build phone     # the built app on http://localhost:4173
+cloudflared tunnel --url http://localhost:4173         # prints https://<random-words>.trycloudflare.com
 ```
 
-Open that address on the phone (any network; it's a free Cloudflare quick tunnel, no account). The address changes each time you start the tunnel. Press Ctrl+C to stop it.
+Open the printed address on the phone. The phone service serves the built app, a handful of files, because the development server's hundreds of small files often leave a phone on a blank page over a tunnel. It rebuilds from your current code each time it starts (`docker compose --profile phone restart phone` after changes). Install `cloudflared` with `winget install --id Cloudflare.cloudflared` on Windows or `brew install cloudflared` on macOS; `docker compose --profile phone up tunnel` runs it in a container instead.
 
-- **Android (Chrome):** sign in, then **Settings > Leon on this device > Install Leon** (or the browser menu's Install app). Turn on push in Settings, then **Send a test notification**.
-- **iPhone and iPad (iOS 16.4 or later):** in Safari, Share > **Add to Home Screen**. Open Leon from the Home Screen, sign in, and turn on push in Settings. Apple only allows web push for apps added to the Home Screen.
-- **Desktop Chrome or Edge:** the install icon in the address bar, or Settings > Install Leon. `http://localhost:5173` counts as secure, so install and push work without the tunnel.
+The address changes every time you start the tunnel, and an app installed from an old address won't open, so install again from the new one. If the tunnel fails with "certificate signed by unknown authority", the network is inspecting HTTPS (common on school and office Wi-Fi): connect the laptop to a phone hotspot and run it again.
 
-Push needs VAPID keys in `.env` (`init_env` creates them). If notifications don't arrive: check the site's notification permission in the browser, make sure the phone isn't in Do Not Disturb or focus mode, and use **Send a test notification**. Reminders wait up to 12 hours for a phone that's asleep or offline; code-red and missed-deadline reminders are sent as high priority.
+- **iPhone and iPad (iOS 16.4 or later):** in Safari, Share > **Add to Home Screen**. Open Leon from the Home Screen, sign in (the Home Screen app has its own sign-in), then Settings > **Turn on push** > **Send a test notification**. Apple only allows web push for apps added to the Home Screen.
+- **Android (Chrome):** Settings > **Leon on this device** > **Install Leon** (or the browser menu's Install app), then turn on push and send a test.
+- **Desktop Chrome or Edge:** `http://localhost:5173` counts as secure, so install and push work there without a tunnel.
+
+Push needs VAPID keys in `.env` (`init_env` creates them). If notifications don't arrive: check the notification permission for Leon, make sure the phone isn't in Do Not Disturb or a focus mode, and use **Send a test notification**. Reminders wait up to 12 hours for a phone that's asleep or offline; code-red and missed-deadline reminders are sent as high priority.
 
 A deployed Leon (see [DEPLOY.md](DEPLOY.md)) is already on HTTPS, so phones can install it straight from its address.
 
