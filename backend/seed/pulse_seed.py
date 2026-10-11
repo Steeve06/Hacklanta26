@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from accounts.models import StudentProfile
 from lms.models import Submission
-from pulse.models import AvailabilityBlock, Onboarding, Session
+from pulse.models import AvailabilityBlock, Onboarding, Session, StatusSnapshot
 from pulse.services.planner import plan
 
 AVAILABILITY = {
@@ -55,6 +55,12 @@ def seed_plans(students: dict) -> None:
             onboarding_done=True,
         )
         student.refresh_from_db()
+        if profile_name == "badly_behind":
+            # Already falling behind last week, so the hysteresis band keeps Today in the bad
+            # state whichever weekday the demo is seeded on.
+            StatusSnapshot.objects.create(
+                student=student, score=40, state="bad", computed_at=now - timedelta(days=1)
+            )
         past = plan(student, reason="seed", at=now - timedelta(days=7))
         record_history(past, now, DONE_SHARE[profile_name])
         plan(student, reason="seed")
