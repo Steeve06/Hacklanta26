@@ -53,7 +53,7 @@ def client_for(user):
 def make_check(student, chapters, opens, closes):
     check = StudyCheck.objects.create(
         student=student,
-        scheduled_date=opens.date(),
+        scheduled_date=opens.astimezone(NY).date(),
         opens_at=opens,
         closes_at=closes,
         timezone="America/New_York",
