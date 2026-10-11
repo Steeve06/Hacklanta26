@@ -144,11 +144,12 @@ def test_teacher_post_arrives_as_a_push_the_browser_can_read(
     from lms.registration import Registration, register_course
 
     from .factories import TermFactory
-    from .test_teaching import client_for
+    from .test_teaching import client_for, without_quiet_hours
 
     TermFactory()
     course = register_course(Registration("CS 201", "Data Structures", "ada@school.edu"))
     student = StudentFactory()
+    without_quiet_hours(student)
     Enrollment.objects.get_or_create(user=student, course=course)
     browser = Browser()
     PushSubscription.objects.create(
