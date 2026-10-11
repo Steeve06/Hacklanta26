@@ -235,6 +235,19 @@ class TestWindows:
             timezone.now(), NY
         ).date() + timedelta(days=1)
 
+    def test_chapter_finished_last_night_still_gets_its_check_after_midnight(self, setup):
+        student, _, chapter = setup
+        with time_machine.travel(datetime(2026, 10, 14, 23, 30, tzinfo=NY), tick=False):
+            plan(student, reason="test")
+            ChapterProgress.objects.create(
+                student=student, chapter=chapter, completed_at=timezone.now()
+            )
+        with time_machine.travel(datetime(2026, 10, 15, 0, 30, tzinfo=NY), tick=False):
+            sync_checks(student)
+            check = StudyCheck.objects.get(student=student, chapters=chapter)
+            assert check.opens_at <= timezone.now() < check.closes_at
+            assert check.closes_at.astimezone(NY).date() == datetime(2026, 10, 15).date()
+
     @time_machine.travel(datetime(2026, 10, 14, 22, 0, tzinfo=NY))
     def test_replan_moves_unopened_check_but_not_open_one(self, setup):
         student, _, chapter = setup
