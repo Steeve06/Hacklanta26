@@ -3,7 +3,8 @@ import { signIn } from "./helpers";
 
 // Headless Chromium can't reach a real push service, so DevTools hands the service worker the
 // push message instead. The payload is the one the server sends (backend/tests/test_push_delivery
-// checks the server side: VAPID signature, encryption, and this exact JSON).
+// checks the server side: VAPID signature, encryption, and this exact JSON). The headless shell CI
+// uses has no notification centre, so the test records what the worker asks the device to show.
 const ORIGIN = "http://localhost:5174";
 
 test("a push message becomes a notification on the device", async ({ page, context }) => {
@@ -22,6 +23,22 @@ test("a push message becomes a notification on the device", async ({ page, conte
   await expect.poll(() => registrations.get(`${ORIGIN}/`)).toBeTruthy();
   const registrationId = registrations.get(`${ORIGIN}/`) ?? "";
 
+  const worker =
+    context.serviceWorkers().find((w) => w.url() === `${ORIGIN}/sw.js`) ??
+    (await context.waitForEvent("serviceworker"));
+  await worker.evaluate(() => {
+    const scope = self as unknown as {
+      shown: unknown[];
+      registration: ServiceWorkerRegistration;
+    };
+    scope.shown = [];
+    const show = scope.registration.showNotification.bind(scope.registration);
+    scope.registration.showNotification = (title: string, options: NotificationOptions = {}) => {
+      scope.shown.push({ title, body: options.body, tag: options.tag, data: options.data });
+      return show(title, options).catch(() => undefined);
+    };
+  });
+
   const payload = {
     id: 4242,
     title: "Leon · New in your course",
@@ -36,16 +53,7 @@ test("a push message becomes a notification on the device", async ({ page, conte
     data: JSON.stringify(payload),
   });
 
-  const shown = () =>
-    page.evaluate(async () => {
-      const registration = await navigator.serviceWorker.ready;
-      return (await registration.getNotifications()).map((n) => ({
-        title: n.title,
-        body: n.body,
-        tag: n.tag,
-        data: n.data as unknown,
-      }));
-    });
+  const shown = () => worker.evaluate(() => (self as unknown as { shown: unknown[] }).shown);
   await expect.poll(shown).toEqual([
     {
       title: payload.title,
