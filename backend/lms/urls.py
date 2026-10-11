@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import teaching, views
 
 urlpatterns = [
     path("courses", views.CourseListView.as_view()),
@@ -8,6 +8,9 @@ urlpatterns = [
     path("courses/<int:course_id>/chapters", views.ChapterListView.as_view()),
     path("courses/<int:course_id>/assessments", views.AssessmentListView.as_view()),
     path("courses/<int:course_id>/syllabus", views.SyllabusView.as_view()),
+    path("courses/<int:course_id>/syllabus/edit", teaching.SyllabusEditView.as_view()),
+    path("teach/overview", teaching.TeachingOverviewView.as_view()),
+    path("teach/registrations", teaching.CourseRegistrationView.as_view()),
     path("chapters/<int:chapter_id>", views.ChapterDetailView.as_view()),
     path("chapters/<int:chapter_id>/complete", views.ChapterCompleteView.as_view()),
     path("assessments/<int:assessment_id>", views.AssessmentDetailView.as_view()),

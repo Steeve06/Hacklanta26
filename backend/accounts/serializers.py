@@ -29,6 +29,9 @@ def _check_password(password: str, user: User, field: str = "password") -> None:
 
 
 class SignupSerializer(serializers.Serializer):
+    role = serializers.ChoiceField(
+        choices=["student", "teacher"], required=False, default="student"
+    )
     first_name = serializers.CharField(max_length=80)
     last_name = serializers.CharField(max_length=80)
     email = serializers.EmailField(max_length=254)
@@ -37,12 +40,32 @@ class SignupSerializer(serializers.Serializer):
     timezone = serializers.CharField(max_length=64, required=False, validators=[validate_timezone])
 
     def validate_email(self, value):
-        email = normalize_email(value)
-        if User.objects.filter(email__iexact=email).exists():
-            raise serializers.ValidationError("An account with this email already exists.")
-        return email
+        return normalize_email(value)
 
     def validate(self, attrs):
+        from lms.registration import pending_teacher
+
+        teacher = pending_teacher(attrs["email"])
+        if attrs.get("role") == "teacher":
+            if teacher is None:
+                taken = User.objects.filter(email__iexact=attrs["email"]).exists()
+                raise serializers.ValidationError(
+                    {
+                        "email": "An account with this email already exists."
+                        if taken
+                        else "No course is registered to this email yet. Use the email your "
+                        "department registered, or ask them to add your course."
+                    }
+                )
+            attrs["teacher"] = teacher
+        elif teacher is not None:
+            raise serializers.ValidationError(
+                {"email": "This email is registered to teach a course. Sign up as a teacher."}
+            )
+        elif User.objects.filter(email__iexact=attrs["email"]).exists():
+            raise serializers.ValidationError(
+                {"email": "An account with this email already exists."}
+            )
         if attrs["password"] != attrs["password_confirm"]:
             raise serializers.ValidationError({"password_confirm": "Passwords don't match."})
         candidate = User(

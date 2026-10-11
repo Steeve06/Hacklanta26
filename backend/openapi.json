@@ -1638,6 +1638,60 @@
                 }
             }
         },
+        "/api/v1/courses/{course_id}/syllabus/edit": {
+            "patch": {
+                "operationId": "v1_courses_syllabus_edit_partial_update",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "course_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSyllabusUpdateRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSyllabusUpdateRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSyllabusUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Syllabus"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/demo/replan/{student_id}": {
             "post": {
                 "operationId": "v1_demo_replan_create",
@@ -2970,6 +3024,105 @@
                     }
                 }
             }
+        },
+        "/api/v1/teach/overview": {
+            "get": {
+                "operationId": "v1_teach_overview_list",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/TeachingCourse"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/teach/registrations": {
+            "get": {
+                "operationId": "v1_teach_registrations_list",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/RegisteredCourse"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_teach_registrations_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegistrationRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegistrationRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegistrationRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RegisteredCourse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -3392,8 +3545,9 @@
                     },
                     "points": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "weight_pct": {
                         "type": "string",
@@ -3402,24 +3556,28 @@
                     },
                     "est_minutes": {
                         "type": "integer",
-                        "maximum": 32767,
+                        "maximum": 9223372036854775807,
                         "minimum": 0,
+                        "format": "int64",
                         "nullable": true
                     },
                     "discussion_replies_required": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "time_limit_minutes": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "max_attempts": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "published": {
                         "type": "boolean"
@@ -3504,8 +3662,9 @@
                 "properties": {
                     "weekday": {
                         "type": "integer",
-                        "maximum": 32767,
+                        "maximum": 9223372036854775807,
                         "minimum": 0,
+                        "format": "int64",
                         "description": "0 = Monday"
                     },
                     "start_time": {
@@ -3528,8 +3687,9 @@
                 "properties": {
                     "weekday": {
                         "type": "integer",
-                        "maximum": 32767,
+                        "maximum": 9223372036854775807,
                         "minimum": 0,
+                        "format": "int64",
                         "description": "0 = Monday"
                     },
                     "start_time": {
@@ -3878,8 +4038,9 @@
                 "properties": {
                     "order": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "title": {
                         "type": "string",
@@ -3898,8 +4059,9 @@
                     },
                     "reading_minutes": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "objectives": {
                         "type": "array",
@@ -4817,6 +4979,34 @@
                     "weekday"
                 ]
             },
+            "MeetingWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "weekday": {
+                        "type": "integer",
+                        "maximum": 6,
+                        "minimum": 0
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "location": {
+                        "type": "string",
+                        "default": "",
+                        "maxLength": 80
+                    }
+                },
+                "required": [
+                    "end_time",
+                    "start_time",
+                    "weekday"
+                ]
+            },
             "MissedDeadline": {
                 "type": "object",
                 "properties": {
@@ -5319,8 +5509,9 @@
                     },
                     "points": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "weight_pct": {
                         "type": "string",
@@ -5329,24 +5520,28 @@
                     },
                     "est_minutes": {
                         "type": "integer",
-                        "maximum": 32767,
+                        "maximum": 9223372036854775807,
                         "minimum": 0,
+                        "format": "int64",
                         "nullable": true
                     },
                     "discussion_replies_required": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "time_limit_minutes": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "max_attempts": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "published": {
                         "type": "boolean"
@@ -5364,8 +5559,9 @@
                 "properties": {
                     "order": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "title": {
                         "type": "string",
@@ -5384,8 +5580,9 @@
                     },
                     "reading_minutes": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "objectives": {
                         "type": "array",
@@ -5458,6 +5655,26 @@
                     "completed_minutes": {
                         "type": "integer",
                         "minimum": 0
+                    }
+                }
+            },
+            "PatchedSyllabusUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "maxLength": 4000
+                    },
+                    "office_hours": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "grading": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        }
                     }
                 }
             },
@@ -5694,8 +5911,9 @@
                 "properties": {
                     "sass_level": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "max_hours_per_day": {
                         "type": "string",
@@ -5714,7 +5932,7 @@
                             }
                         ],
                         "minimum": 0,
-                        "maximum": 32767
+                        "maximum": 9223372036854775807
                     },
                     "earliest_time": {
                         "type": "string",
@@ -5910,8 +6128,9 @@
                     },
                     "order": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "type": {
                         "$ref": "#/components/schemas/QuestionTypeEnum"
@@ -5922,13 +6141,15 @@
                     "options": {},
                     "correct_index": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "points": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     }
                 },
                 "required": [
@@ -5945,8 +6166,9 @@
                 "properties": {
                     "order": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "type": {
                         "$ref": "#/components/schemas/QuestionTypeEnum"
@@ -5958,13 +6180,15 @@
                     "options": {},
                     "correct_index": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     },
                     "points": {
                         "type": "integer",
-                        "maximum": 32767,
-                        "minimum": 0
+                        "maximum": 9223372036854775807,
+                        "minimum": 0,
+                        "format": "int64"
                     }
                 },
                 "required": [
@@ -6048,6 +6272,93 @@
                     "score",
                     "started_at",
                     "submitted_at"
+                ]
+            },
+            "RegisteredCourse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "term": {
+                        "type": "string"
+                    },
+                    "teacher_email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "claimed": {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "claimed",
+                    "code",
+                    "id",
+                    "teacher_email",
+                    "term",
+                    "title"
+                ]
+            },
+            "RegistrationRequest": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 20
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "teacher_email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    },
+                    "teacher_first_name": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "teacher_last_name": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "color": {
+                        "type": "string",
+                        "minLength": 1,
+                        "default": "#1f6f5c",
+                        "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "description": {
+                        "type": "string",
+                        "default": ""
+                    },
+                    "office_hours": {
+                        "type": "string",
+                        "default": "",
+                        "maxLength": 200
+                    },
+                    "meetings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MeetingWriteRequest"
+                        }
+                    }
+                },
+                "required": [
+                    "code",
+                    "teacher_email",
+                    "title"
                 ]
             },
             "ResultEnum": {
@@ -6347,6 +6658,14 @@
             "SignupRequest": {
                 "type": "object",
                 "properties": {
+                    "role": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SignupRoleEnum"
+                            }
+                        ],
+                        "default": "student"
+                    },
                     "first_name": {
                         "type": "string",
                         "minLength": 1,
@@ -6386,6 +6705,14 @@
                     "password",
                     "password_confirm"
                 ]
+            },
+            "SignupRoleEnum": {
+                "enum": [
+                    "student",
+                    "teacher"
+                ],
+                "type": "string",
+                "description": "* `student` - student\n* `teacher` - teacher"
             },
             "Status": {
                 "type": "object",
@@ -6987,6 +7314,79 @@
                     "start_date",
                     "topic",
                     "week_number"
+                ]
+            },
+            "TeachingCourse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "color": {
+                        "type": "string"
+                    },
+                    "term": {
+                        "type": "string"
+                    },
+                    "meetings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Meeting"
+                        }
+                    },
+                    "students": {
+                        "type": "integer"
+                    },
+                    "chapters": {
+                        "type": "integer"
+                    },
+                    "homework": {
+                        "type": "integer"
+                    },
+                    "discussions": {
+                        "type": "integer"
+                    },
+                    "quizzes": {
+                        "type": "integer"
+                    },
+                    "hidden": {
+                        "type": "integer",
+                        "description": "Assignments not yet visible to students"
+                    },
+                    "to_grade": {
+                        "type": "integer",
+                        "description": "Submissions waiting for a score"
+                    },
+                    "next_due": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/NextDue"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "chapters",
+                    "code",
+                    "color",
+                    "discussions",
+                    "hidden",
+                    "homework",
+                    "id",
+                    "meetings",
+                    "next_due",
+                    "quizzes",
+                    "students",
+                    "term",
+                    "title",
+                    "to_grade"
                 ]
             },
             "TravelRequest": {

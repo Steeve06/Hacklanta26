@@ -16,6 +16,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from accounts.clock import now as clock_now
 from config.throttles import AUTH_THROTTLES, AuthIPThrottle
 from lms.enrolment import enroll_in_current_term
+from lms.registration import claim_teacher_account, pending_teacher
 
 from . import auth
 from .export import build_export
@@ -37,6 +38,7 @@ from .serializers import (
 COOKIE_PATH = "/api/v1/auth/"
 RESET_SENT = "If that email exists, we sent a link."
 BAD_LOGIN = "Email or password is incorrect."
+UNCLAIMED = "Your course is waiting for you. Sign up as a teacher with this email first."
 LOCKED = "Too many failed sign-in attempts. Try again in 15 minutes."
 
 
@@ -95,7 +97,8 @@ class LoginView(APIView):
         user = authenticate(request, email=email, password=serializer.validated_data["password"])
         if user is None or not user.is_active:
             auth.record_failure(email)
-            return Response({"detail": BAD_LOGIN}, status=status.HTTP_400_BAD_REQUEST)
+            detail = UNCLAIMED if pending_teacher(email) else BAD_LOGIN
+            return Response({"detail": detail}, status=status.HTTP_400_BAD_REQUEST)
         auth.clear_failures(email)
         remember = serializer.validated_data["remember"]
         return _signed_in(auth.start_session(user, remember), remember)
@@ -111,6 +114,15 @@ class SignupView(APIView):
         serializer = SignupSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+        if teacher := data.get("teacher"):
+            user = claim_teacher_account(
+                teacher,
+                password=data["password"],
+                first_name=data["first_name"],
+                last_name=data["last_name"],
+                timezone=data.get("timezone"),
+            )
+            return _signed_in(auth.start_session(user), False, status.HTTP_201_CREATED)
         try:
             with transaction.atomic():
                 user = User.objects.create_user(

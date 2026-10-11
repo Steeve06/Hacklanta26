@@ -272,6 +272,11 @@ class AssessmentWriteSerializer(serializers.ModelSerializer):
         max_attempts = attrs.get("max_attempts")
         if max_attempts is not None and not 1 <= max_attempts <= 3:
             raise serializers.ValidationError({"max_attempts": "Allow 1 to 3 attempts."})
+        kind = attrs.get("type", getattr(self.instance, "type", None))
+        if kind == "quiz" and self.instance is None and not attrs.get("questions"):
+            raise serializers.ValidationError({"questions": "Add at least one question."})
+        if kind == "quiz" and "questions" in attrs and not attrs["questions"]:
+            raise serializers.ValidationError({"questions": "Add at least one question."})
         course = self.context["course"]
         for chapter in attrs.get("chapters", []):
             if chapter.course_id != course.id:

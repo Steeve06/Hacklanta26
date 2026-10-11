@@ -27,6 +27,7 @@ from lms.models import (
     SyllabusWeek,
     Term,
 )
+from lms.registration import Meeting, Registration, register_course
 
 from . import catalog
 
@@ -109,7 +110,7 @@ def make_user(email, first, last, role, **extra) -> User:
     return user
 
 
-def build_term() -> DemoTerm:
+def build_term(with_content: bool = True) -> DemoTerm:
     start = term_start()
     term = Term.objects.create(
         name=term_name(start),
@@ -129,11 +130,32 @@ def build_term() -> DemoTerm:
         )
         for first, last in catalog.CLASSMATES
     ]
+    if not with_content:
+        courses = [register_shell(term, spec) for spec in catalog.COURSES]
+        return DemoTerm(term, start, courses, students, classmates)
     courses = [
         build_course(term, start, spec, [*students.values(), *classmates])
         for spec in catalog.COURSES
     ]
     return DemoTerm(term, start, courses, students, classmates)
+
+
+def register_shell(term: Term, spec: dict) -> Course:
+    """The course as the department pre-registers it: class times and a syllabus intro, no
+    chapters or assignments. The teacher signs up with their email to claim it and add content."""
+    email, first, last = spec["instructor"]
+    return register_course(
+        Registration(
+            code=spec["code"], title=spec["title"], teacher_email=email,
+            teacher_first_name=first, teacher_last_name=last, color=spec["color"],
+            description=spec["description"], office_hours=spec["office_hours"],
+            meetings=[
+                Meeting(day, time.fromisoformat(begins), time.fromisoformat(ends), room)
+                for day, begins, ends, room in spec["meetings"]
+            ],
+        ),
+        term=term,
+    )  # fmt: skip
 
 
 def build_course(term: Term, start: date, spec: dict, students: list[User]) -> Course:
