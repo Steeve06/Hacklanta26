@@ -20,6 +20,8 @@ test("Leon is installable: manifest, icons and a service worker", async ({ page,
   await expect
     .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
     .toBe(true);
+  // Let the reload finish restoring the session first: leaving mid-refresh drops the new cookie.
+  await expect(page.getByRole("heading", { name: "Today, Maya" })).toBeVisible();
 
   await page.goto("/settings");
   await expect(page.getByRole("heading", { name: "Leon on this device" })).toBeVisible();
