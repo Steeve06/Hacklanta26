@@ -1,0 +1,23 @@
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+
+	@backend path /api/* /admin /admin/* /static/*
+	handle @backend {
+		reverse_proxy web:8000
+	}
+
+	handle {
+		root * /srv
+		# The service worker, manifest and page must update on the next visit; built files never change.
+		header /sw.js Cache-Control "no-cache"
+		header /manifest.webmanifest {
+			Cache-Control "no-cache"
+			Content-Type "application/manifest+json"
+		}
+		header /assets/* Cache-Control "public, max-age=31536000, immutable"
+		@page not path /assets/* /icons/* /sw.js /manifest.webmanifest /favicon.svg
+		header @page Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

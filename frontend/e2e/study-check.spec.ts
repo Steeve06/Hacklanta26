@@ -49,6 +49,9 @@ test("a study check flips each card and settles the streak once", async ({ page,
     }
     const last = i === check.card_count - 1;
     await page.getByRole("button", { name: last ? "See how you did" : "Next card" }).click();
+    // The answered card animates out before the next one mounts; until it has gone, its locked
+    // controls would match the locators above.
+    if (!last) await expect(page.getByRole("status")).toHaveCount(0);
   }
   expect(kinds).toContain("choice");
   await expect(page.getByText(/\d+ XP/).first()).toBeVisible();

@@ -78,7 +78,8 @@ def sync_checks(student) -> list[StudyCheck]:
         if chapter_id in taken:
             continue
         done_day = completed_at.astimezone(tz).date()
-        if done_day >= today:
+        # The early window runs to the end of the day after completion, so yesterday's still counts.
+        if done_day >= today - timedelta(days=1):
             groups[(StudyCheck.Kind.EARLY, done_day)].append(chapter_id)
     for chapter_id, day in study_days.items():
         if chapter_id in taken or chapter_id in completed or day < today:
