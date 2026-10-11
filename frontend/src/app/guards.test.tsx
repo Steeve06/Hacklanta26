@@ -27,6 +27,7 @@ function app(path: string) {
             children: [{ path: "today", element: page("today page") }],
           },
           { path: "/lms", element: page("lms page") },
+          { path: "/teach", element: page("teach page") },
         ],
       },
     ],
@@ -82,9 +83,9 @@ describe("route guards", () => {
     expect(await screen.findByText("today page")).toBeInTheDocument();
   });
 
-  it("sends instructors who open onboarding or Leon to Learning Hub", async () => {
+  it("sends instructors who open onboarding or Leon to their dashboard", async () => {
     signedInAs(studentMe(false, "instructor"));
     app("/onboarding");
-    expect(await screen.findByText("lms page")).toBeInTheDocument();
+    expect(await screen.findByText("teach page")).toBeInTheDocument();
   });
 });

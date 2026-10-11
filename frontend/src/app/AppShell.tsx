@@ -29,12 +29,20 @@ const studentNav: NavItem[] = [
 ];
 
 const instructorNav: NavItem[] = [
+  { to: "/teach", label: "Dashboard", icon: "today", mobile: true, end: true },
   { to: "/lms", label: "Courses", icon: "courses", mobile: true },
   { to: "/settings", label: "Settings", icon: "settings", mobile: true },
 ];
 
 const adminNav: NavItem[] = [
   { to: "/lms", label: "Courses", icon: "courses", mobile: true },
+  {
+    to: "/teach/register",
+    label: "Register courses",
+    short: "Register",
+    icon: "roster",
+    mobile: true,
+  },
   { to: "/demo", label: "Demo controls", icon: "roster", mobile: true },
   { to: "/admin/", label: "Django admin", icon: "external", mobile: true, external: true },
   { to: "/settings", label: "Settings", icon: "settings", mobile: true },

@@ -2289,9 +2289,10 @@ export interface components {
          *     * `streak_lost` - Streak Lost
          *     * `win` - Win
          *     * `digest` - Digest
+         *     * `new_content` - New Content
          * @enum {string}
          */
-        TriggerEnum: "session_starting" | "session_ignored" | "upcoming_due" | "falling_behind" | "final_stretch" | "code_red" | "missed_late" | "streak_at_risk" | "streak_lost" | "win" | "digest";
+        TriggerEnum: "session_starting" | "session_ignored" | "upcoming_due" | "falling_behind" | "final_stretch" | "code_red" | "missed_late" | "streak_at_risk" | "streak_lost" | "win" | "digest" | "new_content";
     };
     responses: never;
     parameters: never;

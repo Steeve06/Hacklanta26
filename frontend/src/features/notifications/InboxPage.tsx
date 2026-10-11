@@ -158,22 +158,26 @@ function NotificationRow({ notification: n }: { notification: Notification }) {
         >
           Open
         </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => run("snooze")}
-          pending={act.isPending && act.variables?.action === "snooze"}
-        >
-          Snooze 1 h
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => run("tone_down")}
-          pending={act.isPending && act.variables?.action === "tone_down"}
-        >
-          Tone it down
-        </Button>
+        {n.trigger !== "new_content" && (
+          <>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => run("snooze")}
+              pending={act.isPending && act.variables?.action === "snooze"}
+            >
+              Snooze 1 h
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => run("tone_down")}
+              pending={act.isPending && act.variables?.action === "tone_down"}
+            >
+              Tone it down
+            </Button>
+          </>
+        )}
       </div>
     </article>
   );

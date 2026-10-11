@@ -11,6 +11,30 @@ RESOLVING = {"submission", "excused", "override", "assessment_deleted", "discuss
 
 
 @receiver(lms_changed)
+def announce_new_content(sender, student_ids, reason, details, **kwargs):
+    from lms.models import Assessment, Chapter
+
+    from .announcements import announce
+
+    if reason == "chapter_created":
+        chapter = Chapter.objects.select_related("course").filter(pk=details["chapter_id"]).first()
+        if chapter:
+            announce(
+                student_ids, kind="chapter", title=chapter.title, course=chapter.course,
+                source_type="chapter", source_id=chapter.id, opens_at=chapter.available_from,
+                link=f"/lms/courses/{chapter.course_id}/chapters/{chapter.id}",
+            )  # fmt: skip
+    elif reason in ("assessment_created", "assessment_published"):
+        a = Assessment.objects.select_related("course").filter(pk=details["assessment_id"]).first()
+        if a and a.published:
+            announce(
+                student_ids, kind=a.type, title=a.title, course=a.course,
+                source_type="assessment", source_id=a.id, opens_at=a.open_at,
+                link=f"/lms/courses/{a.course_id}/assignments/{a.id}",
+            )  # fmt: skip
+
+
+@receiver(lms_changed)
 def on_lms_change(sender, student_ids, reason, details, **kwargs):
     assessment_id = details.get("assessment_id")
     if not assessment_id or reason not in RESOLVING:

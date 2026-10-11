@@ -7421,10 +7421,11 @@
                     "streak_at_risk",
                     "streak_lost",
                     "win",
-                    "digest"
+                    "digest",
+                    "new_content"
                 ],
                 "type": "string",
-                "description": "* `session_starting` - Session Starting\n* `session_ignored` - Session Ignored\n* `upcoming_due` - Upcoming Due\n* `falling_behind` - Falling Behind\n* `final_stretch` - Final Stretch\n* `code_red` - Code Red\n* `missed_late` - Missed Late\n* `streak_at_risk` - Streak At Risk\n* `streak_lost` - Streak Lost\n* `win` - Win\n* `digest` - Digest"
+                "description": "* `session_starting` - Session Starting\n* `session_ignored` - Session Ignored\n* `upcoming_due` - Upcoming Due\n* `falling_behind` - Falling Behind\n* `final_stretch` - Final Stretch\n* `code_red` - Code Red\n* `missed_late` - Missed Late\n* `streak_at_risk` - Streak At Risk\n* `streak_lost` - Streak Lost\n* `win` - Win\n* `digest` - Digest\n* `new_content` - New Content"
             }
         },
         "securitySchemes": {

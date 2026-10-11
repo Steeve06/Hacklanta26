@@ -297,3 +297,87 @@ class TestAdminRegistration:
             format="json",
         )
         assert response.status_code == 403
+
+
+class TestNewContentNotifications:
+    def _post_homework(self, course, **extra):
+        now = timezone.now()
+        body = {
+            "type": "homework", "title": "Problem set 1", "instructions": "Answer.",
+            "open_at": (now - timedelta(hours=1)).isoformat(),
+            "due_at": (now + timedelta(days=3)).isoformat(), **extra,
+        }  # fmt: skip
+        return client_for(course.instructor).post(
+            f"/api/v1/courses/{course.id}/assessments", body, format="json"
+        )
+
+    def test_students_are_told_about_new_work_by_push(
+        self, course, settings, django_capture_on_commit_callbacks
+    ):
+        import json
+        from unittest import mock
+
+        from notifications.models import Notification, PushSubscription
+
+        settings.VAPID_PUBLIC_KEY, settings.VAPID_PRIVATE_KEY = "pub", "priv"
+        student = StudentFactory()
+        Enrollment.objects.create(user=student, course=course)
+        StudentFactory()  # not in the course
+        PushSubscription.objects.create(
+            user=student, endpoint="https://push.example/abc", keys={"p256dh": "x", "auth": "y"}
+        )
+        with (
+            mock.patch("pywebpush.webpush") as send,
+            django_capture_on_commit_callbacks(execute=True),
+        ):
+            assert self._post_homework(course).status_code == 201
+        n = Notification.objects.get()
+        assert n.student == student
+        assert n.text == "New assignment in CS 201: Problem set 1"
+        assert n.sent_at is not None and n.channels == ["inapp", "push"]
+        payload = json.loads(send.call_args.kwargs["data"])
+        assert payload["title"] == "Leon · New in your course"
+        assert payload["url"] == f"/lms/courses/{course.id}/assignments/{n.source_id}"
+        inbox = client_for(student).get("/api/v1/notifications").data
+        assert inbox["unread"] == 1
+
+    def test_hidden_work_is_announced_when_published(
+        self, course, django_capture_on_commit_callbacks
+    ):
+        from notifications.models import Notification
+
+        student = StudentFactory()
+        Enrollment.objects.create(user=student, course=course)
+        with django_capture_on_commit_callbacks(execute=True):
+            created = self._post_homework(course, published=False)
+        assert not Notification.objects.exists()
+        with django_capture_on_commit_callbacks(execute=True):
+            client_for(course.instructor).patch(
+                f"/api/v1/assessments/{created.data['id']}", {"published": True}, format="json"
+            )
+        assert Notification.objects.filter(student=student, sent_at__isnull=False).count() == 1
+
+    def test_future_chapter_is_announced_when_it_unlocks(
+        self, course, django_capture_on_commit_callbacks
+    ):
+        from notifications.engine import dispatch_due
+        from notifications.models import Notification
+
+        student = StudentFactory()
+        Enrollment.objects.create(user=student, course=course)
+        unlock = timezone.now() + timedelta(days=2)
+        with django_capture_on_commit_callbacks(execute=True):
+            client_for(course.instructor).post(
+                f"/api/v1/courses/{course.id}/chapters",
+                {
+                    "order": 1, "title": "Heaps", "body_md": CHAPTER_BODY,
+                    "objectives": ["Use a heap"], "reading_minutes": 10,
+                    "available_from": unlock.isoformat(),
+                },
+                format="json",
+            )  # fmt: skip
+        n = Notification.objects.get()
+        assert n.sent_at is None and n.scheduled_for >= unlock
+        dispatch_due(now=unlock + timedelta(hours=12))
+        n.refresh_from_db()
+        assert n.sent_at is not None

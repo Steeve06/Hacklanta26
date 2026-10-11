@@ -274,12 +274,19 @@ class AssessmentDetailView(APIView):
             assessment, data=request.data, partial=True, context={"course": assessment.course}
         )
         serializer.is_valid(raise_exception=True)
+        was_published = assessment.published
         assessment = serializer.save()
         emit_change(
             enrolled_student_ids(assessment.course),
             "assessment_updated",
             assessment_id=assessment.id,
         )
+        if assessment.published and not was_published:
+            emit_change(
+                enrolled_student_ids(assessment.course),
+                "assessment_published",
+                assessment_id=assessment.id,
+            )
         context = {"now": clock_now(request.user)}
         return Response(AssessmentDetailSerializer(assessment, context=context).data)
 
