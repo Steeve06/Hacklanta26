@@ -20,7 +20,8 @@ make up      # Postgres, Redis, Django, Celery worker, Celery Beat and Vite
 In a second terminal, once the containers are up:
 
 ```sh
-make demo    # migrates, loads the demo term and prints the demo accounts
+make demo         # migrates, registers the term's empty courses and prints the accounts
+make demo-sample  # the same, with sample chapters, assignments and student history
 ```
 
 Open http://localhost:5173. API docs are at http://localhost:8000/api/docs and Django admin at http://localhost:8000/admin.
@@ -35,7 +36,7 @@ docker compose up --build
 docker compose exec web python manage.py seed_demo
 ```
 
-`make demo` resets all demo data, so you can run it before every demo.
+`make demo` resets all demo data, so you can run it before every demo. It leaves the three courses empty, waiting for their teachers to sign up and add content (see [Teachers](#teachers)). `make demo-sample` (or `seed_demo --sample-content`) fills them with the sample term instead, which is what [DEMO.md](DEMO.md) walks through.
 
 ## Run it without Docker
 
@@ -84,7 +85,7 @@ celery -A config beat --loglevel=info
 
 ## Demo accounts
 
-All passwords are `pulse-demo`.
+All passwords are `pulse-demo`. The student descriptions apply to `--sample-content`; with plain `seed_demo` the courses are empty, the instructor accounts don't exist until the teachers sign up (choose "I teach a course" with the email below and any password) (until then, signing in as one explains that).
 
 | Account | Who |
 | --- | --- |
@@ -103,7 +104,7 @@ The seeded term is 15 weeks and starts 4 weeks before today (set `TERM_START_DAT
 
 ## Accounts, sign-in and onboarding
 
-- **Sign up** at `/signup` (students only). New students are enrolled in the term's three courses; work that closed before they joined is excused. Instructors and admins come from `seed_demo` or Django admin.
+- **Sign up** at `/signup`. Students choose "I'm a student" and are enrolled in the term's courses; work that closed before they joined is excused. Teachers choose "I teach a course" and must use the email their course was registered with (see [Teachers](#teachers)). Admins come from `seed_demo` or `createsuperuser`.
 - **Passwords** need 10+ characters, can't be common, only numbers, or close to your name or email. They're hashed with Argon2.
 - **Forgot password** emails a link that works once for an hour. Locally, emails print to the backend log: `docker compose logs web` (or the `runserver` terminal). Copy the `/reset-password?...` link into the browser.
 - **Remember me** keeps you signed in for 30 days instead of 7. Signing out, or changing or resetting a password, ends the session in every tab (and, for password changes, on other devices).
@@ -114,13 +115,22 @@ The seeded term is 15 weeks and starts 4 weeks before today (set `TERM_START_DAT
 - **Ask Leon** (the chat button in the sidebar, or the speech bubble at the top on a phone) takes requests like "skip tonight's session", "I'm working Friday evening" or "keep Sundays free". It answers with the change it would make, and nothing happens until the student presses **Confirm**. Each change is checked against the student's own schedule, hours and deadlines both when it's suggested and when it's confirmed.
 - Ten wrong passwords for one email lock it for 15 minutes; sign-in, sign-up and reset are limited to 5 a minute per IP and per email.
 
+## Teachers
+
+Course content comes from teachers, not from fixed files.
+
+1. **An admin registers the course**: code, title, class times and the teacher's email. Use **Register courses** in the app (admin account), or `python manage.py register_course "ENG 105" "Academic Writing" kim@school.edu --teacher-name "Kim Lee" --meeting "tue 09:00-10:15 Hall 2"`. `seed_demo` registers CS 201, PSY 101 and BUS 210 for `prof.okafor@`, `dr.marsh@` and `prof.reyes@pulse.test`. Every student in the term is enrolled.
+2. **The teacher signs up** at `/signup` with "I teach a course" and that email. The account was waiting without a password; signing up claims it, and the teacher lands on the **Dashboard** with the course already there. Signing in before signing up says to sign up first.
+3. **The teacher adds content** from the dashboard: chapters (Markdown), assignments, discussions and quizzes (multiple choice or true/false), plus the syllabus description, office hours and grading weights. Content can be hidden until it's ready.
+4. **Students see it in Learning Hub as before**, it is planned into their schedule, and chapters feed their study checks and daily cards. Each new item also reaches them as an inbox notification and, on devices with push turned on, a push notification (sent when the item opens, outside quiet hours).
+
 ## Updating an existing install
 
 New Python packages and migrations come with updates. With Docker:
 
 ```sh
 docker compose up --build                                   # rebuilds images, runs migrations on start
-docker compose exec web python manage.py seed_demo          # optional: reset the demo data
+docker compose exec web python manage.py seed_demo          # optional: reset the demo data (add --sample-content for the filled term)
 ```
 
 Without Docker (virtualenv active): `pip install -r backend/requirements-dev.txt`, then from `backend/` run `python manage.py migrate` and, optionally, `python manage.py seed_demo`. Re-seeding replaces the demo accounts and courses; accounts you created with sign-up are kept and re-enrolled in the new courses. `docker compose down` keeps the database; only `docker compose down -v` deletes it.

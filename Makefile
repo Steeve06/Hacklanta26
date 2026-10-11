@@ -1,4 +1,4 @@
-.PHONY: setup up down demo test e2e lint api-types
+.PHONY: setup up down demo demo-sample test e2e lint api-types
 
 # Create .env from the example and fill in a secret key and Web Push keys.
 setup:
@@ -13,9 +13,14 @@ down:
 	docker compose down
 
 # Reset the demo data and print the demo accounts. Run while `make up` is running.
+# Courses start empty until their teachers sign up; demo-sample fills them with the sample term.
 demo:
 	docker compose exec web python manage.py migrate --noinput
 	docker compose exec web python manage.py seed_demo
+
+demo-sample:
+	docker compose exec web python manage.py migrate --noinput
+	docker compose exec web python manage.py seed_demo --sample-content
 
 test:
 	docker compose exec web pytest

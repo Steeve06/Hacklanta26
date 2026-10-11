@@ -7,4 +7,4 @@ cd "$(dirname "$0")/.."
 cd backend
 python manage.py init_env ../.env
 python manage.py migrate --noinput
-python manage.py seed_demo
+python manage.py seed_demo  # add --sample-content for the filled sample term
