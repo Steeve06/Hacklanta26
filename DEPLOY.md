@@ -1,26 +1,6 @@
 # Deploying Leon
 
-Nothing here is deployed for you. There are two ways to run Leon in production: everything on one Vultr server (the quickest, below), or the backend on Render and the frontend on Vercel. Vercel can't run Celery workers or long AI jobs, so on that route the backend goes to Render.
-
-## One server on Vultr
-
-`docker-compose.prod.yml` runs the whole app on one machine: Postgres, Redis, Django (gunicorn, production settings), the Celery worker and Beat, and Caddy, which serves the built app and gets an HTTPS certificate on its own.
-
-1. In Vultr, deploy a **Cloud Compute** server with **Ubuntu 24.04** and at least **2 GB of RAM**. Note its IP address and root password.
-2. Connect: `ssh root@<server-ip>` (or the Vultr web console).
-3. Get the code and run the setup script:
-   ```sh
-   git clone https://github.com/Steeve06/Hacklanta26.git leon
-   cd leon
-   bash deploy/vultr-setup.sh
-   ```
-   It adds swap, installs Docker, opens ports 80 and 443, writes `.env` with a new secret key, push keys and database password, builds, starts, and loads the sample demo data. The first run takes about 10 minutes.
-4. Open the address it prints, `https://<ip-with-dashes>.sslip.io`. With your own domain, point its A record at the server and run `bash deploy/vultr-setup.sh your.domain` instead.
-5. To turn on AI, set `AI_API_KEY` in `.env` (`nano .env`), then `docker compose -f docker-compose.prod.yml up -d`.
-
-To update after pushing new code: `git pull && bash deploy/vultr-setup.sh`. To reset the demo data: `docker compose -f docker-compose.prod.yml exec web python manage.py seed_demo --sample-content`. Logs: `docker compose -f docker-compose.prod.yml logs -f web worker`.
-
-The script keeps `DEMO_MODE=true` so the admin's demo controls work during judging. Set it to `false` in `.env` for real use.
+Nothing here is deployed for you. These steps put the backend on Render and the frontend on Vercel when you're ready. Vercel can't run Celery workers or long AI jobs, so the backend goes to Render.
 
 ## What runs where
 

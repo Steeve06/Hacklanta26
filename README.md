@@ -15,7 +15,7 @@ Learning Hub lives under `/lms`, Leon under `/pulse`. Both share one login.
 
 ## Hacklanta 2026
 
-- **Track:** Social Good. **Side challenge:** Best use of Vultr ([deploying on one Vultr server](DEPLOY.md#one-server-on-vultr)).
+- **Track:** Social Good.
 - **Why:** a teammate watched a TED talk by Duolingo's founder about how a bit of playful guilt keeps learners coming back. Leon mixes that voice and Duolingo-style streaks with what a campus app like D2L's Pulse knows about courses and deadlines, and adds the missing piece: a plan for when to do the work.
 - **Try it:** sign in as `jordan@pulse.test` (behind), `maya@pulse.test` (on track), `prof.okafor@pulse.test` (teacher) or `admin@pulse.test` (demo controls), all with the password `pulse-demo`. Every account and record is fictional. [DEMO.md](DEMO.md) walks through a 10-minute demo.
 - **How it was built:** during the event, from a written build spec. Much of the code, tests and docs were written with Claude Code, an AI coding agent, with the team directing, reviewing, testing and merging; teammates built the timed quiz, XP leaderboard and teacher dashboard on their own branches. Open-source libraries and fonts are listed in [CREDITS.md](CREDITS.md), and design choices in [DECISIONS.md](DECISIONS.md).
