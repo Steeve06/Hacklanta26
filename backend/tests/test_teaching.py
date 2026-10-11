@@ -299,6 +299,16 @@ class TestAdminRegistration:
         assert response.status_code == 403
 
 
+def without_quiet_hours(student):
+    """Announcements wait out quiet hours (22:00 to 08:00 by default), so tests that expect an
+    immediate send would fail in the evening without this."""
+    from accounts.models import StudentProfile
+
+    StudentProfile.objects.update_or_create(
+        user=student, defaults={"quiet_start": time(0), "quiet_end": time(0)}
+    )
+
+
 class TestNewContentNotifications:
     def _post_homework(self, course, **extra):
         now = timezone.now()
@@ -321,6 +331,7 @@ class TestNewContentNotifications:
 
         settings.VAPID_PUBLIC_KEY, settings.VAPID_PRIVATE_KEY = "pub", "priv"
         student = StudentFactory()
+        without_quiet_hours(student)
         Enrollment.objects.create(user=student, course=course)
         StudentFactory()  # not in the course
         PushSubscription.objects.create(
@@ -347,6 +358,7 @@ class TestNewContentNotifications:
         from notifications.models import Notification
 
         student = StudentFactory()
+        without_quiet_hours(student)
         Enrollment.objects.create(user=student, course=course)
         with django_capture_on_commit_callbacks(execute=True):
             created = self._post_homework(course, published=False)
