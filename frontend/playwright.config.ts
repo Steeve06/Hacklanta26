@@ -29,7 +29,8 @@ export default defineConfig({
       reuseExistingServer: false,
       env: {
         DJANGO_SETTINGS_MODULE: "config.settings.dev",
-        DATABASE_URL: "sqlite:///e2e.sqlite3",
+        // Wait for a busy write instead of failing with "database is locked".
+        DATABASE_URL: "sqlite:///e2e.sqlite3?timeout=20",
         REDIS_URL: "",
         AI_PROVIDER: "",
         AI_API_KEY: "",
