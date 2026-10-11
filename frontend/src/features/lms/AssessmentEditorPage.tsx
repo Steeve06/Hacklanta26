@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiError, errorMessage, unwrap } from "@/api/client";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import {
@@ -25,6 +25,14 @@ import {
 } from "./api";
 import { useNumericParam } from "./useIds";
 
+type Kind = "homework" | "discussion" | "quiz";
+const kinds: Kind[] = ["homework", "discussion", "quiz"];
+const newTitles: Record<Kind, string> = {
+  homework: "New assignment",
+  discussion: "New discussion",
+  quiz: "New quiz",
+};
+
 type DraftQuestion = {
   prompt: string;
   type: "multiple_choice" | "true_false";
@@ -39,10 +47,13 @@ export function AssessmentEditorPage() {
   const assessment = useAssessment(Number(assessmentId ?? 0));
   const questions = useQuestions(Number(assessmentId ?? 0), editing);
   const chapters = useChapters(courseId);
+  const [search] = useSearchParams();
+  const wanted = search.get("type") as Kind | null;
+  const preset: Kind = wanted && kinds.includes(wanted) ? wanted : "homework";
   const crumbs = [
     { label: "Courses", to: "/lms" },
     { label: "Assignments", to: `/lms/courses/${courseId}/assignments` },
-    { label: editing ? "Edit assignment" : "New assignment" },
+    { label: editing ? "Edit assignment" : newTitles[preset] },
   ];
   return (
     <div>
@@ -64,8 +75,10 @@ export function AssessmentEditorPage() {
         </QueryView>
       ) : (
         <AssessmentForm
+          key={preset}
           courseId={courseId}
           initial={null}
+          preset={preset}
           chapters={chapters.data ?? []}
           initialQuestions={[]}
         />
@@ -83,14 +96,23 @@ function toDraft(q: QuestionWrite): DraftQuestion {
   };
 }
 
+const blankQuestion: DraftQuestion = {
+  prompt: "",
+  type: "multiple_choice",
+  options: "",
+  correct_index: 0,
+};
+
 function AssessmentForm({
   courseId,
   initial,
+  preset = "homework",
   chapters,
   initialQuestions,
 }: {
   courseId: number;
   initial: AssessmentDetail | null;
+  preset?: Kind;
   chapters: ChapterSummary[];
   initialQuestions: QuestionWrite[];
 }) {
@@ -98,7 +120,7 @@ function AssessmentForm({
   const navigate = useNavigate();
   const client = useQueryClient();
   const [form, setForm] = useState(() => ({
-    type: initial?.type ?? "homework",
+    type: initial?.type ?? preset,
     title: initial?.title ?? "",
     instructions: initial?.instructions ?? "",
     open_at: toLocalInputValue(initial?.open_at ?? new Date().toISOString(), tz),
@@ -116,7 +138,9 @@ function AssessmentForm({
     published: initial?.published ?? true,
   }));
   const [chapterIds, setChapterIds] = useState<number[]>(initial?.chapter_ids ?? []);
-  const [questions, setQuestions] = useState<DraftQuestion[]>(initialQuestions.map(toDraft));
+  const [questions, setQuestions] = useState<DraftQuestion[]>(() =>
+    initial || preset !== "quiz" ? initialQuestions.map(toDraft) : [blankQuestion],
+  );
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -204,7 +228,7 @@ function AssessmentForm({
   const invalid =
     !form.title.trim() ||
     !form.instructions.trim() ||
-    (form.type === "quiz" && questions.some((q) => !q.prompt.trim()));
+    (form.type === "quiz" && (questions.length === 0 || questions.some((q) => !q.prompt.trim())));
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -214,7 +238,9 @@ function AssessmentForm({
 
   return (
     <form onSubmit={submit} noValidate className="flex max-w-3xl flex-col gap-4">
-      <h1 className="text-2xl font-bold">{initial ? "Edit assignment" : "New assignment"}</h1>
+      <h1 className="text-2xl font-bold">
+        {initial ? "Edit assignment" : newTitles[form.type as Kind]}
+      </h1>
       <div className="grid gap-4 sm:grid-cols-[12rem_1fr]">
         <Select label="Type" value={form.type} onChange={set("type")} disabled={Boolean(initial)}>
           <option value="homework">Homework</option>
@@ -451,12 +477,7 @@ function QuestionsEditor({
       <Button
         variant="secondary"
         className="self-start"
-        onClick={() =>
-          onChange([
-            ...questions,
-            { prompt: "", type: "multiple_choice", options: "", correct_index: 0 },
-          ])
-        }
+        onClick={() => onChange([...questions, blankQuestion])}
       >
         Add question
       </Button>

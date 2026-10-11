@@ -9,14 +9,14 @@ describe("redirects", () => {
   it("sends each role home", () => {
     expect(homeFor(student(false))).toBe("/onboarding");
     expect(homeFor(student(true))).toBe("/pulse/today");
-    expect(homeFor(instructor)).toBe("/lms");
+    expect(homeFor(instructor)).toBe("/teach");
     expect(homeFor(admin)).toBe("/lms");
   });
 
   it("returns to the page asked for unless onboarding or the role says otherwise", () => {
     expect(destinationAfterLogin(student(true), "/pulse/week")).toBe("/pulse/week");
     expect(destinationAfterLogin(student(false), "/pulse/week")).toBe("/onboarding");
-    expect(destinationAfterLogin(instructor, "/pulse/week")).toBe("/lms");
+    expect(destinationAfterLogin(instructor, "/pulse/week")).toBe("/teach");
     expect(destinationAfterLogin(instructor, "/lms/courses/4")).toBe("/lms/courses/4");
     expect(destinationAfterLogin(student(true), "/onboarding")).toBe("/pulse/today");
   });

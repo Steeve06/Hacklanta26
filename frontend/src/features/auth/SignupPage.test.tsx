@@ -58,4 +58,40 @@ describe("SignupPage", () => {
     expect(screen.getByLabelText("Email")).toHaveValue("MAYA@pulse.test");
     expect(fetch).toHaveBeenCalledTimes(1);
   });
+
+  it("signs a teacher up into their dashboard", async () => {
+    let sent: Record<string, unknown> = {};
+    mockFetch({
+      "POST /api/v1/auth/signup": async (request) => {
+        sent = (await request.json()) as Record<string, unknown>;
+        return json({ access: "token" }, 201);
+      },
+      "GET /api/v1/me": () =>
+        json({
+          id: 9,
+          email: "ada@school.edu",
+          first_name: "Ada",
+          last_name: "Okafor",
+          role: "instructor",
+          timezone: "America/New_York",
+          profile: null,
+          server_now: new Date().toISOString(),
+          demo_mode: false,
+        }),
+    });
+    renderRoute(<SignupPage />, "/signup", [{ path: "/teach", element: <p>teach page</p> }]);
+    await userEvent.click(screen.getByRole("radio", { name: "I teach a course" }));
+    expect(screen.getByText(/Use the email your department registered/)).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("First name"), "Ada");
+    await userEvent.type(screen.getByLabelText("Last name"), "Okafor");
+    await userEvent.type(screen.getByLabelText("School email"), "ada@school.edu");
+    await userEvent.type(password(), "maple-river-lantern");
+    await userEvent.type(
+      screen.getByLabelText("Confirm password", { selector: "input" }),
+      "maple-river-lantern",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    expect(await screen.findByText("teach page")).toBeInTheDocument();
+    expect(sent).toMatchObject({ role: "teacher", email: "ada@school.edu" });
+  });
 });

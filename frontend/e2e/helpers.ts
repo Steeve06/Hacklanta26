@@ -25,5 +25,6 @@ export async function apiAs(request: APIRequestContext, email: string) {
       return (await res.json()) as T;
     },
     post: (path: string, data?: unknown) => request.post(path, { headers, data }),
+    patch: (path: string, data?: unknown) => request.patch(path, { headers, data }),
   };
 }

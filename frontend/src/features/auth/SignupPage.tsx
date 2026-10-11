@@ -1,13 +1,13 @@
 import { useId, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, errorMessage, isUnreachable } from "@/api/client";
-import { Button, Input } from "@/components/ui";
+import { Button, ChipGroup, Input } from "@/components/ui";
 import { AuthLayout } from "./AuthLayout";
 import { useSignup } from "./hooks";
 import { PasswordInput } from "./PasswordInput";
 import { PasswordRules } from "./PasswordRules";
 import { passwordProblem, passwordRules } from "./passwordChecks";
-import { ONBOARDING } from "./redirects";
+import { homeFor } from "./redirects";
 
 const EMAIL = /^\S+@\S+\.\S+$/;
 type FieldName = "first_name" | "last_name" | "email" | "password" | "password_confirm";
@@ -24,6 +24,7 @@ export function SignupPage() {
   const navigate = useNavigate();
   const signup = useSignup();
   const rulesId = useId();
+  const [role, setRole] = useState<"student" | "teacher">("student");
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -66,8 +67,8 @@ export function SignupPage() {
     });
     if (invalid || signup.isPending) return;
     signup.mutate(
-      { ...form, email: form.email.trim(), timezone: browserTimezone() },
-      { onSuccess: () => navigate(ONBOARDING, { replace: true }) },
+      { ...form, role, email: form.email.trim(), timezone: browserTimezone() },
+      { onSuccess: (me) => navigate(homeFor(me), { replace: true }) },
     );
   }
 
@@ -79,6 +80,26 @@ export function SignupPage() {
   return (
     <AuthLayout title="Create your account" busy={signup.isPending || signup.isSuccess}>
       <form noValidate onSubmit={submit} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <ChipGroup<"student" | "teacher">
+            label="I am"
+            value={role}
+            onChange={(next) => {
+              setRole(next);
+              if (signup.isError) signup.reset();
+            }}
+            options={[
+              { value: "student", label: "I'm a student" },
+              { value: "teacher", label: "I teach a course" },
+            ]}
+          />
+          {role === "teacher" && (
+            <p className="text-sm text-ink-soft">
+              Use the email your department registered your course with. Your course is waiting for
+              you; you only add the content.
+            </p>
+          )}
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
             label="First name"
@@ -102,7 +123,7 @@ export function SignupPage() {
           />
         </div>
         <Input
-          label="Email"
+          label={role === "teacher" ? "School email" : "Email"}
           type="email"
           autoComplete="email"
           value={form.email}

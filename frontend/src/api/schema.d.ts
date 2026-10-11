@@ -517,6 +517,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/courses/{course_id}/syllabus/edit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["v1_courses_syllabus_edit_partial_update"];
+        trace?: never;
+    };
     "/api/v1/demo/replan/{student_id}": {
         parameters: {
             query?: never;
@@ -1014,6 +1030,38 @@ export interface paths {
         patch: operations["v1_submissions_score_partial_update"];
         trace?: never;
     };
+    "/api/v1/teach/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_teach_overview_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/teach/registrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_teach_registrations_list"];
+        put?: never;
+        post: operations["v1_teach_registrations_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1129,12 +1177,17 @@ export interface components {
             due_at: string;
             /** Format: date-time */
             cutoff_at?: string | null;
+            /** Format: int64 */
             points?: number;
             /** Format: decimal */
             weight_pct?: string;
+            /** Format: int64 */
             est_minutes?: number | null;
+            /** Format: int64 */
             discussion_replies_required?: number;
+            /** Format: int64 */
             time_limit_minutes?: number;
+            /** Format: int64 */
             max_attempts?: number;
             published?: boolean;
             questions?: components["schemas"]["QuestionWriteRequest"][];
@@ -1155,7 +1208,10 @@ export interface components {
             readonly merged: number;
         };
         AvailabilityBlock: {
-            /** @description 0 = Monday */
+            /**
+             * Format: int64
+             * @description 0 = Monday
+             */
             weekday: number;
             /** Format: time */
             start_time: string;
@@ -1163,7 +1219,10 @@ export interface components {
             end_time: string;
         };
         AvailabilityBlockRequest: {
-            /** @description 0 = Monday */
+            /**
+             * Format: int64
+             * @description 0 = Monday
+             */
             weekday: number;
             /** Format: time */
             start_time: string;
@@ -1253,10 +1312,12 @@ export interface components {
             completed: boolean;
         };
         ChapterWriteRequest: {
+            /** Format: int64 */
             order: number;
             title: string;
             body_md: string;
             links?: components["schemas"]["LinkRequest"][];
+            /** Format: int64 */
             reading_minutes?: number;
             objectives: string[];
             /** Format: date-time */
@@ -1505,6 +1566,15 @@ export interface components {
             readonly location: string;
             readonly timezone: string;
         };
+        MeetingWriteRequest: {
+            weekday: number;
+            /** Format: time */
+            start_time: string;
+            /** Format: time */
+            end_time: string;
+            /** @default  */
+            location: string;
+        };
         MissedDeadline: {
             assessment_id: number;
             course_id: number;
@@ -1645,21 +1715,28 @@ export interface components {
             due_at?: string;
             /** Format: date-time */
             cutoff_at?: string | null;
+            /** Format: int64 */
             points?: number;
             /** Format: decimal */
             weight_pct?: string;
+            /** Format: int64 */
             est_minutes?: number | null;
+            /** Format: int64 */
             discussion_replies_required?: number;
+            /** Format: int64 */
             time_limit_minutes?: number;
+            /** Format: int64 */
             max_attempts?: number;
             published?: boolean;
             questions?: components["schemas"]["QuestionWriteRequest"][];
         };
         PatchedChapterWriteRequest: {
+            /** Format: int64 */
             order?: number;
             title?: string;
             body_md?: string;
             links?: components["schemas"]["LinkRequest"][];
+            /** Format: int64 */
             reading_minutes?: number;
             objectives?: string[];
             /** Format: date-time */
@@ -1684,6 +1761,13 @@ export interface components {
         PatchedSessionUpdateRequest: {
             status?: components["schemas"]["SessionUpdateStatusEnum"];
             completed_minutes?: number;
+        };
+        PatchedSyllabusUpdateRequest: {
+            description?: string;
+            office_hours?: string;
+            grading?: {
+                [key: string]: unknown;
+            }[];
         };
         PlanJob: {
             readonly id: number;
@@ -1753,6 +1837,7 @@ export interface components {
             readonly plan_feedback: string;
         };
         ProfileUpdateRequest: {
+            /** Format: int64 */
             sass_level?: number;
             /** Format: decimal */
             max_hours_per_day?: string;
@@ -1823,19 +1908,25 @@ export interface components {
         QuestionTypeEnum: "multiple_choice" | "true_false";
         QuestionWrite: {
             readonly id: number;
+            /** Format: int64 */
             order: number;
             type: components["schemas"]["QuestionTypeEnum"];
             prompt: string;
             options: unknown;
+            /** Format: int64 */
             correct_index: number;
+            /** Format: int64 */
             points?: number;
         };
         QuestionWriteRequest: {
+            /** Format: int64 */
             order: number;
             type: components["schemas"]["QuestionTypeEnum"];
             prompt: string;
             options: unknown;
+            /** Format: int64 */
             correct_index: number;
+            /** Format: int64 */
             points?: number;
         };
         QuizAttempt: {
@@ -1854,6 +1945,30 @@ export interface components {
             readonly auto_submitted: boolean;
             readonly questions: components["schemas"]["QuestionPublic"][];
             readonly results: components["schemas"]["QuestionResult"][] | null;
+        };
+        RegisteredCourse: {
+            id: number;
+            code: string;
+            title: string;
+            term: string;
+            /** Format: email */
+            teacher_email: string;
+            readonly claimed: boolean;
+        };
+        RegistrationRequest: {
+            code: string;
+            title: string;
+            /** Format: email */
+            teacher_email: string;
+            teacher_first_name?: string;
+            teacher_last_name?: string;
+            /** @default #1f6f5c */
+            color: string;
+            /** @default  */
+            description: string;
+            /** @default  */
+            office_hours: string;
+            meetings?: components["schemas"]["MeetingWriteRequest"][];
         };
         /**
          * @description * `done` - done
@@ -1957,6 +2072,8 @@ export interface components {
          */
         SessionUpdateStatusEnum: "done" | "partial" | "skipped" | "planned";
         SignupRequest: {
+            /** @default student */
+            role: components["schemas"]["SignupRoleEnum"];
             first_name: string;
             last_name: string;
             /** Format: email */
@@ -1965,6 +2082,12 @@ export interface components {
             password_confirm: string;
             timezone?: string;
         };
+        /**
+         * @description * `student` - student
+         *     * `teacher` - teacher
+         * @enum {string}
+         */
+        SignupRoleEnum: "student" | "teacher";
         Status: {
             /** Format: date-time */
             computed_at: string;
@@ -2130,6 +2253,24 @@ export interface components {
             readonly topic: string;
             readonly chapters: components["schemas"]["ChapterRef"][];
         };
+        TeachingCourse: {
+            id: number;
+            code: string;
+            title: string;
+            color: string;
+            term: string;
+            meetings: components["schemas"]["Meeting"][];
+            students: number;
+            chapters: number;
+            homework: number;
+            discussions: number;
+            quizzes: number;
+            /** @description Assignments not yet visible to students */
+            hidden: number;
+            /** @description Submissions waiting for a score */
+            to_grade: number;
+            next_due: components["schemas"]["NextDue"] | null;
+        };
         TravelRequest: {
             student_id: number;
             hours?: number;
@@ -2148,9 +2289,10 @@ export interface components {
          *     * `streak_lost` - Streak Lost
          *     * `win` - Win
          *     * `digest` - Digest
+         *     * `new_content` - New Content
          * @enum {string}
          */
-        TriggerEnum: "session_starting" | "session_ignored" | "upcoming_due" | "falling_behind" | "final_stretch" | "code_red" | "missed_late" | "streak_at_risk" | "streak_lost" | "win" | "digest";
+        TriggerEnum: "session_starting" | "session_ignored" | "upcoming_due" | "falling_behind" | "final_stretch" | "code_red" | "missed_late" | "streak_at_risk" | "streak_lost" | "win" | "digest" | "new_content";
     };
     responses: never;
     parameters: never;
@@ -3099,6 +3241,33 @@ export interface operations {
             };
         };
     };
+    v1_courses_syllabus_edit_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSyllabusUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSyllabusUpdateRequest"];
+                "multipart/form-data": components["schemas"]["PatchedSyllabusUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Syllabus"];
+                };
+            };
+        };
+    };
     v1_demo_replan_create: {
         parameters: {
             query?: never;
@@ -3954,6 +4123,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Submission"];
+                };
+            };
+        };
+    };
+    v1_teach_overview_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeachingCourse"][];
+                };
+            };
+        };
+    };
+    v1_teach_registrations_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisteredCourse"][];
+                };
+            };
+        };
+    };
+    v1_teach_registrations_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["RegistrationRequest"];
+                "multipart/form-data": components["schemas"]["RegistrationRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisteredCourse"];
                 };
             };
         };

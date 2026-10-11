@@ -2,9 +2,11 @@
 
 About 10 minutes. It follows the acceptance criteria in the build brief.
 
-**Before you start:** run `make demo` (or `python manage.py seed_demo`) to reset the data. This also clears any time-travel. Use one normal browser window for students and a private window for the admin and instructor, so you can stay signed in to both. All passwords are `pulse-demo`.
+**Before you start:** run `make demo-sample` (or `python manage.py seed_demo --sample-content`) to reset the data. This also clears any time-travel. Use one normal browser window for students and a private window for the admin and instructor, so you can stay signed in to both. All passwords are `pulse-demo`.
 
 **Optional opener: a new student.** Click **Create an account** on the sign-in page, sign up, and go through the five onboarding steps: courses, study time on the grid, preferences, reminder style with its live sample, then the schedule Leon builds. Press **Looks good** to land on Today. (Or sign in as `casey@pulse.test`, who stopped at step 3.)
+
+**Optional opener: a teacher.** In the private window, sign in as **admin@pulse.test**, open **Register courses** and register a course (say ENG 105) with any new email. Sign out, open **Create an account**, choose **I teach a course** and use that email: the dashboard shows the course ready for content. Add a chapter, an assignment, a discussion and a quiz from the four buttons. In a student's window the course and its content appear under Courses, and the bell shows "New quiz in ENG 105: …". (For a fully empty term where teachers start from scratch, run `make demo` instead.)
 
 ## 1. A student who is badly behind
 

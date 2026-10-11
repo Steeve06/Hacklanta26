@@ -23,6 +23,7 @@ const notifications = () => import("@/features/notifications/InboxPage");
 const quiz = () => import("@/features/quiz/pages");
 const demo = () => import("@/features/demo/DemoPage");
 const onboarding = () => import("@/features/onboarding/OnboardingPage");
+const teach = () => import("@/features/teach/pages");
 
 export const router = createBrowserRouter([
   {
@@ -73,6 +74,8 @@ export const router = createBrowserRouter([
             ],
           },
           { path: "settings", lazy: page(pulse, "SettingsPage") },
+          { path: "teach", lazy: page(teach, "TeachPage") },
+          { path: "teach/register", lazy: page(teach, "RegisterCoursePage") },
           { path: "lms", lazy: page(lms, "CourseListPage") },
           { path: "demo", lazy: page(demo, "DemoPage") },
           {

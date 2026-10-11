@@ -115,10 +115,20 @@ def evaluate(student, snapshot: StudentSnapshot, now: datetime) -> list[Candidat
     return candidates
 
 
+def _still_posted(notification) -> bool:
+    from lms.models import Assessment, Chapter
+
+    if notification.source_type == "chapter":
+        return Chapter.objects.filter(pk=notification.source_id).exists()
+    return Assessment.objects.filter(pk=notification.source_id, published=True).exists()
+
+
 def still_true(notification, snapshot: StudentSnapshot, now: datetime) -> bool:
     """Re-check a queued reminder at send time."""
     if notification.trigger in (Trigger.WIN, Trigger.DIGEST, Trigger.STREAK_LOST):
         return True
+    if notification.trigger == Trigger.NEW_CONTENT:
+        return _still_posted(notification)
     if notification.source_type == "assessment":
         a = next((x for x in snapshot.assessments if x.id == notification.source_id), None)
         return bool(a and not a.done and a.status != "excused")

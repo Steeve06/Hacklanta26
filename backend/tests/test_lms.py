@@ -333,9 +333,9 @@ def test_seed_demo_is_idempotent():
 
     from lms.models import Assessment, Chapter, Course
 
-    call_command("seed_demo", stdout=io.StringIO())
+    call_command("seed_demo", "--sample-content", stdout=io.StringIO())
     counts = (Course.objects.count(), Chapter.objects.count(), Assessment.objects.count())
-    call_command("seed_demo", stdout=io.StringIO())
+    call_command("seed_demo", "--sample-content", stdout=io.StringIO())
     assert (Course.objects.count(), Chapter.objects.count(), Assessment.objects.count()) == counts
     assert counts == (3, 24, 30)
     assert all(len(c.body_md.split()) >= 600 for c in Chapter.objects.all())
@@ -347,6 +347,23 @@ def test_seed_demo_is_idempotent():
     assert AvailabilityBlock.objects.filter(student=casey.student).count() == 3
     assert Onboarding.objects.get(student__email="riley@pulse.test").current_step == 1
     assert not casey.student.profile.onboarding_done
+
+
+def test_seed_demo_default_registers_empty_courses_for_teachers_to_claim():
+    from django.core.management import call_command
+
+    from lms.models import Assessment, Chapter, Course, Enrollment
+    from lms.registration import pending_teacher
+
+    call_command("seed_demo", stdout=io.StringIO())
+    assert Course.objects.count() == 3
+    assert (Chapter.objects.count(), Assessment.objects.count()) == (0, 0)
+    for course in Course.objects.all():
+        assert pending_teacher(course.instructor.email) == course.instructor
+        assert course.syllabus.description
+        assert course.meetings.exists()
+    maya_courses = Enrollment.objects.filter(user__email="maya@pulse.test", role="student")
+    assert maya_courses.count() == 3
 
 
 @pytest.mark.parametrize("hour", [1, 9, 15, 23])
@@ -363,7 +380,7 @@ def test_seed_gives_on_track_student_a_streak_and_an_open_check_at_any_time_of_d
     moment = datetime(2026, 10, 10, hour, 0, tzinfo=ZoneInfo("America/New_York"))
     with time_machine.travel(moment, tick=False):
         with django_capture_on_commit_callbacks(execute=True):
-            call_command("seed_demo", stdout=io.StringIO())
+            call_command("seed_demo", "--sample-content", stdout=io.StringIO())
         maya = StudyCheck.objects.filter(student__email="maya@pulse.test")
         assert maya.filter(opens_at__lte=moment, closes_at__gt=moment).count() == 1
         assert Streak.objects.get(student__email="maya@pulse.test").current == 6

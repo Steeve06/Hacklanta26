@@ -2,12 +2,14 @@ import type { Me } from "./hooks";
 
 export const TODAY = "/pulse/today";
 export const ONBOARDING = "/onboarding";
+export const TEACH = "/teach";
 
 export function needsOnboarding(me: Pick<Me, "role" | "profile">): boolean {
   return me.role === "student" && !me.profile?.onboarding_done;
 }
 
 export function homeFor(me: Pick<Me, "role" | "profile">): string {
+  if (me.role === "instructor") return TEACH;
   if (me.role !== "student") return "/lms";
   return needsOnboarding(me) ? ONBOARDING : TODAY;
 }

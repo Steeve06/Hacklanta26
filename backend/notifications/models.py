@@ -18,6 +18,7 @@ class Trigger(models.TextChoices):
     STREAK_LOST = "streak_lost"
     WIN = "win"
     DIGEST = "digest"
+    NEW_CONTENT = "new_content"
 
 
 WIN_TIER = 0

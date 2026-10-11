@@ -22,6 +22,7 @@ TITLES = {
     "streak_lost": "Streak reset",
     "win": "Nice work",
     "digest": "While you were away",
+    "new_content": "New in your course",
 }
 
 
@@ -43,7 +44,9 @@ def push_payload(n: Notification) -> str:
             "body": n.text,
             "url": n.link or "/pulse/inbox",
             "urgent": n.tier >= URGENT_TIER,
-            "actions": [
+            "actions": [{"action": "open", "title": "Open"}]
+            if n.trigger == "new_content"
+            else [
                 {"action": "open", "title": "Open"},
                 {"action": "snooze", "title": "Snooze 1 h"},
                 {"action": "tone_down", "title": "Tone it down"},

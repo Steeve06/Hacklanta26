@@ -22,7 +22,7 @@ export default defineConfig({
   webServer: [
     {
       // A fresh database every run, so old migrations or leftover data never get in the way.
-      command: `${python} -c "import pathlib; pathlib.Path('e2e.sqlite3').unlink(missing_ok=True)" && ${python} manage.py migrate --noinput && ${python} manage.py seed_demo && ${python} manage.py runserver 127.0.0.1:8001 --noreload`,
+      command: `${python} -c "import pathlib; pathlib.Path('e2e.sqlite3').unlink(missing_ok=True)" && ${python} manage.py migrate --noinput && ${python} manage.py seed_demo --sample-content && ${python} manage.py runserver 127.0.0.1:8001 --noreload`,
       cwd: "../backend",
       url: "http://127.0.0.1:8001/api/health",
       timeout: 180_000,
