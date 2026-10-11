@@ -1,4 +1,4 @@
-from datetime import time, timedelta
+from datetime import datetime, time, timedelta
 
 import pytest
 from django.core.cache import cache
@@ -29,6 +29,22 @@ def student():
     homework.chapters.set([chapter])
     plan(student, reason="test")
     return student
+
+
+def free_hour(student, days_ahead: int) -> str:
+    """A whole hour with nothing planned, so a move there is always allowed."""
+    day = (timezone.now() + timedelta(days=days_ahead)).astimezone(student.tz).date()
+    for hour in range(8, 21):
+        start = datetime.combine(day, time(hour), student.tz)
+        busy = Session.objects.filter(
+            schedule__student=student,
+            schedule__is_active=True,
+            start__lt=start + timedelta(hours=1, minutes=10),
+            end__gt=start - timedelta(minutes=10),
+        )
+        if not busy.exists():
+            return f"{day.isoformat()}T{hour:02d}:00"
+    raise AssertionError("No free hour on that day")
 
 
 def upcoming(student):
@@ -172,8 +188,7 @@ class TestChecks:
 
     def test_a_moved_session_stays_put_when_the_plan_is_rebuilt(self, student):
         session = upcoming(student).first()
-        day = (timezone.now() + timedelta(days=3)).astimezone(student.tz).date()
-        free_slot = f"{day.isoformat()}T08:00"
+        free_slot = free_hour(student, days_ahead=3)
         checked = actions.check(
             student, {"type": "move_session", "session_id": session.id, "start": free_slot}
         )
